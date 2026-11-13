@@ -49,6 +49,26 @@ Every invocation path supports `--help`/`-h` and `--version`/`-V`. Help and
 version discovery exit 0 and write no error output; invalid command usage remains
 exit 2.
 
+## Local Node 20/24 acceptance (no GitHub Actions)
+
+From a clean checkout of this PR, with **Node 20** active, run
+`bash scripts/verify-local.sh`; then switch to **Node 24** and run the same
+command again. Each invocation requires network access for the pinned npm
+dependencies and calls `npm ci --ignore-scripts --no-audit --no-fund` followed
+by the full `npm test` suite. It requires Git, Node and npm and **will refuse
+all other Node majors**, including Node 22. There is no model call or GitHub
+Actions invocation. No Node installation or version switching is performed by
+the script.
+
+Each run records the exact Git commit, Node and npm version, exit status, and
+installation/test logs in a private temporary directory outside the repository.
+It also refuses a dirty checkout or post-test uncommitted changes. A `PASS`
+only means the dependency install and repository tests passed under that
+specific Node version/commit; it does not establish agent comprehension or
+provider billing savings. Review and redact log content before publishing.
+Both Node versions must report `PASS` against **the same commit** before the
+PR can be considered fully tested.
+
 ## Install from source
 
 ```sh
