@@ -164,6 +164,12 @@ The default tokenizer is `o200k_base`; measurement commands also accept `cl100k_
 
 ## Prepare one complete input
 
+The standalone `pack` command also selects the minimum locally measured token
+count among complete context variants that reduce bytes versus its guided
+baseline. More bytes than another intermediate candidate is acceptable only
+while still staying below the original byte budget; equal-token cases prefer
+fewer bytes.
+
 The `prepare` command now compares the **complete serialized envelope** across
 readable/JSON intent descriptions, original/conservative source candidates, and
 raw/dictionary history. It chooses the fewest measured local tokens among
