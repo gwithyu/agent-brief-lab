@@ -3,6 +3,11 @@
 set -euo pipefail
 
 fail() { printf 'VERIFICATION BLOCKED: %s\n' "$*" >&2; exit 2; }
+assert_clean() {
+  local changes
+  changes="$(git status --porcelain --untracked-files=normal)" || fail 'git status failed: cannot establish a clean checkout'
+  [[ -z "$changes" ]] || fail "$1"
+}
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 command -v git >/dev/null 2>&1 || fail 'Git is required'
@@ -12,7 +17,7 @@ version="$(node -p 'process.versions.node')"
 major="${version%%.*}"
 case "$major" in 20|24) ;; *) fail "expected Node 20 or 24, got $version" ;; esac
 [[ -f package-lock.json && -f package.json ]] || fail 'run from the complete repository checkout'
-[[ -z "$(git status --porcelain --untracked-files=normal)" ]] || fail 'checkout must be clean before testing'
+assert_clean 'checkout must be clean before testing'
 sha="$(git rev-parse --verify HEAD)"
 output="$(mktemp -d "${TMPDIR:-/tmp}/agent-brief-test-node${major}.XXXXXX")"
 chmod 700 "$output"
@@ -34,7 +39,7 @@ finish() {
 trap finish EXIT
 npm ci --ignore-scripts --no-audit --no-fund 2>&1 | tee "$output/npm-ci.log"
 [[ "$(git rev-parse --verify HEAD)" == "$sha" ]] || fail 'npm ci changed the checkout commit'
-[[ -z "$(git status --porcelain --untracked-files=normal)" ]] || fail 'npm ci changed tracked/untracked project files'
+assert_clean 'npm ci changed tracked/untracked project files'
 npm test 2>&1 | tee "$output/npm-test.log"
 [[ "$(git rev-parse --verify HEAD)" == "$sha" ]] || fail 'test run changed the checkout commit'
-[[ -z "$(git status --porcelain --untracked-files=normal)" ]] || fail 'test run changed tracked/untracked project files'
+assert_clean 'test run changed tracked/untracked project files'
