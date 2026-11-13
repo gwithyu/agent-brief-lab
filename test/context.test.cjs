@@ -60,6 +60,41 @@ for(const encoding of ['o200k_base','cl100k_base']) {
     }
   });
 }
+test('token minimum can beat current winner while remaining under baseline bytes',()=>{
+  const vm=require('node:vm');
+  const module={exports:{}};
+  const fakeIndex={
+    validateIntent:value=>value,
+    intentDigest:()=> 'c'.repeat(64),
+    brief:()=> 'B'.repeat(1500),
+    simplify:()=>({code:'short;'}),
+    tokens:serialized=>{
+      const value=JSON.parse(serialized);
+      const json=value.instruction.startsWith('{');
+      const rewrite=value.files[0].source==='short;';
+      // Synthetic tokenizer values create an intentionally incomparable pair.
+      return json?(rewrite?900:400):(rewrite?300:1000);
+    }
+  };
+  const sandbox={module,exports:module.exports,Buffer,require:name=>{
+    assert.equal(name,'./index.cjs');
+    return fakeIndex;
+  }};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../context.cjs'),'utf8'),sandbox,{timeout:1000});
+  const i={request:'Fix',goal:'Fix',allowedFiles:['foo.js'],
+    constraints:[{id:'x',text:'must'}],acceptance:[{id:'y',text:'check'}],questions:[]};
+  const source={'foo.js':'function example(){return true;}'.repeat(20)};
+  const variants=sandbox.module.exports.contextVariants(i,source);
+  const currentBytes=Buffer.byteLength(JSON.stringify(variants[1].input));
+  const report=sandbox.module.exports.packContext(i,source);
+  assert.equal(report.metrics.afterTokens,300);
+  assert.equal(report.metrics.briefFormat,'readable');
+  assert.equal(report.input.files[0].source,'short;');
+  assert.ok(report.metrics.afterBytes>currentBytes,
+    'the winning token-minimal candidate is allowed more bytes than the first winner');
+  assert.ok(report.metrics.afterBytes<report.metrics.beforeBytes,
+    'the winning candidate must still beat baseline bytes');
+});
 test('CSS stays intact and brief costs cannot be called net savings',()=>{
   const p=packContext(intent,{'src/navigation.css':'.nav { opacity: .5; }'});
   assert.equal(p.input.files[0].source,'.nav { opacity: .5; }');assert.deepEqual(p.metrics.rewrittenFiles,[]);
