@@ -1,3 +1,19 @@
+# 0.11.0-alpha.5 — tolerate unchanged repository symlinks
+
+Fixes baseline capture rejecting every repository that contains a symbolic link,
+even outside the allowed edit scope. Unchanged tracked, untracked and dangling
+links now have metadata-only observations; raw link targets are hashed without
+reading target contents. Link retargeting/removal/type changes remain rejected,
+and allowed source files must still be regular UTF-8 text.
+
+Link-containing baselines use version 2. File-only version 1 remains compatible;
+old readers reject version 2. Target contents are explicitly outside link
+observation, and submodules/other nonregular entries remain unsupported.
+
+132 tests cover the extension and existing scope/privacy regressions. Current
+synthetic history counts are regenerated because execution.cjs changed length;
+that change is not evidence of improved compression or real model performance.
+
 # 0.11.0-alpha.4 — current-session agent workflow
 
 Adds `agent-brief session <intent> <repo> <new-output-dir>`: return prepared source,

@@ -13,7 +13,9 @@ node index.cjs session examples/propose-intent.json . ../active-agent-bundle
 The command returns the complete prepared `input`, current intent digest and
 `baselineFile`. It also saves a private bundle outside the target repository.
 Its schema only supports scoped content edits to existing regular text files;
-file additions, deletions and staging/committing need separate review. Source in
+file additions, deletions and staging/committing need separate review. Unselected
+symlinks may remain unchanged: only their link metadata is observed, not target
+contents. Editable source must still be a regular file. Source in
 the returned input may already be a conservative rewrite **candidate**.
 
 ## Instructions an agent can follow

@@ -71,7 +71,7 @@ test('mode changes and symlink substitution cannot pass',()=>repository(({root,t
   assert.equal(checkChanges(intent,plan,base,root).changed[0].kind,'mode_changed');
   fs.rmSync(file);const outside=path.join(temporary,'outside.css');fs.writeFileSync(outside,'private canary');fs.symlinkSync(outside,file);
   const result=checkChanges(intent,plan,base,root);
-  assert.equal(result.ok,false);assert.equal(result.changed[0].kind,'unsupported');
+  assert.equal(result.ok,false);assert.equal(result.changed[0].kind,'type_changed');
   assert.ok(!JSON.stringify(result).includes('private canary'));
 }));
 
@@ -104,7 +104,7 @@ test('baseline requires the exact root and regular source files',()=>repository(
   put('extra.txt','untracked baseline content');
   assert.ok(captureBaseline(intent,root).files.some(x=>x.path==='extra.txt'));
   fs.symlinkSync('src/icons.js',path.join(root,'source-link'));
-  assert.throws(()=>captureBaseline(intent,root),/regular existing/);
+  assert.equal(captureBaseline(intent,root).files.find(x=>x.path==='source-link').state,'symlink');
 }));
 
 test('Git filters and filesystem monitor commands are not executed',()=>repository(({root,put,git})=>{
@@ -157,4 +157,37 @@ test('CLI baseline and actual-change verification work without executing source'
   put('src/temple.js','throw new Error("Do not execute this source");');
   const verify=run(['verify',intentPath,planPath,basePath,root]);assert.equal(verify.status,1);
   assert.ok(JSON.parse(verify.stdout).changed.some(x=>x.path==='src/temple.js'));
+}));
+test('unchanged tracked, untracked and dangling symlinks are observed without following them',()=>repository(({root,temporary,put,git})=>{
+  const external=path.join(temporary,'outside.txt');fs.writeFileSync(external,'private target contents');
+  fs.symlinkSync(external,path.join(root,'external-link'));fs.symlinkSync('missing-target',path.join(root,'dangling-link'));
+  git('add','external-link','dangling-link');git('commit','-m','Link fixture');
+  fs.symlinkSync('src/icons.js',path.join(root,'untracked-link'));
+  const base=captureBaseline(intent,root);assert.equal(base.version,2);
+  assert.equal(base.files.filter(x=>x.state==='symlink').length,3);
+  assert.equal(JSON.stringify(base).includes('private target contents'),false);
+  put('src/navigation.css','.navigation { opacity: 0.5; padding: 8px; }\n');
+  const result=checkChanges(intent,plan,base,root);assert.equal(result.ok,true,JSON.stringify(result));
+  assert.deepEqual(result.changed,[{path:'src/navigation.css',kind:'modified'}]);
+}));
+test('retargeting, deleting and replacing an existing symlink cannot pass',()=>{
+  for(const kind of ['retarget','delete','replace'])repository(({root,put})=>{
+    const link=path.join(root,'kept-link');fs.symlinkSync('src/icons.js',link);
+    const base=captureBaseline(intent,root);put('src/navigation.css','.navigation { opacity: .5; }');
+    fs.rmSync(link);if(kind==='retarget')fs.symlinkSync('src/navigation.css',link);if(kind==='replace')fs.writeFileSync(link,'regular file');
+    const r=checkChanges(intent,plan,base,root);assert.equal(r.ok,false);
+    assert.ok(r.changed.some(x=>x.path==='kept-link'));assert.ok(r.failures.some(x=>x.includes('kept-link')));
+  });
+});
+test('allowed edit sources must still be regular files and v1 cannot contain symlink records',()=>repository(({root,put})=>{
+  fs.symlinkSync('src/icons.js',path.join(root,'source-link'));
+  assert.throws(()=>captureBaseline({...intent,allowedFiles:['source-link']},root),/regular/);
+  const base=captureBaseline(intent,root);put('src/navigation.css','.nav{opacity:.5}');
+  assert.throws(()=>checkChanges(intent,plan,{...base,version:1},root),/baseline/);
+}));
+test('symlink target contents are outside observation and never included as source',()=>repository(({root,temporary,put})=>{
+  const target=path.join(temporary,'private.txt');fs.writeFileSync(target,'canary-one');fs.symlinkSync(target,path.join(root,'outside-link'));
+  const base=captureBaseline(intent,root);fs.writeFileSync(target,'canary-two');
+  put('src/navigation.css','.nav{opacity:.5}');const r=checkChanges(intent,plan,base,root);
+  assert.equal(r.ok,true);assert.equal(JSON.stringify(base).includes('canary-one'),false);assert.equal(JSON.stringify(r).includes('canary-two'),false);
 }));

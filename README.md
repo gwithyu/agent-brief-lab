@@ -1,6 +1,6 @@
 # Agent Brief Lab
 
-**Public alpha · 0.11.0-alpha.4 · MIT · Node.js 20+**
+**Public alpha · 0.11.0-alpha.5 · MIT · Node.js 20+**
 
 Local experiments for preparing smaller coding-agent inputs while keeping explicit user constraints, and checking what changed in a Git working tree.
 
@@ -139,7 +139,7 @@ node index.cjs verify intent.json plan.json /trusted/baseline.json /absolute/rep
 node index.cjs review intent.json plan.json /trusted/baseline.json /absolute/repo /trusted/checks.json
 ```
 
-All allowed files must already exist as regular UTF-8 text. `verify` observes content hashes, modes, additions, deletions, symlinks, HEAD and index changes. Only existing-file content edits are accepted; new/deleted files and staging/committing require separate review. It rejects no-op completion claims and actual out-of-scope edits even if the plan looks correct.
+All allowed files must already exist as regular UTF-8 text. Other observed entries may be regular files or symbolic links. Unchanged links are retained by hashing their raw target-path bytes, without following them; target contents (inside or outside the repository) are not part of link observation. Dangling links are supported. Symlink edits, replacements, deletion and selecting a symlink as editable source still fail. Submodules and other nonregular entries remain unsupported. Baselines containing links use version 2; file-only baselines remain version 1 and are still accepted. Older readers cannot read version 2. `verify` observes content hashes, modes, additions, deletions, symlinks, HEAD and index changes. Only existing-file content edits are accepted; new/deleted files and staging/committing require separate review. It rejects no-op completion claims and actual out-of-scope edits even if the plan looks correct.
 
 `checks.json` binds every acceptance ID to a caller-reviewed command:
 
@@ -187,7 +187,7 @@ privacy and remaining limitations. No completed live comparison is claimed.
 
 ## Evidence, with limits
 
-128 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
+132 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
 
 | Same synthetic task | Original complete input | Prepared input | Net saved tokens |
 | --- | ---: | ---: | ---: |

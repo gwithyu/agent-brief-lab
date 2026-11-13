@@ -32,7 +32,13 @@ function observe(root,file,includeSource=false) {
   let stat;
   try { stat=fs.lstatSync(absolute); }
   catch(error) { if(error.code==='ENOENT') return {path:file,state:'missing'};throw new Error(`Cannot inspect: ${file}`); }
-  if(stat.isSymbolicLink() || !stat.isFile()) return {path:file,state:'unsupported'};
+  if(stat.isSymbolicLink()) {
+    const parent=path.relative(root,fs.realpathSync(path.dirname(absolute)));
+    if(parent==='..' || parent.startsWith('..'+path.sep) || path.isAbsolute(parent)) return {path:file,state:'unsupported'};
+    const target=fs.readlinkSync(absolute,{encoding:'buffer'});
+    return {path:file,state:'symlink',sha256:hash(target),mode:stat.mode & 0o7777,bytes:target.length};
+  }
+  if(!stat.isFile()) return {path:file,state:'unsupported'};
   const relative=path.relative(root,fs.realpathSync(absolute));
   if(relative==='..' || relative.startsWith('..'+path.sep) || path.isAbsolute(relative)) {
     return {path:file,state:'unsupported'};
@@ -54,13 +60,14 @@ function captureBaseline(intent,root) {
   const commit=head(root),index=indexDigest(root),selected=new Set(intent.allowedFiles),sources={};
   const files=paths(root).map(file=>{
     const value=observe(root,file,selected.has(file));
-    if(value.state!=='file') throw new Error(`Baseline requires regular existing files: ${file}`);
+    if(!['file','symlink'].includes(value.state)) throw new Error(`Baseline requires regular files or symlink entries: ${file}`);
+    if(selected.has(file) && value.state!=='file') throw new Error(`Allowed edit sources must be regular files: ${file}`);
     if(selected.has(file)) {sources[file]=value.source;delete value.source;}
     return value;
   });
   if(intent.allowedFiles.some(file=>!Object.hasOwn(sources,file))) throw new Error('Every allowed file must exist in the baseline');
   if(commit!==head(root) || index!==indexDigest(root)) throw new Error('Repository changed during baseline capture');
-  return {version:1,intentDigest:intentDigest(intent),head:commit,indexDigest:index,files,sources};
+  return {version:files.some(file=>file.state==='symlink')?2:1,intentDigest:intentDigest(intent),head:commit,indexDigest:index,files,sources};
 }
 
 function sourceMap(intent,sources) {
@@ -82,16 +89,16 @@ function measureContext(intent,before,after,encoding='o200k_base') {
 }
 
 function validateBaseline(intent,base) {
-  if(!base || base.version!==1 || !hex(base.intentDigest) || !hex(base.indexDigest)
+  if(!base || ![1,2].includes(base.version) || !hex(base.intentDigest) || !hex(base.indexDigest)
     || typeof base.head!=='string' || !/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(base.head)
     || !Array.isArray(base.files) || !base.files.length) throw new Error('Invalid baseline');
-  if(base.files.some(file=>!file || !filePath(file.path) || file.state!=='file' || !hex(file.sha256)
+  if(base.files.some(file=>!file || !filePath(file.path) || !(base.version===1?['file']:['file','symlink']).includes(file.state) || !hex(file.sha256)
     || !Number.isInteger(file.mode) || file.mode<0 || file.mode>0o7777)
     || new Set(base.files.map(file=>file.path)).size!==base.files.length) throw new Error('Invalid baseline files');
   sourceMap(intent,base.sources);
   for(const file of intent.allowedFiles) {
     const recorded=base.files.find(value=>value.path===file);
-    if(!recorded || hash(base.sources[file])!==recorded.sha256) throw new Error('Baseline source fingerprint mismatch');
+    if(!recorded || recorded.state!=='file' || hash(base.sources[file])!==recorded.sha256) throw new Error('Baseline source fingerprint mismatch');
   }
 }
 
@@ -106,8 +113,8 @@ function checkChanges(intent,plan,base,root,encoding='o200k_base') {
   for(const file of union) {
     const old=before.get(file),current=observe(root,file,intent.allowedFiles.includes(file));
     if(Object.hasOwn(current,'source')) {after[file]=current.source;delete current.source;}
-    if(old && current.state==='file' && old.sha256===current.sha256 && old.mode===current.mode) continue;
-    const kind=!old?'added':current.state==='missing'?'deleted':current.state!=='file'?'unsupported':old.mode!==current.mode?'mode_changed':'modified';
+    if(old && ['file','symlink'].includes(current.state) && old.state===current.state && old.sha256===current.sha256 && old.mode===current.mode) continue;
+    const kind=!old?'added':current.state==='missing'?'deleted':current.state==='unsupported'?'unsupported':old.state!==current.state?'type_changed':current.state==='symlink'?'symlink_changed':old.mode!==current.mode?'mode_changed':'modified';
     changed.push({path:file,kind});
     if(!intent.allowedFiles.includes(file)) failures.push(`Actual change outside allowed scope: ${file}`);
     if(!plan.files.includes(file)) failures.push(`Actual change absent from plan: ${file}`);

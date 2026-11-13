@@ -1,4 +1,4 @@
-# Release verification — 0.11.0-alpha.4
+# Release verification — 0.11.0-alpha.5
 
 Checked 2026-11-13. This is a public-source alpha, not a production-quality or
 real-agent cost/understanding guarantee. No GitHub Actions workflow was required
@@ -7,13 +7,15 @@ or added; verification ran in the local execution environment.
 | Check | Result |
 | --- | --- |
 | Locked clean install, `npm ci --ignore-scripts` | PASS |
-| Node 24.22.1 suite | 128/128; no failures/skips/cancellations |
-| Node 20.20.2 suite | 128/128; no failures/skips/cancellations |
-| Installed npm tarball suite | 128/128; no failures/skips/cancellations |
+| Node 24.22.1 suite | 132/132; no failures/skips/cancellations |
+| Node 20.20.2 suite | 132/132; no failures/skips/cancellations |
+| Installed npm tarball suite | 132/132; no failures/skips/cancellations |
 | Installed `agent-brief` executable | PASS; 52→23 tokens on boolean fixture |
 | Re-run demo against recorded JSON | Identical |
 | Dependency versions/licenses | TypeScript 5.9.3 Apache-2.0; js-tiktoken 1.0.21 MIT; base64-js 1.5.1 MIT |
 | Bundled dependency/credential/private-source check | Explicit source-file allowlist; none included |
+| Public-source clone with an added link | session_ready; version-2 baseline; probe link removed after check |
+| Symlink compatibility | Unchanged/dangling links accepted; mutations and editable links rejected; targets not read |
 | Current-agent entry | Returns input/baseline; Git-only PATH test; no nested model |
 | Guided host walkthrough | Five behavior tests passed; protected-file negative case rejected; not A/B |
 | Proposal adapter | Preview + simulated response/failure tests; no automatic application |
