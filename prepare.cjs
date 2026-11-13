@@ -2,7 +2,10 @@
 const {tokens}=require('./index.cjs');
 const {contextVariants}=require('./context.cjs');
 const {packHistory,unpackHistory}=require('./history.cjs');
-function prepareInput(intent,sources,messages,encoding='o200k_base') {
+function prepareInput(intent,sources,messages,encoding='o200k_base',minSavingsTokens=1) {
+  if(!Number.isSafeInteger(minSavingsTokens) || minSavingsTokens<1 || minSavingsTokens>1000000) {
+    throw new RangeError('minSavingsTokens must be a positive safe integer at most 1000000');
+  }
   const variants=contextVariants(intent,sources,encoding),history=packHistory(messages,encoding);
   const restored=unpackHistory(history.input,history.metrics.sourceDigest);
   const originalFiles=variants[0].input.files;
@@ -13,6 +16,7 @@ function prepareInput(intent,sources,messages,encoding='o200k_base') {
   const baselineSerialized=JSON.stringify(baseline);
   const measurements=[{id:'readable/original/raw',tokens:before.tokens,bytes:before.bytes,selected:false,reason:'BASELINE'}];
   const measured=new Map([[baselineSerialized,measurements[0]]]);
+  let marginBlocked=false;
   // Compare *complete serialized inputs*. Never include source text or history
   // contents in diagnostics: those can contain private project data.
   for(const [index,variant] of variants.entries()) for(const [historyFormat,h] of [['raw',restored],['dictionary',history.input]]) {
@@ -24,6 +28,7 @@ function prepareInput(intent,sources,messages,encoding='o200k_base') {
     if(size.tokens>=before.tokens && size.bytes>=before.bytes) record.reason='NO_GAIN_BOTH';
     else if(size.tokens>=before.tokens) record.reason='NO_TOKEN_GAIN';
     else if(size.bytes>=before.bytes) record.reason='NO_BYTE_GAIN';
+    else if(before.tokens-size.tokens<minSavingsTokens) {record.reason='BELOW_MINIMUM_GAIN';marginBlocked=true;}
     else if(size.tokens<after.tokens || (size.tokens===after.tokens && size.bytes<after.bytes)) {
       input=candidate;after=size;selected={instructionFormat:variant.format,historyFormat};
     }
@@ -42,8 +47,8 @@ function prepareInput(intent,sources,messages,encoding='o200k_base') {
     rawRequestBeforeBytes:raw.bytes,guidedBeforeBytes:before.bytes,afterBytes:after.bytes,
     historyCompressed:!Array.isArray(input.history),historySourceDigest:history.metrics.sourceDigest,
     rewrittenFiles,
-    selection:{...selected,reason:after.tokens<before.tokens?'MEASURED_GAIN':'NO_GAIN',
-      uniqueCandidatesMeasured:measured.size,baselineTokens:before.tokens,baselineBytes:before.bytes,
+    selection:{...selected,reason:after.tokens<before.tokens?'MEASURED_GAIN':(marginBlocked?'MARGIN_NOT_MET':'NO_GAIN'),
+      minSavingsTokens,uniqueCandidatesMeasured:measured.size,baselineTokens:before.tokens,baselineBytes:before.bytes,
       candidates:measurements}},
     scope:'One complete serialized input document. All intent fields retained. Custom history references require executor support; not native model messages, actual billing or a semantic-understanding evaluation.'};
 }
