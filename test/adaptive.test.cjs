@@ -29,7 +29,7 @@ for(const encoding of ['o200k_base','cl100k_base']) {
       const candidates=new Map();
       for(const variant of contextVariants(baseIntent,sources,encoding)) for(const [historyFormat,history] of histories) {
         const input={...variant.input,history},serialized=JSON.stringify(input);
-        candidates.set(serialized,{input,instructionFormat:variant.format,historyFormat,
+        if(!candidates.has(serialized)) candidates.set(serialized,{input,instructionFormat:variant.format,historyFormat,
           tokenCount:tokens(serialized,encoding),byteCount:Buffer.byteLength(serialized)});
       }
       const baseline={...contextVariants(baseIntent,sources,encoding)[0].input,history:messages};
