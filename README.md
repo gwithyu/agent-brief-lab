@@ -62,7 +62,7 @@ the script.
 
 Each run records the exact Git commit, Node and npm version, exit status, and
 installation/test logs in a private temporary directory outside the repository.
-It also refuses a dirty checkout or post-test uncommitted changes. A `PASS`
+It also refuses a dirty checkout, Git status inspection failures, any change\nto the checked-out HEAD during installation or tests, and post-test uncommitted\nchanges. The acceptance-runner's own isolated regression tests cover clean\nNode 20/24, wrong Node versions, HEAD mutations, dirty trees, failed Git status\nand failed tests using mocked Node/npm but real Bash and Git. A `PASS`
 only means the dependency install and repository tests passed under that
 specific Node version/commit; it does not establish agent comprehension or
 provider billing savings. Review and redact log content before publishing.
