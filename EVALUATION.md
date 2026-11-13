@@ -24,3 +24,59 @@ model behavior. Include repeated runs and uncertainty before making broad claims
 
 Do not include credentials, private source, unredacted personal conversations or
 runtime authentication material in public evaluation artifacts.
+
+
+## Runnable protocol (alpha.2)
+
+`npm run evaluate` is a deterministic dry run: four cases, raw/prepared prompt
+counts, **zero model calls**. Each raw condition contains the same full intent
+brief/constraints as its prepared counterpart; the difference is representation,
+not omission of constraints. Repeated snapshots and adversarial strings are
+synthetic. The common question/output instructions count in both prompts.
+
+For a compatible, trusted local machine with an authenticated Codex CLI:
+
+```sh
+node evaluation/run.cjs --live --model YOUR_MODEL_ID --out evaluation-results
+```
+
+Choose the exact supported model ID yourself. Eight independent sessions run by
+default; `--repeats 1..5` caps the experiment at 40 calls. Conditions alternate
+raw/prepared order across cases and repetitions. The output directory must be new;
+when inside this package it must be evaluation-results or a child, which is
+excluded from Git and npm package contents. Other source-directory destinations
+are refused. Raw traces can include private
+runtime metadata: do not commit or share them without reviewing/redacting them.
+The runner uses saved local authentication through the CLI, not copied credentials
+or a seeded auth file, and is not an example of account-auth CI deployment.
+
+The subprocess uses read-only mode, never grants approvals, and disables apps, plugins and the shell
+tool while ignoring user configuration for this independent probe. Existing
+managed rules are not disabled. Runtime incompatibility remains blocking; no
+fallback broadens sandbox permissions. This retry with the installed legacy
+compatibility option also failed: filesystem-restricted execution still requires
+bubblewrap socket isolation. It produced no model completion.
+
+### What the report establishes
+
+- Four probes ask only for allowed paths, target CSS values, unresolved-question
+  count and whether questions prevent proceeding. Exact answer keys are not put
+  in prompts. They test bounded retrieval/constraint handling, not general human
+  understanding, implementation quality or application behavior.
+- A model-completed result needs one completed turn, one final agent-message JSON
+  and nonnegative reported input/output usage. Tool/unknown item activity, missing
+  usage, ambiguous completions and malformed streams invalidate a run. A valid
+  completion with a wrong answer is a completed failure, not discarded.
+- Startup failures stop further calls and leave every remaining planned run as
+  not_run. Report counts separate planned, attempted, modelCompleted and passed;
+  comparisonComplete stays false for blocked/incomplete runs. No success rate is
+  calculated by silently removing failures. All offline fixture simulations are
+  unit tests only.
+- CLI-reported input/output/cache/reasoning fields are retained per run, separate
+  from local o200k prompt-text counts. They can include harness context and do
+  not themselves prove invoice savings. The requested model ID and CLI version
+  are recorded; backend model revision is not independently verified.
+
+The subprocess adapter follows the official [non-interactive CLI JSONL/schema
+documentation](https://learn.chatgpt.com/docs/non-interactive-mode). A live test
+must still establish compatibility with the actual installed CLI version.

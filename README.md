@@ -1,6 +1,6 @@
 # Agent Brief Lab
 
-**Public alpha · 0.11.0-alpha.1 · MIT · Node.js 20+**
+**Public alpha · 0.11.0-alpha.2 · MIT · Node.js 20+**
 
 Local experiments for preparing smaller coding-agent inputs while keeping explicit user constraints, and checking what changed in a Git working tree.
 
@@ -98,9 +98,32 @@ Supported forms return opposite boolean literals, either in an `if/else`, or an 
 
 This is not a general refactoring engine or a formal equivalence proof. Source reflection, stack line numbers and other metaprogramming observations can change. Project type checking, builds, tests and human review remain necessary.
 
+## Reproducible comprehension probes
+
+```sh
+npm run evaluate
+# Dry run only: builds four raw/prepared pairs, zero model calls.
+node evaluation/run.cjs --live --model YOUR_MODEL_ID --out evaluation-results
+```
+
+The optional live command uses independent read-only Codex CLI sessions and can
+consume your model quota. The default is four cases × two variants = eight calls;
+`--repeats 1..5` permits up to 40. It requires a compatible local sandbox and
+existing local CLI authentication. It does not request/copy credentials, change
+global configuration, permit tools in the task, or automatically retry startup
+failures. A first blocked startup stops the remaining calls.
+
+These are **structured comprehension probes**, not coding/patch-success tests.
+Normal requests, user corrections, instruction-like tool output and unresolved
+questions share exact-answer scoring. Both variants receive the same full user
+constraints. Local o200k input counts are separate from CLI-reported usage;
+run failures and unrun tasks are retained. Dry-run output and offline parser tests
+never count as model successes. See [EVALUATION.md](EVALUATION.md) for protocol,
+privacy and remaining limitations. No completed live comparison is claimed.
+
 ## Evidence, with limits
 
-108 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
+117 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
 
 | Same synthetic task | Original complete input | Prepared input | Net saved tokens |
 | --- | ---: | ---: | ---: |
