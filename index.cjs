@@ -174,8 +174,8 @@ Commands:
   history <messages.json> [encoding]           Pack repeated tool-output strings losslessly
   restore <history-input.json> [expected-sha256]
                                                Restore and verify a packed history document
-  prepare <intent.json> <sources.json> <messages.json> [encoding]
-                                               Build one measured input envelope
+  prepare <intent.json> <sources.json> <messages.json> [encoding] [min-saving-tokens]
+                                               Build one measured input envelope; default minimum 1 token
   session <intent.json> <repo> <new-output-dir>
                                                Prepare a bundle for the current agent; no model call
   propose <intent.json> <repo> <new-output-dir> [--live --model MODEL]
@@ -197,7 +197,7 @@ Exit status: 0 success; 1 invalid/rejected/check failure; 2 incorrect CLI usage.
       console.log(JSON.stringify(result,null,2));if(!['prepared','proposal_ready'].includes(result.state))process.exitCode=1;
     }catch(error){console.error(error.message);process.exitCode=error.exitCode??1;}
   } else {
-  const arity={measure:[2,3],compact:[2,3],check:[3,3],brief:[2,2],baseline:[3,3],verify:[5,6],context:[4,5],pack:[3,4],history:[2,3],restore:[2,3],review:[6,6],prepare:[4,5],session:[4,4]};
+  const arity={measure:[2,3],compact:[2,3],check:[3,3],brief:[2,2],baseline:[3,3],verify:[5,6],context:[4,5],pack:[3,4],history:[2,3],restore:[2,3],review:[6,6],prepare:[4,6],session:[4,4]};
   const readJson=name=>JSON.parse(fs.readFileSync(name,'utf8'));
   try {
     if (!arity[command] || args.length<arity[command][0] || args.length>arity[command][1]) {
@@ -211,7 +211,8 @@ Exit status: 0 success; 1 invalid/rejected/check failure; 2 incorrect CLI usage.
       console.log(JSON.stringify(result,null,2));
       if(result.state!=='session_ready')process.exitCode=1;
     } else if(command==='prepare') {
-      console.log(JSON.stringify(require('./prepare.cjs').prepareInput(readJson(file),readJson(extra),readJson(fourth),fifth),null,2));
+      const minimum=sixth===undefined?1:(/^[1-9][0-9]*$/.test(sixth)?Number(sixth):NaN);
+      console.log(JSON.stringify(require('./prepare.cjs').prepareInput(readJson(file),readJson(extra),readJson(fourth),fifth??'o200k_base',minimum),null,2));
     } else if(command==='review') {
       const result=require('./review.cjs').reviewChanges(readJson(file),readJson(extra),readJson(fourth),fifth,readJson(sixth));
       console.log(JSON.stringify(result,null,2));
