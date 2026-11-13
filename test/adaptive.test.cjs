@@ -76,6 +76,52 @@ for(const encoding of ['o200k_base','cl100k_base']) {
     }
   });
 }
+for(const encoding of ['o200k_base','cl100k_base']) {
+  test('minimum-savings gate preserves baseline and explains near wins: '+encoding,()=>{
+    const base=prepareInput(baseIntent,sources,[],encoding);
+    const savings=base.metrics.tokensSavedWithGuidance;
+    assert.ok(savings>0,'fixture must produce a measurable token gain');
+    assert.ok(savings<1000000,'fixture must fit supported margin');
+    const exact=prepareInput(baseIntent,sources,[],encoding,savings);
+    assert.deepEqual(exact.input,base.input);
+    assert.equal(exact.metrics.selection.minSavingsTokens,savings);
+    const blocked=prepareInput(baseIntent,sources,[],encoding,savings+1);
+    assert.equal(blocked.metrics.selection.reason,'MARGIN_NOT_MET');
+    assert.equal(blocked.metrics.selection.minSavingsTokens,savings+1);
+    assert.equal(blocked.metrics.tokensSavedWithGuidance,0);
+    assert.equal(blocked.metrics.afterTokens,blocked.metrics.guidedBeforeTokens);
+    assert.deepEqual(blocked.input.history,[]);
+    assert.ok(blocked.metrics.selection.candidates.some(c=>c.reason==='BELOW_MINIMUM_GAIN'));
+    assert.equal(blocked.metrics.selection.candidates.filter(c=>c.selected).length,1);
+    assert.equal(blocked.metrics.selection.candidates.find(c=>c.selected).reason,'BASELINE');
+    assert.deepEqual(unpackHistory(blocked.input.history,blocked.metrics.historySourceDigest),[]);
+  });
+}
+test('invalid minimum savings reject before preparing any data',()=>{
+  for(const invalid of [0,-1,1.5,NaN,Infinity,null,'2',1000001]) {
+    assert.throws(()=>prepareInput(baseIntent,sources,[],'o200k_base',invalid),RangeError);
+  }
+});
+test('prepare CLI accepts configured minimum and rejects malformed minimum',()=>{
+  const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process');
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'brief-adaptive-'));
+  try {
+    for(const [name,value] of Object.entries({intent:baseIntent,sources,messages:[]})) {
+      fs.writeFileSync(path.join(dir,name+'.json'),JSON.stringify(value));
+    }
+    const args=[path.join(__dirname,'../index.cjs'),'prepare',...['intent','sources','messages'].map(n=>path.join(dir,n+'.json')),'o200k_base'];
+    const ok=spawnSync(process.execPath,[...args,'1000000'],{encoding:'utf8'});
+    assert.equal(ok.status,0,ok.stderr);
+    const parsed=JSON.parse(ok.stdout);
+    assert.equal(parsed.metrics.selection.reason,'MARGIN_NOT_MET');
+    assert.equal(parsed.metrics.selection.minSavingsTokens,1000000);
+    for(const invalid of ['0','-1','1.5','abc']) {
+      const bad=spawnSync(process.execPath,[...args,invalid],{encoding:'utf8'});
+      assert.equal(bad.status,1);
+      assert.match(bad.stderr,/minSavingsTokens/);
+    }
+  } finally {fs.rmSync(dir,{force:true,recursive:true});}
+});
 test('non-code source and empty history remain intact and explain the selection',()=>{
   const intent={...baseIntent,allowedFiles:['styles/main.css'],questions:['Confirm final design?']};
   const source={'styles/main.css':'.root { opacity: 0.5; }'};
