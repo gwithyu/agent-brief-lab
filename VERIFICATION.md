@@ -69,3 +69,16 @@ The installed helper reported version 0.11.0-alpha.7, its codex.cjs bytes matche
 the tested source, and session returned session_ready with a saved baseline and
 unchanged target source. The README quick-run URLs were updated only after this
 check. No model call or model-performance claim is part of this consumer check.
+
+
+## Alpha.8 quick-run pin refresh
+
+After publishing the alpha.8 runtime, a new consumer directory and empty npm
+cache fetched public commit `c13a0849f411fa37b6893c6858ee3b0b041a9726`
+through its archive URL. The installed helper reported version 0.11.0-alpha.8;
+its index.cjs and propose.cjs bytes matched the tested source. `session` returned
+session_ready, saved its baseline in a mode-700 bundle directory and left the
+target source unchanged. A second installed-CLI check supplied an undeclared
+intent `notes` field and observed exit 1 with no stdout instead of a silently
+truncated brief. The README pins were changed only after these checks. No model
+call, billing saving or comprehension improvement is claimed by this smoke test.
