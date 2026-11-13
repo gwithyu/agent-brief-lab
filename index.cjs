@@ -150,11 +150,19 @@ module.exports = {tokens, simplify, validateIntent, intentDigest, checkPlan, bri
 if (require.main === module) {
   const args=process.argv.slice(2);
   const [command, file, extra, fourth, fifth, sixth] = args;
+  if(args[0]==='propose') {
+    try {
+      const [_,intentFile,repo,out,...options]=args;
+      if(!intentFile||!repo||!out||!(options.length===0||(options.length===3&&options[0]==='--live'&&options[1]==='--model')))throw Object.assign(new Error('Usage: agent-brief propose <intent.json> <repo> <new-output-dir> [--live --model MODEL]'),{exitCode:2});
+      const result=require('./propose.cjs').propose(JSON.parse(fs.readFileSync(intentFile,'utf8')),repo,out,{live:options.length>0,model:options[2]});
+      console.log(JSON.stringify(result,null,2));if(!['prepared','proposal_ready'].includes(result.state))process.exitCode=1;
+    }catch(error){console.error(error.message);process.exitCode=error.exitCode??1;}
+  } else {
   const arity={measure:[2,3],compact:[2,3],check:[3,3],brief:[2,2],baseline:[3,3],verify:[5,6],context:[4,5],pack:[3,4],history:[2,3],restore:[2,3],review:[6,6],prepare:[4,5]};
   const readJson=name=>JSON.parse(fs.readFileSync(name,'utf8'));
   try {
     if (!arity[command] || args.length<arity[command][0] || args.length>arity[command][1]) {
-      console.error('Usage: agent-brief measure|compact <source> [encoding]; check <intent> <plan>; brief <intent>; baseline <intent> <repo>; verify <intent> <plan> <baseline> <repo> [encoding]; context <intent> <before-sources> <after-sources> [encoding]; pack <intent> <sources> [encoding]; history <messages> [encoding]; restore <history-input> [expected-sha256]; review <intent> <plan> <baseline> <repo> <checks>; prepare <intent> <sources> <messages> [encoding]');
+      console.error('Usage: agent-brief measure|compact <source> [encoding]; check <intent> <plan>; brief <intent>; baseline <intent> <repo>; verify <intent> <plan> <baseline> <repo> [encoding]; context <intent> <before-sources> <after-sources> [encoding]; pack <intent> <sources> [encoding]; history <messages> [encoding]; restore <history-input> [expected-sha256]; review <intent> <plan> <baseline> <repo> <checks>; prepare <intent> <sources> <messages> [encoding]; propose <intent> <repo> <new-output-dir> [--live --model MODEL]');
       process.exitCode = 2;
     } else if (command === 'measure' || command === 'compact') {
       const result = simplify(fs.readFileSync(file,'utf8'), file, extra ?? 'o200k_base');
@@ -188,4 +196,5 @@ if (require.main === module) {
       }
     }
   } catch (error) { console.error(error.message); process.exitCode = 1; }
+}
 }

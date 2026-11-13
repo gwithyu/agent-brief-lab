@@ -1,0 +1,20 @@
+{
+  "request": "只精简 examples/boolean-before.js 中 visible 和 hidden 的布尔返回，保留函数名、结果、求值次数及异常行为。",
+  "goal": "为布尔返回示例生成可审阅的精简方案。",
+  "allowedFiles": [
+    "examples/boolean-before.js"
+  ],
+  "constraints": [
+    {
+      "id": "keep_api",
+      "text": "保留 visible 和 hidden 函数名、接口、结果及条件的一次求值；不改其他文件。"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "behavior_tests",
+      "text": "人工应用前核对差异，并运行项目原有行为测试。"
+    }
+  ],
+  "questions": []
+}

@@ -1,6 +1,6 @@
 # Agent Brief Lab
 
-**Public alpha · 0.11.0-alpha.2 · MIT · Node.js 20+**
+**Public alpha · 0.11.0-alpha.3 · MIT · Node.js 20+**
 
 Local experiments for preparing smaller coding-agent inputs while keeping explicit user constraints, and checking what changed in a Git working tree.
 
@@ -25,6 +25,51 @@ Requires Git for working-tree checks and workspace demos. Dependencies are insta
 - Packs identical tool-output strings into a reversible history dictionary, while preserving every message's position, role and metadata. Short results remain inline when references would cost more.
 - Counts an entire prepared input, including formatting, instructions, references and fingerprints. Reports both savings against a fully guided baseline and net change against the original request.
 - Checks actual tracked and nonignored working-tree files against a trusted baseline. Optionally runs caller-reviewed acceptance commands and checks the tree after **each** command.
+
+## One-command Codex proposal adapter
+
+From a fresh clone, preview a real bundled source file without invoking a model:
+
+```sh
+node index.cjs propose examples/propose-intent.json . ../agent-brief-preview
+```
+
+To send the prepared task to your authenticated, compatible local Codex CLI:
+
+```sh
+node index.cjs propose examples/propose-intent.json . ../agent-brief-live --live --model YOUR_MODEL_ID
+```
+
+For your own project, supply an intent JSON with its exact allowed paths and
+replace `.` with that project's Git root. Output must be a **new directory outside
+the target repository**. No manual sources/history JSON is needed: the adapter
+captures a baseline and reads all allowed source files automatically.
+
+Preview creates private input/baseline/prompt/report files, with zero invocation
+attempts. Live mode explicitly sends the request and allowed source contents to
+the selected model and can consume quota; review what you permit first. It uses
+the same read-only Codex adapter as the evaluator: apps, plugins and the shell
+tool are disabled, and unexpected tool events invalidate responses. It does not copy
+credentials or change global settings. Unresolved intent questions block calls.
+
+Only a completed, parseable model response can reach validation. The response
+must bind the current intent digest, acknowledge all constraint/check IDs and
+provide complete replacements for exactly its declared in-scope files. Stale,
+missing, duplicate, out-of-scope and no-op proposals fail. The observed target
+snapshot must remain unchanged, including when the model startup fails.
+
+A valid result is saved as `proposal.json` **for human review**; the adapter never
+applies it, runs project code, or treats named checks as executed tests. Review the
+patch and apply it only in your chosen isolated checkout; run real project checks
+before merging. Existing
+ignored/transient/concurrent-change limitations still apply. Private output bundles
+can contain source and runtime metadata; do not commit them.
+
+This first adapter has no prior chat-history capture and does not intercept an
+existing agent session. Brief/schema/CLI overhead can increase cost; measurements
+separate prompt-text counts from CLI-reported usage. The real Codex end-to-end
+call remains unverified in this host because sandbox startup is blocked. Unit
+tests simulate responses and failures; they are not real model-success evidence.
 
 ## Quick examples
 
@@ -123,7 +168,7 @@ privacy and remaining limitations. No completed live comparison is claimed.
 
 ## Evidence, with limits
 
-117 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
+125 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
 
 | Same synthetic task | Original complete input | Prepared input | Net saved tokens |
 | --- | ---: | ---: | ---: |

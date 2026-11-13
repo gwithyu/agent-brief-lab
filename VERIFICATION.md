@@ -1,4 +1,4 @@
-# Release verification — 0.11.0-alpha.2
+# Release verification — 0.11.0-alpha.3
 
 Checked 2026-11-13. This is a public-source alpha, not a production-quality or
 real-agent cost/understanding guarantee. No GitHub Actions workflow was required
@@ -7,13 +7,14 @@ or added; verification ran in the local execution environment.
 | Check | Result |
 | --- | --- |
 | Locked clean install, `npm ci --ignore-scripts` | PASS |
-| Node 24.22.1 suite | 117/117; no failures/skips/cancellations |
-| Node 20.20.2 suite | 117/117; no failures/skips/cancellations |
-| Installed npm tarball suite | 117/117; no failures/skips/cancellations |
+| Node 24.22.1 suite | 125/125; no failures/skips/cancellations |
+| Node 20.20.2 suite | 125/125; no failures/skips/cancellations |
+| Installed npm tarball suite | 125/125; no failures/skips/cancellations |
 | Installed `agent-brief` executable | PASS; 52→23 tokens on boolean fixture |
 | Re-run demo against recorded JSON | Identical |
 | Dependency versions/licenses | TypeScript 5.9.3 Apache-2.0; js-tiktoken 1.0.21 MIT; base64-js 1.5.1 MIT |
 | Bundled dependency/credential/private-source check | Explicit source-file allowlist; none included |
+| Proposal adapter | Preview + simulated response/failure tests; no automatic application |
 | Default probe dry run | Four cases, zero model calls |
 | Live agent model task/A-B comparison | BLOCKED; see EVALUATION.md |
 | npm public registry publication | NOT DONE; source GitHub release only |

@@ -80,3 +80,18 @@ bubblewrap socket isolation. It produced no model completion.
 The subprocess adapter follows the official [non-interactive CLI JSONL/schema
 documentation](https://learn.chatgpt.com/docs/non-interactive-mode). A live test
 must still establish compatibility with the actual installed CLI version.
+
+
+## Proposal adapter (alpha.3)
+
+`propose` and this probe harness share `codex.cjs` for invocation and completion
+parsing. The proposal adapter captures source directly from an exact Git root,
+prepares the prompt, and optionally sends it to the chosen model. Its output is a
+validated replacement **proposal**, not an applied patch or test receipt.
+
+Programmatic unit-test response injection is explicitly simulated; those temporary
+fixtures are removed and never counted in live comparison reports. Startup errors
+keep modelCompleted at zero. Any completed response still needs current digest,
+complete ID acknowledgements, exact replacement/plan paths, a non-noop change and
+an unchanged observed repository before proposal.json is written. End-to-end live
+model behavior remains blocked/unverified here.

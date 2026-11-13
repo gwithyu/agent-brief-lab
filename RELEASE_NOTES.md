@@ -1,3 +1,18 @@
+# 0.11.0-alpha.3 — explicit Codex proposal adapter
+
+Adds `agent-brief propose <intent> <repo> <new-output-dir>`: collect allowed source,
+prepare one input and save a review bundle. Default preview makes no model calls.
+Explicit `--live --model MODEL` calls a shared read-only, tools-disabled Codex CLI
+adapter; response validation binds intent, acknowledgements and replacement paths,
+then rechecks the observed target. Valid proposals are saved, never auto-applied.
+
+A bundled intent demonstrates the workflow on this repository's boolean fixture.
+No manual source/history JSON is required. The suite has 125 tests, including
+simulated model responses, rejected scope/digest/output cases and unchanged-source
+checks. Simulated responses do not establish live model success. Actual model
+execution in this host remains blocked by sandbox startup. No real billing or
+understanding improvement is claimed. No npm registry publication is performed.
+
 # 0.11.0-alpha.2 — reproducible comprehension probe harness
 
 Adds a dry-run-first evaluator with four raw/prepared cases: normal intent,
