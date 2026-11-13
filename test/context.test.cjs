@@ -6,7 +6,7 @@ const path=require('node:path');
 const os=require('node:os');
 const {spawnSync}=require('node:child_process');
 const {tokens,intentDigest}=require('../index.cjs');
-const {compactBrief,packContext}=require('../context.cjs');
+const {compactBrief,contextVariants,packContext}=require('../context.cjs');
 const intent=require('../examples/intent.json');
 const source=fs.readFileSync(path.join(__dirname,'../examples/boolean-before.js'),'utf8');
 test('compact brief retains exact text, IDs, order, questions and binding',()=>{
@@ -28,6 +28,36 @@ for(const encoding of ['o200k_base','cl100k_base']) {
     assert.equal(Buffer.byteLength(JSON.stringify(p.input)),p.metrics.afterBytes);
     assert.equal(p.metrics.addedVersusRawRequest,p.metrics.afterTokens-p.metrics.rawRequestBeforeTokens);
     assert.deepEqual(p.metrics.rewrittenFiles,['src/logic.js']);assert.match(p.input.files[0].source,/return !!/);
+  });
+}
+for(const encoding of ['o200k_base','cl100k_base']) {
+  test('packContext chooses the global smallest eligible token input: '+encoding,()=>{
+    const examples=[
+      {intent:{...intent,allowedFiles:['src/logic.js']},sources:{'src/logic.js':source}},
+      {intent:{...intent,allowedFiles:['a.css']},sources:{'a.css':'.root { padding: 4px; }'}},
+      {intent:{...intent,allowedFiles:['a.js','z.css']},
+        sources:{'a.js':source,'z.css':'.root { opacity: 0.5; }'}}
+    ];
+    for(const {intent:i,sources:src} of examples) {
+      const variants=contextVariants(i,src,encoding);
+      const baseline=JSON.stringify(variants[0].input);
+      const original={tokens:tokens(baseline,encoding),bytes:Buffer.byteLength(baseline)};
+      let best={input:variants[0].input,...original};
+      for(const variant of variants.slice(1)) {
+        const candidate=JSON.stringify(variant.input);
+        const count={tokens:tokens(candidate,encoding),bytes:Buffer.byteLength(candidate)};
+        if(count.tokens>=original.tokens || count.bytes>=original.bytes) continue;
+        if(count.tokens<best.tokens || count.tokens===best.tokens && count.bytes<best.bytes) {
+          best={input:variant.input,...count};
+        }
+      }
+      const chosen=packContext(i,src,encoding);
+      assert.deepEqual(chosen.input,best.input);
+      assert.equal(chosen.metrics.afterTokens,best.tokens);
+      assert.equal(chosen.metrics.afterBytes,best.bytes);
+      assert.ok(chosen.metrics.afterTokens<=chosen.metrics.beforeTokens);
+      assert.ok(chosen.metrics.afterBytes<=chosen.metrics.beforeBytes);
+    }
   });
 }
 test('CSS stays intact and brief costs cannot be called net savings',()=>{
