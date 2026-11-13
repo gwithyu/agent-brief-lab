@@ -1,3 +1,17 @@
+# 0.11.0-alpha.9 — make installed CLI discovery work
+
+Adds standard `--help`/`-h` and `--version`/`-V` entry points. Previously all four
+were treated as incorrect usage, returned exit 2 and printed the long usage line
+to stderr, so a fresh consumer could not ask the installed executable which
+version it was running. Help now documents every command, options and exit-status
+contract; version prints the package version. Both return exit 0 with empty
+stderr. Invalid command shapes remain exit 2.
+
+140 tests cover long and short aliases as well as existing CLI behavior. Node 20,
+Node 24 and installed-tarball verification are required for publication. This is
+a usability fix; it does not change packing, rewrite, intent, model or billing
+behavior.
+
 # 0.11.0-alpha.8 — bind only explicit intent and plan schemas
 
 Fixes intent and plan validators silently accepting undeclared fields. Those

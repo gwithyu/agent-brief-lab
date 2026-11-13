@@ -156,7 +156,40 @@ module.exports = {tokens, simplify, validateIntent, intentDigest, checkPlan, bri
 if (require.main === module) {
   const args=process.argv.slice(2);
   const [command, file, extra, fourth, fifth, sixth] = args;
-  if(args[0]==='propose') {
+  const help=`Usage: agent-brief <command> [options]
+
+Commands:
+  measure <source> [encoding]                 Measure a conservative rewrite candidate
+  compact <source> [encoding]                 Print a smaller candidate without overwriting source
+  brief <intent.json>                         Print the complete explicit intent brief
+  check <intent.json> <plan.json>             Validate declared scope, constraints and checks
+  baseline <intent.json> <repo>               Capture a trusted Git working-tree baseline
+  verify <intent.json> <plan.json> <baseline.json> <repo> [encoding]
+                                               Compare actual edits with the bound plan
+  review <intent.json> <plan.json> <baseline.json> <repo> <checks.json>
+                                               Run caller-reviewed checks after scope validation
+  pack <intent.json> <sources.json> [encoding] Pack intent and complete allowed sources
+  context <intent.json> <before.json> <after.json> [encoding]
+                                               Measure complete before/after input envelopes
+  history <messages.json> [encoding]           Pack repeated tool-output strings losslessly
+  restore <history-input.json> [expected-sha256]
+                                               Restore and verify a packed history document
+  prepare <intent.json> <sources.json> <messages.json> [encoding]
+                                               Build one measured input envelope
+  session <intent.json> <repo> <new-output-dir>
+                                               Prepare a bundle for the current agent; no model call
+  propose <intent.json> <repo> <new-output-dir> [--live --model MODEL]
+                                               Prepare or request a review-only source proposal
+
+Options:
+  -h, --help                                   Show this help and exit
+  -V, --version                                Show the installed version and exit
+
+Exit status: 0 success; 1 invalid/rejected/check failure; 2 incorrect CLI usage.
+`;
+  if(args.length===1 && ['--help','-h'].includes(args[0])) process.stdout.write(help);
+  else if(args.length===1 && ['--version','-V'].includes(args[0])) console.log(require('./package.json').version);
+  else if(args[0]==='propose') {
     try {
       const [_,intentFile,repo,out,...options]=args;
       if(!intentFile||!repo||!out||!(options.length===0||(options.length===3&&options[0]==='--live'&&options[1]==='--model')))throw Object.assign(new Error('Usage: agent-brief propose <intent.json> <repo> <new-output-dir> [--live --model MODEL]'),{exitCode:2});
@@ -168,7 +201,7 @@ if (require.main === module) {
   const readJson=name=>JSON.parse(fs.readFileSync(name,'utf8'));
   try {
     if (!arity[command] || args.length<arity[command][0] || args.length>arity[command][1]) {
-      console.error('Usage: agent-brief measure|compact <source> [encoding]; check <intent> <plan>; brief <intent>; baseline <intent> <repo>; verify <intent> <plan> <baseline> <repo> [encoding]; context <intent> <before-sources> <after-sources> [encoding]; pack <intent> <sources> [encoding]; history <messages> [encoding]; restore <history-input> [expected-sha256]; review <intent> <plan> <baseline> <repo> <checks>; prepare <intent> <sources> <messages> [encoding]; session <intent> <repo> <new-output-dir>; propose <intent> <repo> <new-output-dir> [--live --model MODEL]');
+      console.error('Usage: agent-brief <command> [options]\nRun agent-brief --help for command details.');
       process.exitCode = 2;
     } else if (command === 'measure' || command === 'compact') {
       const result = simplify(fs.readFileSync(file,'utf8'), file, extra ?? 'o200k_base');

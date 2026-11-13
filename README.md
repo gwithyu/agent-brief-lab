@@ -1,6 +1,6 @@
 # Agent Brief Lab
 
-**Public alpha · 0.11.0-alpha.8 · MIT · Node.js 20+**
+**Public alpha · 0.11.0-alpha.9 · MIT · Node.js 20+**
 
 Local experiments for preparing smaller coding-agent inputs while keeping explicit user constraints, and checking what changed in a Git working tree.
 
@@ -44,6 +44,10 @@ These are POSIX-shell examples, verified on Linux with Node 24.22.1/npm 11.9.0.
 The source commit is pinned; archive installs still resolve dependency ranges.
 For the complete committed dependency lock, use the source checkout and `npm ci`
 workflow below. The npm registry package remains unpublished/private.
+
+Every invocation path supports `--help`/`-h` and `--version`/`-V`. Help and
+version discovery exit 0 and write no error output; invalid command usage remains
+exit 2.
 
 ## Install from source
 
@@ -241,7 +245,7 @@ privacy and remaining limitations. No completed live comparison is claimed.
 
 ## Evidence, with limits
 
-139 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
+140 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
 
 | Same synthetic task | Original complete input | Prepared input | Net saved tokens |
 | --- | ---: | ---: | ---: |

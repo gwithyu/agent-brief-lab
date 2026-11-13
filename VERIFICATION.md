@@ -1,4 +1,4 @@
-# Release verification — 0.11.0-alpha.8
+# Release verification — 0.11.0-alpha.9
 
 Checked 2026-11-13. This is a public-source alpha, not a production-quality or
 real-agent cost/understanding guarantee. No GitHub Actions workflow was required
@@ -7,9 +7,9 @@ or added; verification ran in the local execution environment.
 | Check | Result |
 | --- | --- |
 | Locked clean install, `npm ci --ignore-scripts` | PASS |
-| Node 24.22.1 suite | 139/139; no failures/skips/cancellations |
-| Node 20.20.2 suite | 139/139; no failures/skips/cancellations |
-| Installed npm tarball suite | 139/139; no failures/skips/cancellations |
+| Node 24.22.1 suite | 140/140; no failures/skips/cancellations |
+| Node 20.20.2 suite | 140/140; no failures/skips/cancellations |
+| Installed npm tarball suite | 140/140; no failures/skips/cancellations |
 | Installed `agent-brief` executable | PASS; 52→23 tokens on boolean fixture |
 | Re-run demo against recorded JSON | Identical |
 | Dependency versions/licenses | TypeScript 5.9.3 Apache-2.0; js-tiktoken 1.0.21 MIT; base64-js 1.5.1 MIT |
@@ -20,6 +20,7 @@ or added; verification ran in the local execution environment.
 | Guided host walkthrough | Five behavior tests passed; protected-file negative case rejected; not A/B |
 | CLI completion stream | Malformed item envelopes and inconsistent/later unfinished lifecycle reject; normal start events accept |
 | Intent/plan schema boundary | Undeclared top-level and entry fields reject; proposal plan projection remains valid |
+| CLI discovery | `--help`/`-h` and `--version`/`-V` exit 0 with empty stderr; invalid usage remains exit 2 |
 | Proposal schema boundary | Extra receipt/command/mode fields and invalid UTF-8 reject; valid Unicode accepts |
 | Proposal adapter | Preview + simulated response/failure tests; no automatic application |
 | Default probe dry run | Four cases, zero model calls |

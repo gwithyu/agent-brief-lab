@@ -182,3 +182,20 @@ test('CLI creates candidates without modifying source and uses correct check exi
     assert.equal(run([]).status,2);
   } finally {fs.rmSync(root,{recursive:true,force:true});}
 });
+
+test('CLI exposes successful help and version discovery', () => {
+  const cli=path.resolve(__dirname,'../index.cjs');
+  const run=args=>spawnSync(process.execPath,[cli,...args],{encoding:'utf8',timeout:30000});
+  const version=require('../package.json').version;
+  for(const option of ['--version','-V']) {
+    const result=run([option]);assert.equal(result.status,0,result.stderr);
+    assert.equal(result.stdout,version+'\n');assert.equal(result.stderr,'');
+  }
+  const long=run(['--help']),short=run(['-h']);
+  for(const result of [long,short]) {
+    assert.equal(result.status,0,result.stderr);assert.equal(result.stderr,'');
+    assert.match(result.stdout,/^Usage: agent-brief/m);assert.match(result.stdout,/session <intent\.json>/);
+    assert.match(result.stdout,/propose <intent\.json>/);assert.match(result.stdout,/Exit status: 0 success/);
+  }
+  assert.equal(short.stdout,long.stdout);
+});
