@@ -64,4 +64,4 @@ Use `null` for unavailable observations, never zero. Preserve raw run receipts o
 
 ## Current status
 
-Protocol only. No new A/B calls, benchmark results, or billing reductions are claimed by this document.
+The experimental `prepare` CLI now compares complete input variants and falls back on no measured token/byte gain, reporting its selection reason. A configurable minimum margin, model-comprehension equivalence, and the paired live A/B run are **not implemented or verified**. No new live model results or billing reductions are claimed by this document.
