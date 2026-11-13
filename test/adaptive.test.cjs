@@ -122,6 +122,21 @@ test('prepare CLI accepts configured minimum and rejects malformed minimum',()=>
     }
   } finally {fs.rmSync(dir,{force:true,recursive:true});}
 });
+test('large private source is preserved but never copied into selection diagnostics',()=>{
+  const secret='SENSITIVE_CANARY_DO_NOT_ECHO_';
+  const big=secret+'/* '+('unchanged CSS payload. '.repeat(2500))+' */';
+  const intent={...baseIntent,allowedFiles:['styles/large.css']};
+  const source={'styles/large.css':big};
+  const one=prepareInput(intent,source,[]);
+  const two=prepareInput(intent,source,[]);
+  assert.deepEqual(one,two,'candidate ranking must remain deterministic');
+  assert.equal(one.input.files[0].source,big);
+  assert.ok(one.metrics.selection.candidates.length<=4);
+  assert.equal(one.metrics.selection.uniqueCandidatesMeasured,one.metrics.selection.candidates.length);
+  assert.equal(one.metrics.selection.candidates.filter(candidate=>candidate.selected).length,1);
+  assert.ok(!JSON.stringify(one.metrics.selection).includes(secret),
+    'audit metadata must not contain any raw source');
+});
 test('non-code source and empty history remain intact and explain the selection',()=>{
   const intent={...baseIntent,allowedFiles:['styles/main.css'],questions:['Confirm final design?']};
   const source={'styles/main.css':'.root { opacity: 0.5; }'};
