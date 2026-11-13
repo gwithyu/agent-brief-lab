@@ -37,6 +37,11 @@ case "$1" in
   *) exit 3 ;;
 esac
 `,{mode:0o755});
+    if(kind==='git_status_failed') {
+      const realGit=spawnSync('bash',['-c','command -v git'],{encoding:'utf8'}).stdout.trim();
+      assert.ok(realGit);
+      fs.writeFileSync(path.join(bin,'git'),`#!/bin/sh\nif [ "$1" = status ]; then exit 8; fi\nexec "${realGit}" "$@"\n`,{mode:0o755});
+    }
     for(const args of [
       ['init','-q'],['add','.'],
       ['-c','user.name=Runner','-c','user.email=runner@example.invalid','commit','-qm','initial']
@@ -61,6 +66,7 @@ const cases=[
   ['test-stage HEAD mutation is rejected','test_commit','20',2,true,false],
   ['install-stage HEAD mutation is rejected','install_commit','20',2,true,false],
   ['dirty working tree is rejected','dirty','20',2,false,false],
+  ['git status failure is rejected','git_status_failed','20',2,false,false],
   ['npm test failure is rejected','test_failed','20',9,false,false]
 ];
 for(const [name,kind,major,status,moved,verified] of cases) {
@@ -69,6 +75,7 @@ for(const [name,kind,major,status,moved,verified] of cases) {
     assert.equal(r.status,status,r.output);
     assert.equal(r.before!==r.after,moved);
     assert.equal(/^VERIFIED:/m.test(r.output),verified,r.output);
-    if(!verified && major!=='22')assert.match(r.output,/NOT VERIFIED:/);
+    if(!verified && major!=='22' && kind!=='git_status_failed')assert.match(r.output,/NOT VERIFIED:/);
+    if(kind==='git_status_failed')assert.match(r.output,/VERIFICATION BLOCKED: git status failed/);
   });
 }
