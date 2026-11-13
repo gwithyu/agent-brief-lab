@@ -33,5 +33,8 @@ finish() {
 }
 trap finish EXIT
 npm ci --ignore-scripts --no-audit --no-fund 2>&1 | tee "$output/npm-ci.log"
+[[ "$(git rev-parse --verify HEAD)" == "$sha" ]] || fail 'npm ci changed the checkout commit'
+[[ -z "$(git status --porcelain --untracked-files=normal)" ]] || fail 'npm ci changed tracked/untracked project files'
 npm test 2>&1 | tee "$output/npm-test.log"
+[[ "$(git rev-parse --verify HEAD)" == "$sha" ]] || fail 'test run changed the checkout commit'
 [[ -z "$(git status --porcelain --untracked-files=normal)" ]] || fail 'test run changed tracked/untracked project files'
