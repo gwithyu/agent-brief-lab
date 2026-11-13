@@ -174,6 +174,15 @@ it retains that original. Identical candidates are measured only once. Inspect
 and an audit-only `candidates` array (token/byte totals and rejection reasons,
 without source or history text). The audit report is **not** part of `input` sent
 to an agent.
+
+For a conservative minimum net reduction, pass an optional positive integer
+threshold after an explicit encoding, e.g. `agent-brief prepare intent.json
+sources.json messages.json o200k_base 20`. The default is 1 token; valid values
+are 1 through 1000000. If savings are real but below the requested threshold,
+`metrics.selection.reason` becomes `MARGIN_NOT_MET` and the complete guided
+original is used. Candidate audits mark these as `BELOW_MINIMUM_GAIN`. This is
+only a **local text-token gate**; it is not a billed-cost or model-quality
+threshold.
 These are deterministic **local input** measurements, not proof of improved model
 comprehension, API usage or invoice costs. Rewrites remain proposals, not applied
 source edits, and packed history still requires executor support.
