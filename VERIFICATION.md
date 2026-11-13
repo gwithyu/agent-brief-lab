@@ -83,3 +83,16 @@ target source unchanged. A second installed-CLI check supplied an undeclared
 intent `notes` field and observed exit 1 with no stdout instead of a silently
 truncated brief. The README pins were changed only after these checks. No model
 call, billing saving or comprehension improvement is claimed by this smoke test.
+
+
+## Alpha.9 quick-run pin refresh
+
+A new consumer directory and empty npm cache fetched public runtime commit
+`5be0b0cf7ace585b3059cbda87342da13d3c9970`. Remote-archive npm exec returned
+0.11.0-alpha.9 for `--version`, rendered the complete help document, and produced
+a session_ready bundle from a new synthetic Git project. The target source hash
+and Git status remained unchanged. Direct execution of the cache-installed binary
+confirmed both discovery commands exit 0 with empty stderr, and its index.cjs
+bytes matched the tested runtime. README archive pins were updated only after
+these checks. This remains distribution/usability evidence, not a model A/B or
+real billing result.

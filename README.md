@@ -9,11 +9,11 @@ This is an experimental CLI/library, **not a proven agent-cost optimizer or a na
 ## Quick run without cloning this tool
 
 Requires Node.js 20+, npm, and Git for workspace features. This command fetches a
-fixed, verified alpha.8 source commit and runs the helper through npm's cache:
+fixed, verified alpha.9 source commit and runs the helper through npm's cache:
 
 ```sh
 npm exec --yes --ignore-scripts \
-  --package="https://github.com/gwithyu/agent-brief-lab/archive/c13a0849f411fa37b6893c6858ee3b0b041a9726.tar.gz" \
+  --package="https://github.com/gwithyu/agent-brief-lab/archive/5be0b0cf7ace585b3059cbda87342da13d3c9970.tar.gz" \
   -- agent-brief session "/absolute/intent.json" "/absolute/project" "/absolute/new-bundle"
 ```
 
@@ -35,7 +35,7 @@ executable without npm resolving the remote URL again:
 
 ```sh
 npm install --ignore-scripts --no-save --prefix "/absolute/tool-directory" \
-  "https://github.com/gwithyu/agent-brief-lab/archive/c13a0849f411fa37b6893c6858ee3b0b041a9726.tar.gz"
+  "https://github.com/gwithyu/agent-brief-lab/archive/5be0b0cf7ace585b3059cbda87342da13d3c9970.tar.gz"
 "/absolute/tool-directory/node_modules/.bin/agent-brief" session \
   "/absolute/intent.json" "/absolute/project" "/absolute/new-bundle"
 ```
