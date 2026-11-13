@@ -1,0 +1,44 @@
+{
+  "name": "agent-brief-lab",
+  "version": "0.11.0-alpha.1",
+  "private": true,
+  "description": "Experimental local context packing, conservative boolean rewrites, and explicit change-scope checks",
+  "main": "index.cjs",
+  "bin": {
+    "agent-brief": "index.cjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.cjs",
+    "demo": "node demo.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "typescript": "5.9.3",
+    "js-tiktoken": "1.0.21"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gwithyu/agent-brief-lab.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gwithyu/agent-brief-lab/issues"
+  },
+  "homepage": "https://github.com/gwithyu/agent-brief-lab#readme",
+  "files": [
+    "*.cjs",
+    "examples/",
+    "test/",
+    "README.md",
+    "RESULTS.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "RELEASE_NOTES.md",
+    "VERIFICATION.md",
+    "demo-results.json",
+    "real-source-results.json",
+    "EVALUATION.md"
+  ]
+}

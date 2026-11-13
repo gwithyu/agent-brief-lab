@@ -1,0 +1,14 @@
+{
+  "files": [
+    "src/navigation.css"
+  ],
+  "acknowledgedConstraints": [
+    "keep_temple",
+    "keep_icons"
+  ],
+  "checks": [
+    "nav_transparency",
+    "nav_spacing"
+  ],
+  "intentDigest": "563ba5c695e8288c0ae3a7201ab9c8de99a662680de9266d2078c5b41cd75a70"
+}

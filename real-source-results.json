@@ -1,0 +1,92 @@
+{
+  "source": "Public Clean Edge Preflight 0.1.0 scanner",
+  "gitBlob": "a2d83af54245cf1cadc9dce70358264524a2d654",
+  "metrics": {
+    "encoding": "o200k_base",
+    "beforeTokens": 2373,
+    "afterTokens": 2373,
+    "tokensSaved": 0,
+    "beforeLines": 217,
+    "afterLines": 217,
+    "beforeBytes": 10011,
+    "afterBytes": 10011,
+    "candidates": 0,
+    "applied": 0
+  },
+  "version": "0.4.0-experiment",
+  "additionalSamples": [
+    {
+      "package": "base64-js",
+      "version": "1.5.1",
+      "file": "index.js",
+      "sha256": "829eadd8a1a441d25be0cb93b00e16a0d0c20fd294db95d8f2ed87e6954b7182",
+      "metrics": {
+        "encoding": "o200k_base",
+        "beforeTokens": 1348,
+        "afterTokens": 1348,
+        "tokensSaved": 0,
+        "beforeLines": 150,
+        "afterLines": 150,
+        "beforeBytes": 3932,
+        "afterBytes": 3932,
+        "candidates": 0,
+        "applied": 0
+      }
+    },
+    {
+      "package": "base64-js",
+      "version": "1.5.1",
+      "file": "base64js.min.js",
+      "sha256": "d2e82495607abf54f16e21de04d90ba9ce1605451667d88425babece988f148b",
+      "metrics": {
+        "encoding": "o200k_base",
+        "beforeTokens": 872,
+        "afterTokens": 872,
+        "tokensSaved": 0,
+        "beforeLines": 1,
+        "afterLines": 1,
+        "beforeBytes": 2192,
+        "afterBytes": 2192,
+        "candidates": 0,
+        "applied": 0
+      }
+    },
+    {
+      "package": "js-tiktoken",
+      "version": "1.0.21",
+      "file": "dist/lite.js",
+      "sha256": "e7f8d0900a29c70a1155838cff633f5a66eef660bd3c4fb452882ec7cc4a316c",
+      "metrics": {
+        "encoding": "o200k_base",
+        "beforeTokens": 23,
+        "afterTokens": 23,
+        "tokensSaved": 0,
+        "beforeLines": 1,
+        "afterLines": 1,
+        "beforeBytes": 73,
+        "afterBytes": 73,
+        "candidates": 0,
+        "applied": 0
+      }
+    },
+    {
+      "package": "js-tiktoken",
+      "version": "1.0.21",
+      "file": "dist/chunk-VL2OQCWN.js",
+      "sha256": "4095335817189ee393ce99588744e53d04f1dd32b6c9a7d4a9f365d5e4569035",
+      "metrics": {
+        "encoding": "o200k_base",
+        "beforeTokens": 2776,
+        "afterTokens": 2776,
+        "tokensSaved": 0,
+        "beforeLines": 284,
+        "afterLines": 284,
+        "beforeBytes": 8818,
+        "afterBytes": 8818,
+        "candidates": 0,
+        "applied": 0
+      }
+    }
+  ],
+  "scope": "Read-only installed dependency samples and public scanner; no package source copied, no candidates executed, not a representative project benchmark"
+}

@@ -1,0 +1,14 @@
+{
+  "request": "只调整底部导航：透明一点、上下间距窄一点，保留现有神殿和图标。",
+  "goal": "调整底部导航的透明度和垂直间距。",
+  "allowedFiles": ["src/navigation.css"],
+  "constraints": [
+    {"id":"keep_temple","text":"保留现有神殿，不改场景。"},
+    {"id":"keep_icons","text":"保留现有导航图标。"}
+  ],
+  "acceptance": [
+    {"id":"nav_transparency","text":"在实际背景上检查导航透明度。"},
+    {"id":"nav_spacing","text":"检查导航上下间距和触控区域。"}
+  ],
+  "questions": []
+}

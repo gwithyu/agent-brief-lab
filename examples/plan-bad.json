@@ -1,0 +1,13 @@
+{
+  "files": [
+    "src/navigation.css",
+    "src/temple.js"
+  ],
+  "acknowledgedConstraints": [
+    "keep_icons"
+  ],
+  "checks": [
+    "nav_transparency"
+  ],
+  "intentDigest": "563ba5c695e8288c0ae3a7201ab9c8de99a662680de9266d2078c5b41cd75a70"
+}
