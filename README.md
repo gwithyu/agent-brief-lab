@@ -170,7 +170,10 @@ raw/dictionary history. It chooses the fewest measured local tokens among
 candidates that also reduce serialized bytes versus the guided original; otherwise
 it retains that original. Identical candidates are measured only once. Inspect
 `metrics.selection` for the selected instruction/history representation,
-`MEASURED_GAIN` versus `NO_GAIN`, and the number of unique candidates measured.
+`MEASURED_GAIN` versus `NO_GAIN`, the number of unique candidates measured,
+and an audit-only `candidates` array (token/byte totals and rejection reasons,
+without source or history text). The audit report is **not** part of `input` sent
+to an agent.
 These are deterministic **local input** measurements, not proof of improved model
 comprehension, API usage or invoice costs. Rewrites remain proposals, not applied
 source edits, and packed history still requires executor support.
