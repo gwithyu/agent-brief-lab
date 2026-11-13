@@ -97,3 +97,14 @@ confirmed both discovery commands exit 0 with empty stderr, and its index.cjs
 bytes matched the tested runtime. README archive pins were updated only after
 these checks. This remains distribution/usability evidence, not a model A/B or
 real billing result.
+
+## Alpha.10 quick-run pin refresh
+
+A new consumer Git fixture containing `__proto__` and an empty npm cache fetched
+public commit `34ab09ce88565a0de04e68c47b2d6b6c651cae3a`. The installed
+helper reported 0.11.0-alpha.10, returned session_ready and preserved the complete
+allowed file as an own source entry in the saved JSON baseline. Target contents
+and Git status stayed unchanged. Its execution.cjs bytes matched the tested
+runtime. README pins were updated after this check. Synthetic history counts were
+regenerated for the changed execution.cjs fixture; no model or billing result is
+implied by their change.
