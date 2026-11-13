@@ -64,4 +64,4 @@ Use `null` for unavailable observations, never zero. Preserve raw run receipts o
 
 ## Current status
 
-The experimental `prepare` CLI now compares complete input variants and falls back on no measured token/byte gain, reporting its selection reason. A configurable minimum margin, model-comprehension equivalence, and the paired live A/B run are **not implemented or verified**. No new live model results or billing reductions are claimed by this document.
+The experimental `prepare` CLI now compares complete input variants and falls back on no measured token/byte gain, reporting its selection reason. The CLI now also accepts an opt-in minimum local token reduction; a candidate with an insufficient gain falls back with `MARGIN_NOT_MET`. Model-comprehension equivalence and the paired live A/B run are **not implemented or verified**. No new live model results or billing reductions are claimed by this document.
