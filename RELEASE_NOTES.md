@@ -1,3 +1,17 @@
+# 0.11.0-alpha.10 — preserve prototype-named source paths
+
+Fixes baseline capture rejecting a valid allowed file named `__proto__` because
+assignment into a normal JavaScript object did not create a source entry. Both
+baseline and post-edit source dictionaries now have null prototypes. JSON output
+keeps the same mapping format and existing baseline versions remain compatible.
+
+The regression uses real Git files named `__proto__`, `constructor` and
+`toString`, saves and reloads the baseline as JSON, verifies an allowed edit with
+complete context metrics and rejects an additional protected-file edit. The suite
+has 141 tests. Synthetic history measurements are refreshed because execution.cjs
+changed; their changed size does not demonstrate improved compression or model
+performance. No new dependencies are introduced.
+
 # 0.11.0-alpha.9 — make installed CLI discovery work
 
 Adds standard `--help`/`-h` and `--version`/`-V` entry points. Previously all four

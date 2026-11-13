@@ -57,7 +57,7 @@ function head(root) { return git(root,['rev-parse','--verify','HEAD']).trim(); }
 
 function captureBaseline(intent,root) {
   validateIntent(intent);root=projectRoot(root);
-  const commit=head(root),index=indexDigest(root),selected=new Set(intent.allowedFiles),sources={};
+  const commit=head(root),index=indexDigest(root),selected=new Set(intent.allowedFiles),sources=Object.create(null);
   const files=paths(root).map(file=>{
     const value=observe(root,file,selected.has(file));
     if(!['file','symlink'].includes(value.state)) throw new Error(`Baseline requires regular files or symlink entries: ${file}`);
@@ -109,7 +109,7 @@ function checkChanges(intent,plan,base,root,encoding='o200k_base') {
   if(base.head!==head(root)) failures.push('Git HEAD changed; committed changes require separate review');
   if(base.indexDigest!==indexDigest(root)) failures.push('Git index changed; staged changes require separate review');
   const before=new Map(base.files.map(file=>[file.path,file]));
-  const union=[...new Set([...before.keys(),...paths(root)])].sort(),changed=[],after={};
+  const union=[...new Set([...before.keys(),...paths(root)])].sort(),changed=[],after=Object.create(null);
   for(const file of union) {
     const old=before.get(file),current=observe(root,file,intent.allowedFiles.includes(file));
     if(Object.hasOwn(current,'source')) {after[file]=current.source;delete current.source;}

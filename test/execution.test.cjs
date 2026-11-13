@@ -37,6 +37,21 @@ test('observes the actual allowed edit and leaves the index unchanged',()=>repos
   assert.ok(result.acceptance.startsWith('Not run'));
 }));
 
+test('prototype-named source paths survive baseline JSON and actual-edit verification',()=>repository(({root,put})=>{
+  for(const file of ['__proto__','constructor','toString'])put(file,'original text');
+  const task={...intent,allowedFiles:['__proto__','constructor','toString']};
+  const scopedPlan={...plan,intentDigest:intentDigest(task),files:task.allowedFiles};
+  const baseline=JSON.parse(JSON.stringify(captureBaseline(task,root)));
+  for(const file of task.allowedFiles)assert.equal(Object.hasOwn(baseline.sources,file),true);
+  assert.equal(baseline.sources.__proto__,'original text');
+  put('__proto__','changed text');
+  const result=checkChanges(task,scopedPlan,baseline,root);
+  assert.equal(result.ok,true,JSON.stringify(result));
+  assert.ok(result.context);assert.deepEqual(result.changed,[{path:'__proto__',kind:'modified'}]);
+  put('src/temple.js','protected change');
+  assert.equal(checkChanges(task,scopedPlan,baseline,root).ok,false);
+}));
+
 test('a good declared plan cannot hide an actual temple edit',()=>repository(({root,put,base})=>{
   put('src/temple.js','export const scene = "replaced";\n');
   const result=checkChanges(intent,plan,base,root);
