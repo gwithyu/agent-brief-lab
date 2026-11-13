@@ -95,3 +95,15 @@ keep modelCompleted at zero. Any completed response still needs current digest,
 complete ID acknowledgements, exact replacement/plan paths, a non-noop change and
 an unchanged observed repository before proposal.json is written. End-to-end live
 model behavior remains blocked/unverified here.
+
+
+## Current host session (alpha.4)
+
+ACTIVE_AGENT.md records one guided current-host walkthrough using ordinary tool
+calls. Unlike the optional CLI evaluation runner, `session` does not start another
+model. Source scope and five actual behavior tests passed, and a protected-file
+negative case was rejected. The helper already supplied a rewrite candidate; the
+operator knew the intended answer. No model/build was pinned, no independent
+control condition ran, and no whole-session usage was measured. These results
+must not be mixed with the four-probe model comparison or claimed as a model A/B
+improvement. Its output bundle and raw fixture remain private local artifacts.

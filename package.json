@@ -1,6 +1,6 @@
 {
   "name": "agent-brief-lab",
-  "version": "0.11.0-alpha.3",
+  "version": "0.11.0-alpha.4",
   "private": true,
   "description": "Experimental local context packing, conservative boolean rewrites, and explicit change-scope checks",
   "main": "index.cjs",
@@ -41,6 +41,7 @@
     "demo-results.json",
     "real-source-results.json",
     "EVALUATION.md",
-    "evaluation/"
+    "evaluation/",
+    "ACTIVE_AGENT.md"
   ]
 }

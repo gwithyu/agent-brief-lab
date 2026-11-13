@@ -1,6 +1,6 @@
 # Agent Brief Lab
 
-**Public alpha · 0.11.0-alpha.3 · MIT · Node.js 20+**
+**Public alpha · 0.11.0-alpha.4 · MIT · Node.js 20+**
 
 Local experiments for preparing smaller coding-agent inputs while keeping explicit user constraints, and checking what changed in a Git working tree.
 
@@ -25,6 +25,25 @@ Requires Git for working-tree checks and workspace demos. Dependencies are insta
 - Packs identical tool-output strings into a reversible history dictionary, while preserving every message's position, role and metadata. Short results remain inline when references would cost more.
 - Counts an entire prepared input, including formatting, instructions, references and fingerprints. Reports both savings against a fully guided baseline and net change against the original request.
 - Checks actual tracked and nonignored working-tree files against a trusted baseline. Optionally runs caller-reviewed acceptance commands and checks the tree after **each** command.
+
+## Use your current agent without a nested model
+
+```sh
+node index.cjs session examples/propose-intent.json . ../active-agent-bundle
+```
+
+Give your existing terminal-capable agent [ACTIVE_AGENT.md](ACTIVE_AGENT.md) and
+your task. The session entry collects allowed source and returns prepared input
+plus a baseline location. The current agent can then use its ordinary editing
+tools, verify actual scope and run trusted project checks. No Codex executable,
+new model call or global installation is required for this path. It does not
+automatically grant permission, edit source, replace the session's context, or
+capture prior chat history. The optional nested-Codex adapter below is separate.
+
+A guided host-session walkthrough edited one synthetic source file, passed 5 real
+behavior tests and rejected a protected-file mutation. It is not a blind model
+comparison or evidence of understanding/billing improvement. See ACTIVE_AGENT.md
+for the exact evidence boundary and an agent-facing workflow.
 
 ## One-command Codex proposal adapter
 
@@ -168,7 +187,7 @@ privacy and remaining limitations. No completed live comparison is claimed.
 
 ## Evidence, with limits
 
-125 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
+128 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
 
 | Same synthetic task | Original complete input | Prepared input | Net saved tokens |
 | --- | ---: | ---: | ---: |
@@ -177,7 +196,7 @@ privacy and remaining limitations. No completed live comparison is claimed.
 
 Numbers use `o200k_base`, include brief/reference/fingerprint overhead, and are reproduced by `npm run demo`. Read counts are constructed, not an observed agent trace. Five inspected real scanner/dependency files yield **zero source savings**. Do not generalize synthetic percentages to real projects. More history and source observations are in [RESULTS.md](RESULTS.md), `demo-results.json` and `real-source-results.json`.
 
-No live model task-success, semantic-understanding, actual-billing or rework improvement has been demonstrated. The alpha is for review and integration experiments, not a production quality/cost guarantee.
+No controlled live-model task-success, semantic-understanding, actual-billing or rework improvement has been demonstrated. The alpha is for review and integration experiments, not a production quality/cost guarantee.
 
 ## License
 

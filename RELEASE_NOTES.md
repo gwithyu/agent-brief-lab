@@ -1,3 +1,18 @@
+# 0.11.0-alpha.4 — current-session agent workflow
+
+Adds `agent-brief session <intent> <repo> <new-output-dir>`: return prepared source,
+intent and baseline location directly to an existing terminal-capable agent. It
+uses the preview path only and never launches a nested model or edits the target.
+Unresolved questions remain visible and exit 1. The Codex executable is not needed
+for this entry; that is exercised with Git-only PATH coverage.
+
+ACTIVE_AGENT.md supplies an explicit workflow without automatically modifying any
+personal/global instructions. A guided host-session walkthrough made one actual
+synthetic source edit, passed five behavior tests and rejected an out-of-scope
+mutation. This known-answer exercise is not an independent model A/B test and
+has no measured full-session token/understanding benefit. The nested-CLI model
+comparison remains blocked. Core unit tests now total 128.
+
 # 0.11.0-alpha.3 — explicit Codex proposal adapter
 
 Adds `agent-brief propose <intent> <repo> <new-output-dir>`: collect allowed source,

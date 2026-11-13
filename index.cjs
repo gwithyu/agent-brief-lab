@@ -158,15 +158,19 @@ if (require.main === module) {
       console.log(JSON.stringify(result,null,2));if(!['prepared','proposal_ready'].includes(result.state))process.exitCode=1;
     }catch(error){console.error(error.message);process.exitCode=error.exitCode??1;}
   } else {
-  const arity={measure:[2,3],compact:[2,3],check:[3,3],brief:[2,2],baseline:[3,3],verify:[5,6],context:[4,5],pack:[3,4],history:[2,3],restore:[2,3],review:[6,6],prepare:[4,5]};
+  const arity={measure:[2,3],compact:[2,3],check:[3,3],brief:[2,2],baseline:[3,3],verify:[5,6],context:[4,5],pack:[3,4],history:[2,3],restore:[2,3],review:[6,6],prepare:[4,5],session:[4,4]};
   const readJson=name=>JSON.parse(fs.readFileSync(name,'utf8'));
   try {
     if (!arity[command] || args.length<arity[command][0] || args.length>arity[command][1]) {
-      console.error('Usage: agent-brief measure|compact <source> [encoding]; check <intent> <plan>; brief <intent>; baseline <intent> <repo>; verify <intent> <plan> <baseline> <repo> [encoding]; context <intent> <before-sources> <after-sources> [encoding]; pack <intent> <sources> [encoding]; history <messages> [encoding]; restore <history-input> [expected-sha256]; review <intent> <plan> <baseline> <repo> <checks>; prepare <intent> <sources> <messages> [encoding]; propose <intent> <repo> <new-output-dir> [--live --model MODEL]');
+      console.error('Usage: agent-brief measure|compact <source> [encoding]; check <intent> <plan>; brief <intent>; baseline <intent> <repo>; verify <intent> <plan> <baseline> <repo> [encoding]; context <intent> <before-sources> <after-sources> [encoding]; pack <intent> <sources> [encoding]; history <messages> [encoding]; restore <history-input> [expected-sha256]; review <intent> <plan> <baseline> <repo> <checks>; prepare <intent> <sources> <messages> [encoding]; session <intent> <repo> <new-output-dir>; propose <intent> <repo> <new-output-dir> [--live --model MODEL]');
       process.exitCode = 2;
     } else if (command === 'measure' || command === 'compact') {
       const result = simplify(fs.readFileSync(file,'utf8'), file, extra ?? 'o200k_base');
       process.stdout.write(command === 'compact' ? result.code : JSON.stringify(result.metrics,null,2)+'\n');
+    } else if(command==='session') {
+      const result=require('./session.cjs').startSession(readJson(file),extra,fourth);
+      console.log(JSON.stringify(result,null,2));
+      if(result.state!=='session_ready')process.exitCode=1;
     } else if(command==='prepare') {
       console.log(JSON.stringify(require('./prepare.cjs').prepareInput(readJson(file),readJson(extra),readJson(fourth),fifth),null,2));
     } else if(command==='review') {
