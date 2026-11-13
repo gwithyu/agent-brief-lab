@@ -12,13 +12,12 @@ function prepareInput(intent,sources,messages,encoding='o200k_base') {
   let input=baseline,after=before,selected={instructionFormat:'readable',historyFormat:'raw'};
   const baselineSerialized=JSON.stringify(baseline);
   const measurements=[{id:'readable/original/raw',tokens:before.tokens,bytes:before.bytes,selected:false,reason:'BASELINE'}];
-  const measured=new Set([baselineSerialized]);
+  const measured=new Map([[baselineSerialized,measurements[0]]]);
   // Compare *complete serialized inputs*. Never include source text or history
   // contents in diagnostics: those can contain private project data.
   for(const [index,variant] of variants.entries()) for(const [historyFormat,h] of [['raw',restored],['dictionary',history.input]]) {
     const candidate={...variant.input,history:h},serialized=JSON.stringify(candidate);
     if(measured.has(serialized)) continue;
-    measured.add(serialized);
     const size=measure(candidate);
     const record={id:`${variant.format}/${index<2?'original':'rewrite-candidate'}/${historyFormat}`,
       tokens:size.tokens,bytes:size.bytes,selected:false,reason:'ELIGIBLE_NOT_SELECTED'};
@@ -29,18 +28,14 @@ function prepareInput(intent,sources,messages,encoding='o200k_base') {
       input=candidate;after=size;selected={instructionFormat:variant.format,historyFormat};
     }
     measurements.push(record);
+    measured.set(serialized,record);
   }
-  const selectedSerialized=JSON.stringify(input);
-  // Each representation is counted once. Reasons reflect the *final* winner
-  // rather than which candidate happened to be best midway through the scan.
-  for(const m of measurements) {
-    const parts=m.id.split('/');
-    const variantIndex=parts[1]==='original'?(parts[0]==='readable'?0:1):(parts[0]==='readable'?2:3);
-    const h=parts[2]==='dictionary'?history.input:restored;
-    const serialized=JSON.stringify({...variants[variantIndex].input,history:h});
-    if(serialized===selectedSerialized) {m.selected=true;m.reason=serialized===baselineSerialized?'BASELINE':'SELECTED';}
-    else if(m.reason==='BASELINE') m.reason='ELIGIBLE_NOT_SELECTED';
-  }
+  // Identify the final winner by its exact representation, not a temporary
+  // intermediate minimum. No raw input text is included in these diagnostics.
+  const winner=measured.get(JSON.stringify(input));
+  winner.selected=true;
+  winner.reason=JSON.stringify(input)===baselineSerialized?'BASELINE':'SELECTED';
+  if(winner!==measurements[0]) measurements[0].reason='ELIGIBLE_NOT_SELECTED';
   const rewrittenFiles=input.files.filter(file=>file.source!==sources[file.path]).map(file=>file.path);
   return {input,metrics:{encoding,rawRequestBeforeTokens:raw.tokens,guidedBeforeTokens:before.tokens,afterTokens:after.tokens,
     tokensSavedWithGuidance:before.tokens-after.tokens,netTokensSavedVersusRawRequest:raw.tokens-after.tokens,
