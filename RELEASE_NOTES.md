@@ -1,3 +1,21 @@
+# 0.11.0-alpha.6 — independently validate the proposal schema
+
+Fixes the runtime accepting and preserving undeclared top-level fields or
+replacement metadata despite declaring additionalProperties:false to the model.
+Malformed responses could previously carry untrusted claims such as testsPassed,
+or permission/command fields, into proposal.json. The tool did not execute or
+verify those claims; it now rejects the entire proposal instead of preserving
+them as part of a ready artifact.
+
+The same declared schema is reused for exact-field validation. Replacement source
+also must round-trip through UTF-8: NUL and unpaired surrogates reject; valid
+Unicode remains accepted. Rejected responses retain private raw diagnostic traces
+but produce no proposal.json. Target files are never auto-applied.
+
+135 tests pass. New cases use explicitly simulated responses, not live model
+results. Structural validation does not establish code correctness, executed
+acceptance or better model comprehension. No dependencies are added.
+
 # 0.11.0-alpha.5 — tolerate unchanged repository symlinks
 
 Fixes baseline capture rejecting every repository that contains a symbolic link,

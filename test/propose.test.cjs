@@ -57,3 +57,28 @@ test('proposal CLI preview needs only intent, Git repo and output path',()=>fixt
   assert.equal(r.status,0,r.stderr);assert.equal(JSON.parse(r.stdout).state,'prepared');
   const usage=spawnSync(process.execPath,[path.join(__dirname,'../index.cjs'),'propose'],{encoding:'utf8'});assert.equal(usage.status,2);
 }));
+test('undeclared top-level claims cannot enter a validated proposal',()=>{
+  for(const key of ['testsPassed','testResults','command'])fixture(({root,out,proposal,completion})=>{
+    proposal[key]=key==='testsPassed'?true:'untrusted extra claim';
+    const r=propose(intent,root,out,{live:true,model:'simulated'},()=>completion(proposal));
+    assert.equal(r.state,'rejected');assert.equal(fs.existsSync(path.join(out,'proposal.json')),false);
+  });
+});
+test('replacement metadata cannot smuggle permissions or commands',()=>{
+  for(const key of ['mode','execute','testsPassed'])fixture(({root,out,proposal,completion})=>{
+    proposal.replacements[0][key]='untrusted';
+    const r=propose(intent,root,out,{live:true,model:'simulated'},()=>completion(proposal));
+    assert.equal(r.state,'rejected');assert.equal(fs.existsSync(path.join(out,'proposal.json')),false);
+  });
+});
+test('replacement text must round trip through UTF-8; valid Unicode remains accepted',()=>{
+  for(const source of ['\ud800','\udfff','\u0000'])fixture(({root,out,proposal,completion})=>{
+    proposal.replacements[0].source=source;
+    const r=propose(intent,root,out,{live:true,model:'simulated'},()=>completion(proposal));assert.equal(r.state,'rejected');
+    assert.equal(fs.existsSync(path.join(out,'proposal.json')),false);
+  });
+  fixture(({root,out,proposal,completion})=>{
+    proposal.replacements[0].source='// 合法 Unicode 😀\n'+proposal.replacements[0].source;
+    assert.equal(propose(intent,root,out,{live:true,model:'simulated'},()=>completion(proposal)).state,'proposal_ready');
+  });
+});

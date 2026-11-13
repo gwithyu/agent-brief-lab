@@ -1,6 +1,6 @@
 # Agent Brief Lab
 
-**Public alpha · 0.11.0-alpha.5 · MIT · Node.js 20+**
+**Public alpha · 0.11.0-alpha.6 · MIT · Node.js 20+**
 
 Local experiments for preparing smaller coding-agent inputs while keeping explicit user constraints, and checking what changed in a Git working tree.
 
@@ -76,6 +76,12 @@ must bind the current intent digest, acknowledge all constraint/check IDs and
 provide complete replacements for exactly its declared in-scope files. Stale,
 missing, duplicate, out-of-scope and no-op proposals fail. The observed target
 snapshot must remain unchanged, including when the model startup fails.
+
+The runtime independently enforces the exact declared proposal fields and exactly
+`path`/`source` per replacement. Extra receipt/command/permission fields are
+rejected instead of being carried into a ready proposal. Replacement text must
+round-trip through UTF-8; NUL and unpaired surrogates are rejected, while valid
+Unicode is retained. This validates the representation, not code semantics.
 
 A valid result is saved as `proposal.json` **for human review**; the adapter never
 applies it, runs project code, or treats named checks as executed tests. Review the
@@ -187,7 +193,7 @@ privacy and remaining limitations. No completed live comparison is claimed.
 
 ## Evidence, with limits
 
-132 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
+135 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
 
 | Same synthetic task | Original complete input | Prepared input | Net saved tokens |
 | --- | ---: | ---: | ---: |

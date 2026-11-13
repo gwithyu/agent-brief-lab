@@ -7,11 +7,19 @@ const {captureBaseline}=require('./execution.cjs');
 const {prepareInput}=require('./prepare.cjs');
 const {parseCompletion,invokeCodex}=require('./codex.cjs');
 const schema={type:'object',properties:{intentDigest:{type:'string'},files:{type:'array',items:{type:'string'}},acknowledgedConstraints:{type:'array',items:{type:'string'}},checks:{type:'array',items:{type:'string'}},replacements:{type:'array',items:{type:'object',properties:{path:{type:'string'},source:{type:'string'}},required:['path','source'],additionalProperties:false}}},required:['intentDigest','files','acknowledgedConstraints','checks','replacements'],additionalProperties:false};
+function exactFields(value,shape) {
+  const names=Object.keys(shape.properties);
+  return value && typeof value==='object' && !Array.isArray(value)
+    && Object.keys(value).length===names.length && names.every(name=>Object.hasOwn(value,name));
+}
 function validateProposal(intent,proposal,sources) {
+  if(!exactFields(proposal,schema))throw Error('Proposal must contain exactly the declared schema fields');
   const plan=checkPlan(intent,proposal);
   const edits=proposal.replacements;
-  if(!Array.isArray(edits)||!edits.length||edits.some(e=>!e||typeof e.path!=='string'||typeof e.source!=='string'||e.source.includes('\0'))
-    || new Set(edits.map(e=>e.path)).size!==edits.length
+  if(!Array.isArray(edits)||!edits.length||edits.some(e=>!exactFields(e,schema.properties.replacements.items)
+    || typeof e.path!=='string'||typeof e.source!=='string'||e.source.includes('\0')
+    || Buffer.from(e.source,'utf8').toString('utf8')!==e.source)) throw Error('Replacements require exactly path/source fields and valid UTF-8 text');
+  if(new Set(edits.map(e=>e.path)).size!==edits.length
     || edits.length!==proposal.files.length || edits.some(e=>!proposal.files.includes(e.path))) throw Error('Replacement paths must exactly match the declared plan');
   if(edits.some(e=>!Object.hasOwn(sources,e.path)))plan.failures.push('Replacement is outside captured source files');
   if(edits.every(e=>e.source===sources[e.path]))plan.failures.push('No source change proposed');
