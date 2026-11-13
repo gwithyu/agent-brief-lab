@@ -14,7 +14,8 @@ function exactFields(value,shape) {
 }
 function validateProposal(intent,proposal,sources) {
   if(!exactFields(proposal,schema))throw Error('Proposal must contain exactly the declared schema fields');
-  const plan=checkPlan(intent,proposal);
+  const plan=checkPlan(intent,{intentDigest:proposal.intentDigest,files:proposal.files,
+    acknowledgedConstraints:proposal.acknowledgedConstraints,checks:proposal.checks});
   const edits=proposal.replacements;
   if(!Array.isArray(edits)||!edits.length||edits.some(e=>!exactFields(e,schema.properties.replacements.items)
     || typeof e.path!=='string'||typeof e.source!=='string'||e.source.includes('\0')

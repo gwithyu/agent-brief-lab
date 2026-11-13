@@ -1,6 +1,6 @@
 # Agent Brief Lab
 
-**Public alpha · 0.11.0-alpha.7 · MIT · Node.js 20+**
+**Public alpha · 0.11.0-alpha.8 · MIT · Node.js 20+**
 
 Local experiments for preparing smaller coding-agent inputs while keeping explicit user constraints, and checking what changed in a Git working tree.
 
@@ -149,6 +149,13 @@ node index.cjs check examples/intent.json examples/plan-bad.json
 
 `compact` only writes a candidate to stdout. `check` checks declarations, not execution or semantic understanding. `plan-bad.json` deliberately fails. CLI success is exit 0, rejected/invalid input or failed checks exit 1, incorrect command usage exit 2.
 
+Intent JSON accepts exactly `request`, `goal`, `allowedFiles`, `constraints`,
+`acceptance` and `questions`; every constraint/acceptance entry accepts exactly
+`id` and `text`. Plan JSON accepts exactly `intentDigest`, `files`,
+`acknowledgedConstraints` and `checks`. Undeclared fields reject instead of being
+silently omitted from the digest or brief. This prevents hidden data loss, but it
+does not infer a missing requirement from natural language or a misspelled key.
+
 The default tokenizer is `o200k_base`; measurement commands also accept `cl100k_base`. These counts are text-token measurements, not the current model's bill, reasoning tokens, cache accounting or native message-protocol cost.
 
 ## Prepare one complete input
@@ -234,7 +241,7 @@ privacy and remaining limitations. No completed live comparison is claimed.
 
 ## Evidence, with limits
 
-138 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
+139 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
 
 | Same synthetic task | Original complete input | Prepared input | Net saved tokens |
 | --- | ---: | ---: | ---: |

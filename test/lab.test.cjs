@@ -149,6 +149,18 @@ test('malformed schemas and duplicate IDs are rejected', () => {
   assert.throws(()=>checkPlan(intent,{...good,checks:['nav_spacing','nav_spacing']}),/schema/);
 });
 
+test('undeclared intent and plan fields are rejected instead of silently ignored', () => {
+  for(const value of [
+    {...intent,notes:'This requirement must not disappear from the digest.'},
+    {...intent,constraints:intent.constraints.map((item,index)=>index?item:{...item,priority:'must'})},
+    {...intent,acceptance:intent.acceptance.map((item,index)=>index?item:{...item,evidence:'required'})},
+  ]) assert.throws(()=>validateIntent(value),/schema/);
+  for(const value of [
+    {...good,command:'npm test'},
+    {...good,permissions:['write']},
+  ]) assert.throws(()=>checkPlan(intent,value),/schema/);
+});
+
 test('brief retains the exact request, every constraint and every acceptance criterion', () => {
   const value=brief(intent);assert.ok(value.includes(intent.request));
   for(const entry of [...intent.constraints,...intent.acceptance])assert.ok(value.includes(entry.text));

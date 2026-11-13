@@ -96,6 +96,10 @@ function simplify(source, fileName = 'input.js', encoding = 'o200k_base') {
 
 function text(value) { return typeof value === 'string' && value.trim().length > 0; }
 function list(value) { return Array.isArray(value) && value.every(text) && new Set(value).size === value.length; }
+function exactFields(value, names) {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    && Reflect.ownKeys(value).length === names.length && names.every(name => Object.hasOwn(value, name));
+}
 function filePath(value) {
   return text(value) && !/[\\:*?\[\]{}\x00-\x1f]/.test(value) && !path.posix.isAbsolute(value) && !path.win32.isAbsolute(value)
     && value !== '.' && !value.split('/').some(part => !part || part === '.' || part === '..')
@@ -103,15 +107,16 @@ function filePath(value) {
 }
 
 function validateIntent(intent) {
-  if (!intent || typeof intent !== 'object' || !text(intent.request) || !text(intent.goal)
+  if (!exactFields(intent, ['request','goal','allowedFiles','constraints','acceptance','questions'])
+    || !text(intent.request) || !text(intent.goal)
     || !list(intent.allowedFiles) || !intent.allowedFiles.length || !intent.allowedFiles.every(filePath)
     || !Array.isArray(intent.constraints) || !intent.constraints.length
     || !Array.isArray(intent.acceptance) || !intent.acceptance.length || !list(intent.questions)) {
-    throw new Error('Invalid intent: request, goal, exact allowedFiles, constraints, acceptance and questions are required');
+    throw new Error('Invalid intent schema: exactly request, goal, allowedFiles, constraints, acceptance and questions are required');
   }
   const entries = [...intent.constraints, ...intent.acceptance];
-  if (entries.some(item => !item || !/^[a-z][a-z0-9_]*$/.test(item.id) || !text(item.text))
-    || new Set(entries.map(item => item.id)).size !== entries.length) throw new Error('Invalid or duplicate intent IDs');
+  if (entries.some(item => !exactFields(item, ['id','text']) || !/^[a-z][a-z0-9_]*$/.test(item.id) || !text(item.text))
+    || new Set(entries.map(item => item.id)).size !== entries.length) throw new Error('Invalid intent entry schema or duplicate IDs');
   return intent;
 }
 
@@ -125,7 +130,8 @@ function intentDigest(intent) {
 function checkPlan(intent, plan) {
   validateIntent(intent);
   const failures = [];
-  if (!plan || !list(plan.files) || !plan.files.length || !plan.files.every(filePath)
+  if (!exactFields(plan, ['intentDigest','files','acknowledgedConstraints','checks'])
+    || !list(plan.files) || !plan.files.length || !plan.files.every(filePath)
     || !list(plan.acknowledgedConstraints) || !list(plan.checks)) throw new Error('Invalid plan schema');
   if (plan.intentDigest !== intentDigest(intent)) failures.push('Plan is not bound to the current intent');
   for (const file of plan.files) if (!intent.allowedFiles.includes(file)) failures.push(`Outside allowed edit scope: ${file}`);

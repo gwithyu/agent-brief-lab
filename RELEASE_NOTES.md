@@ -1,3 +1,19 @@
+# 0.11.0-alpha.8 — bind only explicit intent and plan schemas
+
+Fixes intent and plan validators silently accepting undeclared fields. Those
+fields were omitted from the intent digest and generated brief, so a misspelled
+or invented requirement field could appear accepted without actually being
+bound. Intent objects now contain exactly the six documented fields; every
+constraint and acceptance entry contains exactly `id` and `text`; plans contain
+exactly the four declared binding/scope/check fields. Unknown metadata rejects
+instead of disappearing.
+
+Proposal validation still accepts its separately declared `replacements` field
+by explicitly projecting the four plan fields before the strict plan check. 139
+tests pass on Node 20, Node 24 and the installed tarball. This is structural
+loss-prevention, not natural-language intent inference or proof that the supplied
+requirements are complete.
+
 # 0.11.0-alpha.7 — reject incomplete or inconsistent CLI streams
 
 Fixes the shared Codex completion parser ignoring malformed item envelopes and
