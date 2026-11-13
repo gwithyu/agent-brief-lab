@@ -1,6 +1,6 @@
 # Agent Brief Lab
 
-**Public alpha · 0.11.0-alpha.6 · MIT · Node.js 20+**
+**Public alpha · 0.11.0-alpha.7 · MIT · Node.js 20+**
 
 Local experiments for preparing smaller coding-agent inputs while keeping explicit user constraints, and checking what changed in a Git working tree.
 
@@ -110,7 +110,9 @@ the same read-only Codex adapter as the evaluator: apps, plugins and the shell
 tool are disabled, and unexpected tool events invalidate responses. It does not copy
 credentials or change global settings. Unresolved intent questions block calls.
 
-Only a completed, parseable model response can reach validation. The response
+Only a completed, parseable model response can reach validation. The CLI stream
+must have interpretable item envelopes and a consistent single-turn order: the
+answer precedes completion, with no later unfinished start or item activity. The response
 must bind the current intent digest, acknowledge all constraint/check IDs and
 provide complete replacements for exactly its declared in-scope files. Stale,
 missing, duplicate, out-of-scope and no-op proposals fail. The observed target
@@ -232,7 +234,7 @@ privacy and remaining limitations. No completed live comparison is claimed.
 
 ## Evidence, with limits
 
-135 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
+138 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
 
 | Same synthetic task | Original complete input | Prepared input | Net saved tokens |
 | --- | ---: | ---: | ---: |

@@ -107,3 +107,16 @@ operator knew the intended answer. No model/build was pinned, no independent
 control condition ran, and no whole-session usage was measured. These results
 must not be mixed with the four-probe model comparison or claimed as a model A/B
 improvement. Its output bundle and raw fixture remain private local artifacts.
+
+
+## CLI lifecycle validation (alpha.7)
+
+The shared decoder rejects missing/malformed item envelopes, multiple/later starts,
+answers after a completion marker and item activity after completion. Optional
+normal thread/turn starts remain supported. Tests construct these streams; they
+are not live provider observations. Both probes and proposals share the fix.
+
+Invalid or blocked streams may have incurred usage the parser cannot safely
+attribute. Raw private traces retain available events. Do not sum only the parsed
+completed-run usage and present it as full experiment billing; missing usage is
+not zero. This change does not unblock the live CLI sandbox in the current host.

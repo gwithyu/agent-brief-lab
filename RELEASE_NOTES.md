@@ -1,3 +1,16 @@
+# 0.11.0-alpha.7 — reject incomplete or inconsistent CLI streams
+
+Fixes the shared Codex completion parser ignoring malformed item envelopes and
+accepting a completed answer even when a later unfinished turn/thread had started.
+It also rejects answers appearing after the completion marker and late item events.
+Normal optional lifecycle starts and the existing compact completion form remain
+supported. This boundary applies to both evaluation and proposal generation.
+
+138 tests cover the change. New cases are constructed streams, not observations
+of a live provider fault or proof of model behavior. Invalid streams do not yield
+successful evaluations or ready proposals. Raw private traces remain the audit
+source for failures; missing parsed usage must not be treated as zero cost.
+
 # 0.11.0-alpha.6 — independently validate the proposal schema
 
 Fixes the runtime accepting and preserving undeclared top-level fields or

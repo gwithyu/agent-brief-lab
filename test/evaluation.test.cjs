@@ -66,3 +66,24 @@ test('missing CLI yields a blocked report with zero model completions and no fab
     assert.equal(report.runs.filter(x=>x.state==='not_run').length,7);
   }finally{fs.rmSync(temporary,{recursive:true,force:true});}
 });
+test('malformed item envelopes cannot be ignored beside an otherwise valid answer',()=>{
+  const base=completion(items[0].expected);
+  for(const item of [undefined,null,[],{}, {type:null}]) {
+    const event={type:'item.started'};if(item!==undefined)event.item=item;
+    const r=parseRun({...base,stdout:JSON.stringify(event)+'\n'+base.stdout},items[0].expected);
+    assert.notEqual(r.state,'completed');assert.equal(r.passed,false);
+  }
+});
+test('an unfinished extra turn cannot reuse the previous completed answer',()=>{
+  const base=completion(items[0].expected);
+  for(const type of ['turn.started','thread.started']) {
+    const r=parseRun({...base,stdout:base.stdout+'\n'+JSON.stringify({type})},items[0].expected);
+    assert.notEqual(r.state,'completed');assert.equal(r.passed,false);
+  }
+});
+test('answer and completion order must be consistent while normal lifecycle events remain supported',()=>{
+  const base=completion(items[0].expected),lines=base.stdout.split('\n');
+  assert.notEqual(parseRun({...base,stdout:lines.reverse().join('\n')},items[0].expected).state,'completed');
+  const normal=[{type:'thread.started',thread_id:'synthetic'},{type:'turn.started'},{type:'item.started',item:{id:'answer',type:'agent_message'}}].map(x=>JSON.stringify(x)).join('\n')+'\n'+base.stdout;
+  assert.equal(parseRun({...base,stdout:normal},items[0].expected).passed,true);
+});
