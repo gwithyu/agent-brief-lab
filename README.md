@@ -179,7 +179,9 @@ it retains that original. Identical candidates are measured only once. Inspect
 `MEASURED_GAIN` versus `NO_GAIN`, the number of unique candidates measured,
 and an audit-only `candidates` array (token/byte totals and rejection reasons,
 without source or history text). The audit report is **not** part of `input` sent
-to an agent.
+to an agent. Candidate deduplication stores SHA-256 digests rather than keeping
+full serialized inputs as map keys; this reduces retained key size without
+changing the selection rule. No whole-process memory benchmark is claimed.
 
 For a conservative minimum net reduction, pass an optional positive integer
 threshold after an explicit encoding, e.g. `agent-brief prepare intent.json
