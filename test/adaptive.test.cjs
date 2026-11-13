@@ -44,6 +44,14 @@ for(const encoding of ['o200k_base','cl100k_base']) {
       assert.equal(report.metrics.afterTokens,best.tokenCount);
       assert.equal(report.metrics.afterBytes,best.byteCount);
       assert.equal(report.metrics.selection.uniqueCandidatesMeasured,candidates.size);
+      const audits=report.metrics.selection.candidates;
+      assert.equal(audits.length,candidates.size);
+      assert.equal(audits.filter(x=>x.selected).length,1);
+      assert.equal(audits.find(x=>x.selected).tokens,report.metrics.afterTokens);
+      assert.equal(audits.find(x=>x.selected).bytes,report.metrics.afterBytes);
+      assert.ok(audits.every(x=>Object.keys(x).sort().join(',')==='bytes,id,reason,selected,tokens'));
+      assert.ok(audits.every(x=>!JSON.stringify(x).includes(baseIntent.request)));
+      assert.ok(audits.every(x=>['BASELINE','SELECTED','NO_GAIN_BOTH','NO_TOKEN_GAIN','NO_BYTE_GAIN','ELIGIBLE_NOT_SELECTED'].includes(x.reason)));
       assert.equal(report.metrics.selection.instructionFormat,best.instructionFormat);
       assert.equal(report.metrics.selection.historyFormat,best.historyFormat);
       assert.equal(report.metrics.selection.reason,best.tokenCount<tokens(before,encoding)?'MEASURED_GAIN':'NO_GAIN');
