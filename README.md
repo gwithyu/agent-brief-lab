@@ -164,6 +164,17 @@ The default tokenizer is `o200k_base`; measurement commands also accept `cl100k_
 
 ## Prepare one complete input
 
+The `prepare` command now compares the **complete serialized envelope** across
+readable/JSON intent descriptions, original/conservative source candidates, and
+raw/dictionary history. It chooses the fewest measured local tokens among
+candidates that also reduce serialized bytes versus the guided original; otherwise
+it retains that original. Identical candidates are measured only once. Inspect
+`metrics.selection` for the selected instruction/history representation,
+`MEASURED_GAIN` versus `NO_GAIN`, and the number of unique candidates measured.
+These are deterministic **local input** measurements, not proof of improved model
+comprehension, API usage or invoice costs. Rewrites remain proposals, not applied
+source edits, and packed history still requires executor support.
+
 ```sh
 node index.cjs prepare intent.json sources.json messages.json > report.json
 ```
