@@ -58,3 +58,13 @@ launched by these session commands. A direct installed invocation avoids asking
 npm to resolve the archive on each launch; the test did not enforce OS-level
 network isolation. The source checkout's npm ci remains the lockfile reproduction
 path, distinct from convenient archive installation.
+
+
+## Alpha.7 quick-run pin refresh
+
+After publishing the runtime, an empty consumer directory and new npm cache fetched
+`f7111c262d0025d5634e85c0694c3b0953b83eda` through the public archive URL.
+The installed helper reported version 0.11.0-alpha.7, its codex.cjs bytes matched
+the tested source, and session returned session_ready with a saved baseline and
+unchanged target source. The README quick-run URLs were updated only after this
+check. No model call or model-performance claim is part of this consumer check.
