@@ -294,6 +294,44 @@ run failures and unrun tasks are retained. Dry-run output and offline parser tes
 never count as model successes. See [EVALUATION.md](EVALUATION.md) for protocol,
 privacy and remaining limitations. No completed live comparison is claimed.
 
+## Cursor CLI paired A/B preview
+
+An **alternative to Codex** is the locally authenticated Cursor Agent CLI.
+The editor being signed in does not automatically prove the CLI is signed in.
+Check `agent status`, and run `agent login` locally if required. Never paste
+or commit authentication tokens. Official CLI documentation:
+https://cursor.com/docs/cli/overview
+
+```sh
+node evaluation/cursor-run.cjs --dry-run
+# Executes zero model calls; inspect the four synthetic input pairs.
+agent status
+# In a clean checkout, after selecting the exact model ID available to you:
+node evaluation/cursor-run.cjs --live --model YOUR_FIXED_CURSOR_MODEL --out /tmp/agentbrief-cursor-ab
+```
+
+**Live mode makes eight genuine Cursor calls** by default (four fixed cases,
+raw versus prepared); `--repeats 1..5` permits up to 40 and uses quota under
+your Cursor plan. This is a small **comprehension smoke test**, not the
+preregistered 30-task coding-agent experiment. Every run has a separate fresh
+directory, a fresh CLI session, a pinned requested model, and counterbalanced
+raw/prepared order. It stores private event, prompt and stderr receipts outside
+the tracked repository and checks that its Git HEAD and worktree stayed intact.
+
+The invocation uses `--mode=ask --sandbox enabled` and never `--force` or
+`--resume`. These settings are **not an operating-system security boundary**;
+a tool call may have effects before a disqualifying event is received. The
+runner rejects any recorded tool call or interaction and stops remaining pairs.
+Use only **synthetic fixtures**, in a disposable environment, without secrets.
+
+Cursor CLI's documented JSONL terminal response does not guarantee native
+token billing details. Results therefore leave provider input/output tokens
+and billed costs **null (unknown)** even if the locally measured prompt text
+shrinks. Actual model accuracy is scored by exact fields in the synthetic
+fixture; coding-edit accuracy and true provider cost remain unverified. An
+authenticated local CLI and live execution are required; this adapter and its
+mocked regression tests do not establish live A/B results.
+
 ## Evidence, with limits
 
 141 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
