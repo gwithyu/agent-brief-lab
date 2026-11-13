@@ -36,7 +36,11 @@ function packContext(intent,sources,encoding='o200k_base') {
   let input=baseline,current=before,briefFormat='readable';
   for(const variant of variants.slice(1)) {
     const measured=size(variant.input);
-    if(measured.tokens<current.tokens && measured.bytes<current.bytes) {
+    // The byte budget is anchored to the original guided input. A candidate
+    // with fewer tokens must not lose merely because it is slightly larger
+    // than an intermediate winner while still beating that original budget.
+    if(measured.tokens>=before.tokens || measured.bytes>=before.bytes) continue;
+    if(measured.tokens<current.tokens || (measured.tokens===current.tokens && measured.bytes<current.bytes)) {
       input=variant.input;current=measured;briefFormat=variant.format;
     }
   }
