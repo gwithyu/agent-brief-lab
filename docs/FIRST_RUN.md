@@ -4,7 +4,33 @@ This is for a developer who has **never used Agent Brief Lab**. It is not
 an installation of a ChatGPT plugin, automatic context interception, or a
 claim that real API bills decrease.
 
-## Step 1: one clean source checkout
+## Fastest path: one command, no cloning
+
+Install and launch only a **pinned, publicly reviewable GitHub source archive**:
+
+```sh
+npm exec --yes --ignore-scripts \
+  --package="https://github.com/gwithyu/agent-brief-lab/archive/83a52efc17d3e92fa03a6a2d0577482f2fd20efd.tar.gz" \
+  -- agent-brief try
+```
+
+Requires Node 20 or 24, npm and internet access on first run. The pinned
+archive was independently run in a clean consumer directory under Node 24,
+without cloning or modifying a consumer project. The archive and npm
+dependencies execute on your own machine: `--ignore-scripts` prevents npm
+install hooks, but it does **not** sandbox the selected executable. Review
+the public source before running an untrusted dependency on a sensitive
+computer. The tool never automatically accesses personal repositories.
+
+For an explicitly selected, local JS/TS file, add:
+`-- agent-brief try --source "/absolute/path/to/file.js"`.
+For a normalized tool-history JSON document, use:
+`-- agent-brief try --history "/absolute/path/to/messages.json"`.
+Only the selected file is read; source text and local paths are not printed.
+The command is a **synthetic or local counting preview**, not an AI model
+cost or reliability benchmark.
+
+## Alternative: one clean source checkout
 
 Requires Git, npm, Node.js **20 or 24**, and internet access for dependencies.
 
