@@ -2,6 +2,7 @@
 // Post-run quality and charge accounting. Never invokes a model, executes a
 // patch, extrapolates invoice costs from local tokens, or publishes receipts.
 const fs=require('node:fs');
+const {formatEfficiencyMarkdown}=require('./cost-quality-markdown.cjs');
 const MAX_BYTES=2*1024*1024;
 const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const object=o=>o!==null&&typeof o==='object'&&!Array.isArray(o);
@@ -208,16 +209,23 @@ function readPrivateJson(name){
   return JSON.parse(fs.readFileSync(name,'utf8'));
 }
 function runCli(argv=process.argv.slice(2)){
-  if(![2,3,4].includes(argv.length)||argv[0]!=='--report'
-    ||(argv.length===3&&argv[2]!=='--template')
-    ||(argv.length===4&&argv[2]!=='--charges'))
-    throw Error('Usage: node evaluation/cost-quality.cjs --report PRIVATE_REPORT_JSON [--template | --charges PRIVATE_OWNER_SUPPLIED_CHARGES_JSON]');
-  const report=readPrivateJson(argv[1]);
-  if(argv.length===3)return buildChargeTemplate(report);
-  return analyzeEfficiency(report,argv.length===4?readPrivateJson(argv[3]):null);
+  const markdown=argv.at(-1)==='--markdown';
+  const args=markdown?argv.slice(0,-1):argv;
+  if(![2,3,4].includes(args.length)||args[0]!=='--report'
+    ||(args.length===3&&args[2]!=='--template')
+    ||(args.length===4&&args[2]!=='--charges')
+    ||(markdown&&args.length===3))
+    throw Error('Usage: node evaluation/cost-quality.cjs --report PRIVATE_REPORT_JSON [--template | --charges PRIVATE_OWNER_SUPPLIED_CHARGES_JSON] [--markdown]');
+  const report=readPrivateJson(args[1]);
+  if(args.length===3)return buildChargeTemplate(report);
+  const result=analyzeEfficiency(report,args.length===4?readPrivateJson(args[3]):null);
+  return markdown?formatEfficiencyMarkdown(result):result;
 }
 if(require.main===module){
-  try{console.log(JSON.stringify(runCli(),null,2));}
+  try{
+    const result=runCli();
+    console.log(typeof result==='string'?result:JSON.stringify(result,null,2));
+  }
   catch(e){console.error('Efficiency evaluation refused: '+e.message);process.exitCode=1;}
 }
 module.exports={analyzeEfficiency,buildChargeTemplate,runCli};
