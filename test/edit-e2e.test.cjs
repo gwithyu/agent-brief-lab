@@ -62,7 +62,7 @@ function fakeAgentMain(){
   const mode=process.env.BRIEF_STUB_MODE||'edit';
   const config=path.join(process.cwd(),'src/config.json');
   const data=fs.readFileSync(config,'utf8');
-  if(mode==='edit')fs.writeFileSync(config,data.replace('"enabled": false','"enabled": true'));
+  if(mode==='edit'||mode==='silent-edit')fs.writeFileSync(config,data.replace('"enabled": false','"enabled": true'));
   if(mode==='scope')fs.writeFileSync(path.join(process.cwd(),'README.md'),'bad protected edit');
   const system={type:'system',subtype:'init',model:'fake-cursor-e2e/1',session_id:'test',cwd:process.cwd()};
   const tool={type:'tool_call',subtype:'started',call_id:'one',session_id:'test',
@@ -70,7 +70,7 @@ function fakeAgentMain(){
   const done={type:'tool_call',subtype:'completed',call_id:'one',session_id:'test',
     tool_call:{writeToolCall:{args:{path:'src/config.json'},result:{success:{}}}}};
   const end={type:'result',subtype:'success',is_error:false,duration_ms:20,result:'Done',session_id:'test'};
-  const events=mode==='no-tools'?[system,end]:[system,tool,done,end];
+  const events=['no-tools','silent-edit'].includes(mode)?[system,end]:[system,tool,done,end];
   process.stdout.write(events.map(x=>JSON.stringify(x)).join('\n')+'\n');
 }
 function fakeEnvironment(){
@@ -129,4 +129,18 @@ test('end-to-end CLI rejects successful model message without required edits',()
     assert.equal(report.modelCompleted,2);assert.equal(report.passed,0);
     assert.equal(report.runs.every(x=>x.failureReason==='acceptance_failed'),true);
   }finally{fs.rmSync(env.parent,{recursive:true,force:true});}
+});
+
+test('end-to-end rejects edited files without recorded edit-tool evidence',()=>{
+  const env=fakeEnvironment();
+  try {
+    const {result,report}=env.run('silent-edit');
+    assert.equal(result.status,1,result.stderr);
+    assert.equal(report.state,'completed');
+    assert.equal(report.modelCompleted,2);
+    assert.equal(report.passed,0);
+    assert.ok(report.runs.every(x=>x.failureReason==='unaudited_edit'));
+    assert.ok(report.runs.every(x=>x.auditedToolCalls===0));
+    assert.equal(report.gitIntegrity,'PASS');
+  } finally {fs.rmSync(env.parent,{recursive:true,force:true});}
 });
