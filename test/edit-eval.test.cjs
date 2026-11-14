@@ -18,8 +18,13 @@ test('manifest has 30 distinct preregistered tasks and immutable fingerprint',()
   assert.equal(cases.filter(c=>c.kind==='no_change').length,2);
   assert.equal(cases.filter(c=>c.kind==='multi').length,2);
   for(const c of cases){
-    assert.ok(c.allowed.length);assert.ok(c.prompts.raw.includes(c.intent.request));
-    assert.ok(c.prompts.prepared.includes(c.intent.request));
+    assert.ok(c.allowed.length);
+    for(const prompt of Object.values(c.prompts)){
+      const document=JSON.parse(prompt.split('DOCUMENT:\\n').at(-1));
+      const readable=document.instruction;
+      let embedded;try{embedded=JSON.parse(readable).request;}catch{embedded=readable;}
+      assert.ok(embedded.includes(c.intent.request),c.id);
+    }
     assert.ok(c.localInputTextTokens.raw>0&&c.localInputTextTokens.prepared>0);
     assert.equal(c.rewriteRejected,false,'Source-code transforms must not be silently included');
   }
