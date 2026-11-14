@@ -143,6 +143,11 @@ test('full Ask-mode subprocess E2E handles two correct proposals with zero works
     assert.equal(report.passed,2);assert.equal(report.modelCompleted,2);
     assert.equal(report.gitIntegrity,'PASS');assert.equal(report.comparisonComplete,true);
     assert.equal(report.experiment,'read-only-code-proposals');
+    assert.equal(report.efficiency.pairCount,1);
+    assert.equal(report.efficiency.quality.rawPasses,1);
+    assert.equal(report.efficiency.quality.preparedPasses,1);
+    assert.equal(report.efficiency.cost.rawUsdPerSuccess,null);
+    assert.equal(report.efficiency.observedOnThisSample.qualifiesAsMeasuredWin,false);
     for(const d of fs.readdirSync(out).filter(x=>x!=='receipts'&&x!=='report.json')){
       const work=path.join(out,d);
       assert.deepEqual(fs.readdirSync(work),['prompt.txt']);
