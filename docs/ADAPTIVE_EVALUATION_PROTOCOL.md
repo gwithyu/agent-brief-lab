@@ -66,10 +66,15 @@ sessions by default. It requires an explicitly selected model.
 The stream parser checks for exactly one successful terminal event and
 rejects recorded tool calls/interactions, missing events, invalid JSON,
 wrong answers, dirty Git state or a changing HEAD. All traces are
-private by default and each task/arm gets a fresh directory. Ask mode
-and CLI sandbox settings must **not** be represented as absolute
-isolation; tool execution could already have occurred before detection.
-Use only synthetic data and a disposable environment.
+private by default and each task/arm gets a fresh directory. Cursor
+requires workspace trust even when the account is logged in; the runner
+uses `--trust` **only** on private 0700 temporary directories containing
+only a regular synthetic `prompt.txt`. It does **not** use
+`--force` / `--yolo`. Ask mode, workspace trust and Cursor sandbox
+settings must **not** be represented as absolute read isolation;
+Cursor may read outside the workspace under user settings, and tool
+execution could already have occurred before detection. Use only synthetic
+data and preferably a disposable OS account or VM without secrets.
 
 Model provider tokens, cached input tokens, billed cost and reasoning
 tokens remain `null` unless independently supported by provider data.
