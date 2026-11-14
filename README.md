@@ -49,6 +49,26 @@ Every invocation path supports `--help`/`-h` and `--version`/`-V`. Help and
 version discovery exit 0 and write no error output; invalid command usage remains
 exit 2.
 
+## Local Node 20/24 acceptance (no GitHub Actions)
+
+From a clean checkout of this PR, with **Node 20** active, run
+`bash scripts/verify-local.sh`; then switch to **Node 24** and run the same
+command again. Each invocation requires network access for the pinned npm
+dependencies and calls `npm ci --ignore-scripts --no-audit --no-fund` followed
+by the full `npm test` suite. It requires Git, Node and npm and **will refuse
+all other Node majors**, including Node 22. There is no model call or GitHub
+Actions invocation. No Node installation or version switching is performed by
+the script.
+
+Each run records the exact Git commit, Node and npm version, exit status, and
+installation/test logs in a private temporary directory outside the repository.
+It also refuses a dirty checkout, Git status inspection failures, any change\nto the checked-out HEAD during installation or tests, and post-test uncommitted\nchanges. The acceptance-runner's own isolated regression tests cover clean\nNode 20/24, wrong Node versions, HEAD mutations, dirty trees, failed Git status\nand failed tests using mocked Node/npm but real Bash and Git. A `PASS`
+only means the dependency install and repository tests passed under that
+specific Node version/commit; it does not establish agent comprehension or
+provider billing savings. Review and redact log content before publishing.
+Both Node versions must report `PASS` against **the same commit** before the
+PR can be considered fully tested.
+
 ## Install from source
 
 ```sh
@@ -164,6 +184,37 @@ The default tokenizer is `o200k_base`; measurement commands also accept `cl100k_
 
 ## Prepare one complete input
 
+The standalone `pack` command also selects the minimum locally measured token
+count among complete context variants that reduce bytes versus its guided
+baseline. More bytes than another intermediate candidate is acceptable only
+while still staying below the original byte budget; equal-token cases prefer
+fewer bytes.
+
+The `prepare` command now compares the **complete serialized envelope** across
+readable/JSON intent descriptions, original/conservative source candidates, and
+raw/dictionary history. It chooses the fewest measured local tokens among
+candidates that also reduce serialized bytes versus the guided original; otherwise
+it retains that original. Identical candidates are measured only once. Inspect
+`metrics.selection` for the selected instruction/history representation,
+`MEASURED_GAIN` versus `NO_GAIN`, the number of unique candidates measured,
+and an audit-only `candidates` array (token/byte totals and rejection reasons,
+without source or history text). The audit report is **not** part of `input` sent
+to an agent. Candidate deduplication stores SHA-256 digests rather than keeping
+full serialized inputs as map keys; this reduces retained key size without
+changing the selection rule. No whole-process memory benchmark is claimed.
+
+For a conservative minimum net reduction, pass an optional positive integer
+threshold after an explicit encoding, e.g. `agent-brief prepare intent.json
+sources.json messages.json o200k_base 20`. The default is 1 token; valid values
+are 1 through 1000000. If savings are real but below the requested threshold,
+`metrics.selection.reason` becomes `MARGIN_NOT_MET` and the complete guided
+original is used. Candidate audits mark these as `BELOW_MINIMUM_GAIN`. This is
+only a **local text-token gate**; it is not a billed-cost or model-quality
+threshold.
+These are deterministic **local input** measurements, not proof of improved model
+comprehension, API usage or invoice costs. Rewrites remain proposals, not applied
+source edits, and packed history still requires executor support.
+
 ```sh
 node index.cjs prepare intent.json sources.json messages.json > report.json
 ```
@@ -243,9 +294,173 @@ run failures and unrun tasks are retained. Dry-run output and offline parser tes
 never count as model successes. See [EVALUATION.md](EVALUATION.md) for protocol,
 privacy and remaining limitations. No completed live comparison is claimed.
 
+## Cursor CLI paired A/B preview
+
+An **alternative to Codex** is the locally authenticated Cursor Agent CLI.
+The editor being signed in does not automatically prove the CLI is signed in.
+Check `agent status`, and run `agent login` locally if required. Never paste
+or commit authentication tokens. Official CLI documentation:
+https://cursor.com/docs/cli/overview
+
+```sh
+node evaluation/cursor-run.cjs --dry-run
+# Executes zero model calls; inspect the four synthetic input pairs.
+agent status
+# In a clean checkout, after selecting the exact model ID available to you:
+node evaluation/cursor-run.cjs --live --model YOUR_FIXED_CURSOR_MODEL --out /tmp/agentbrief-cursor-ab
+```
+
+**Live mode makes eight genuine Cursor calls** by default (four fixed cases,
+raw versus prepared); `--repeats 1..5` permits up to 40 and uses quota under
+your Cursor plan. This is a small **comprehension smoke test**, not the
+preregistered 30-task coding-agent experiment. Every run has a separate fresh
+directory, a fresh CLI session, a pinned requested model, and counterbalanced
+raw/prepared order. It stores private event, prompt and stderr receipts outside
+the tracked repository and checks that its Git HEAD and worktree stayed intact.
+
+The invocation uses `--trust --mode=ask --sandbox enabled`, and never
+`--force`, `--yolo` or `--resume`. The explicit `--trust` flag avoids the
+`Workspace Trust Required` startup failure for **new, private (mode 0700),
+single-prompt temporary directories** created by this harness. The runner
+rejects non-temporary `--out` roots, extra files, symlinks and nonprivate
+working directories before invoking Cursor. `--trust` is **only workspace
+trust**, not authorization for unrestricted commands.
+
+**Important:** Ask mode and Cursor sandbox settings are **not an operating-
+system read-isolation boundary**. Cursor may still be able to read files
+outside the working directory according to the user's Cursor permissions,
+and a tool call may have effects before a disqualifying event is received.
+The runner rejects any recorded tool call or interaction and stops remaining
+pairs. Use only **synthetic fixtures**, ideally in a disposable OS account or
+VM without secrets. The `--out` directory must be newly created under the
+machine's system temporary directory. A failed or incomplete run should be
+rerun to a *new* directory, never overwriting existing receipts.
+
+Cursor CLI's documented JSONL terminal response does not guarantee native
+token billing details. Results therefore leave provider input/output tokens
+and billed costs **null (unknown)** even if the locally measured prompt text
+shrinks. Actual model accuracy is scored by exact fields in the synthetic
+fixture; coding-edit accuracy and true provider cost remain unverified. An
+authenticated local CLI and live execution are required; this adapter and its
+mocked regression tests do not establish live A/B results.
+
+## Cursor Ask-mode code-replacement proposal A/B (read-only preview)
+
+The new `evaluation/patch-run.cjs` is a **bridge between the original four
+understanding questions and the full autonomous-edit benchmark**. It reuses the
+**same frozen 30 coding-edit fixtures**, but asks Cursor to return a strict
+JSON object of complete replacement source strings, instead of giving the
+model permission to edit any file. `evaluation/patch-proposals.cjs` grades the
+exact new bytes independently; unchanged or protected paths must never be
+returned as edits. Two unresolved tasks must request clarification without
+proposing any replacements.
+
+```sh
+node evaluation/patch-run.cjs --dry-run
+# Zero model calls; inspect the 30 tasks and the new proposal manifest SHA-256.
+
+# Opt-in: run on a machine with an already authenticated Cursor CLI.
+# One task pair = 2 actual model calls, by default.
+ROOT="$(mktemp -d "${TMPDIR:-/tmp/}agentbrief-proposals.XXXXXX")"
+node evaluation/patch-run.cjs --live \
+  --model gpt-5.3-codex-low --limit 1 --out "$ROOT/first-pair"
+
+# Select a harder multi-file task directly instead of consuming the first 26:
+# node evaluation/patch-run.cjs --live \
+#   --model gpt-5.3-codex-low --cases multi-theme \
+#   --out "$ROOT/multi-theme-pair"
+# Use --cases multi-theme,unresolved-spacing for two distinct pairs.
+# For more than 5 paired tasks, also pass --confirm-batch YES.
+```
+
+Only a fresh private `prompt.txt` is placed in each temporary run directory.
+The runner reuses the proven `--print --trust --mode=ask --sandbox enabled
+--output-format stream-json` invocation; **any recorded tool call makes the
+attempt invalid and stops the remaining calls**. No patch is applied, no
+model-authored source is executed, and original repository files must remain
+unchanged. Each arm is independently scored by exact final source bytes and
+a strict JSON response schema; malformed answers, invented paths, extra files,
+duplicate replacements, and failure to ask about unresolved questions fail.
+
+**Safety limitation:** Ask mode and Cursor sandbox settings are *not an OS
+process isolation boundary*. The CLI may still load user rules, discover MCP
+integrations, or access files outside the temporary directory under local
+permissions. A disposable OS account or VM with no personal data is still
+preferable. There is no automatic new login, credential transfer or
+`--force`/`--yolo` option. The runner keeps model receipts private in
+the system temp directory, and does not publish them to GitHub.
+
+Preflight measurements for the same 30 tasks, including this proposal-only
+header, include **21,189 raw vs 18,208 prepared local input-text tokens**
+(**2,981 fewer; 14.07%**). Three cases have no positive local token gain:
+`json-language`, `unresolved-spacing`, `unresolved-toggle`; they are
+deliberately retained in the benchmark instead of being excluded. These
+counts are not native Cursor billed tokens or cost savings.
+
+**Evidence limitation:** passing this benchmark would show the model can
+**propose exact code replacements**, not that a coding agent safely performed
+edits in its own workspace. Local text-token counts are **not** native
+Cursor usage/cost, provider-billed savings, or a proof of real-world quality.
+A `--dry-run` report is not model evidence; it consumes zero Cursor quota.
+
+## Synthetic coding-edit paired benchmark (experimental)
+
+A separate **30-distinct-task edit suite** now exists in
+`evaluation/edit-cases.cjs`, with file-system acceptance grading in
+`evaluation/edit-grade.cjs` and a **default dry-run** Cursor runner:
+
+```sh
+node evaluation/edit-run.cjs --dry-run
+# Runs zero model calls; prints 30 fixture IDs, local text-token counts,
+# category labels and a SHA-256 digest of complete task inputs and expectations.
+```
+
+The 30 deliberately small, preregistered synthetic tasks comprise
+9 JSON configuration edits, 9 CSS declaration edits, 8 CommonJS setting
+edits, 2 multi-file changes and 2 unresolved/no-change tasks. Historical
+tool snapshots vary from no repeats to eight repeats and include intentionally
+stale requests or instruction-like text. **No live editing-agent quality
+measurements are claimed yet.**
+
+For an **opt-in** Cursor CLI execution, in a disposable VM or OS account
+without private files, install dependencies in a clean checkout and use a
+**new path inside the OS temporary directory**:
+
+```sh
+OUT="$(mktemp -d "${TMPDIR:-/tmp/}agentbrief-edit.XXXXXX")"
+# The runner creates the result directory itself, so choose an unused child.
+node evaluation/edit-run.cjs --live --model gpt-5.3-codex-low \
+  --confirm-isolated-env YES --limit 1 --out "$OUT/first-pair"
+# Up to 30 pairs (= 60 agent calls), explicit opt-in and additional quota:
+# node evaluation/edit-run.cjs --live --model MODEL --limit 30 \
+#   --confirm-isolated-env YES --confirm-batch YES --out "$OUT/all-pairs"
+```
+
+**Live mode defaults to only one task pair (two model calls)**, and will refuse any live edit run without the explicit `--confirm-isolated-env YES` acknowledgement that the caller has provisioned a disposable OS account/VM. This flag is an informed-consent gate, **not a sandbox detection or security guarantee**. More than five task pairs also require `--confirm-batch YES`. Never copy credentials
+or publish raw receipts. Jobs have independent, mode-0700 workspaces inside the
+system temporary directory. Cursor CLI uses `--print --trust --mode=agent
+--sandbox enabled --output-format stream-json` without `--force` /
+`--yolo` or session resumption. In print mode, some operations can proceed
+without approval; **neither `--trust` nor Cursor sandboxing confines the
+agent to that directory**. Local rules, plugins or MCP integrations may still
+be loaded. Use a disposable account/VM for actual agent editing tests.
+
+The runner also audits Cursor `stream-json` receipts: it requires a consistent session ID and exact CLI-reported working directory; only recognized file read/edit tool types are eligible. Unknown tools, shell/terminal/MCP activity, hidden tool-use events, path escapes, symlink targets outside the workspace, mismatched start/completion arguments, unsuccessful tool receipts and incomplete streams invalidate the run. An actual expected file change with **no recorded tool call** also fails as `unaudited_edit`. Raw/prepared arms reporting **different model identities** invalidate the pair even if both answers look correct. The per-run report includes a count of audited tool calls and stable failure reasons. **This is after-the-fact evidence validation, not prevention, confinement, or proof that the model could not access private files.** Tests use a fake Cursor executable for complete CLI-path coverage; no new real editing-agent calls are implied.
+
+The external grader reads actual workspace files as bytes, **does not
+execute model-authored code**, rejects missing/extra/renamed/symlinked files,
+protected-file modifications and unexpected modes, and requires exact
+targeted output with unrelated bytes preserved. This strict byte-exact
+benchmark is *narrow*, not a representative sample of real-world coding
+projects. A model's written success claim cannot create a pass. Blocked
+starts and scope violations stop later calls; wrong answers are recorded,
+not hidden. Provider usage and billing fields remain **null**, not guessed
+from local token counts. The current 30-case runner is **not** a full
+production-quality or cost-equivalence validation.
+
 ## Evidence, with limits
 
-141 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
+The full suite has been extended with complete CLI-path fake-agent integration checks. Exact latest Node 20/24 verification is recorded in PR #1; [VERIFICATION.md](VERIFICATION.md) retains earlier release checks. These simulated runs assert file modifications and failure stops without making any real model calls.
 
 | Same synthetic task | Original complete input | Prepared input | Net saved tokens |
 | --- | ---: | ---: | ---: |
@@ -254,7 +469,7 @@ privacy and remaining limitations. No completed live comparison is claimed.
 
 Numbers use `o200k_base`, include brief/reference/fingerprint overhead, and are reproduced by `npm run demo`. Read counts are constructed, not an observed agent trace. Five inspected real scanner/dependency files yield **zero source savings**. Do not generalize synthetic percentages to real projects. More history and source observations are in [RESULTS.md](RESULTS.md), `demo-results.json` and `real-source-results.json`.
 
-No controlled live-model task-success, semantic-understanding, actual-billing or rework improvement has been demonstrated. The alpha is for review and integration experiments, not a production quality/cost guarantee.
+Two authenticated Cursor CLI structured-comprehension smoke runs completed 16/16 exact expected answers at earlier commit `6aacc019` (four distinct synthetic tasks, repeated twice). This is limited evidence for those fixed probes, **not** general agent quality or semantic equivalence. The new 30-distinct-task editing suite has passed *offline engineering tests only*; its live Cursor coding-edit evaluation has not run. Actual provider-billed input/output tokens, cost savings and rework improvements remain **unverified**. The alpha is for review and integration experiments, not a production quality/cost guarantee.
 
 ## License
 
