@@ -2,6 +2,7 @@
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process');
 const {editCases,manifestDigest}=require('./edit-cases.cjs');
 const {materializeCase,gradeEdits,inspectTree}=require('./edit-grade.cjs');
+const {analyzeEfficiency}=require('./cost-quality.cjs');
 function stableJSON(x) {
   if(Array.isArray(x))return '['+x.map(stableJSON).join(',')+']';
   if(x&&typeof x==='object')return '{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+stableJSON(x[k])).join(',')+'}';
@@ -179,9 +180,16 @@ function runCli(args=process.argv.slice(2),overrides={}){
   });
   const later=status(),after=spawnSync('git',['rev-parse','--verify','HEAD'],{cwd:repository,encoding:'utf8'});
   const integrity=later.status===0&&!later.stdout.trim()&&after.status===0&&after.stdout.trim()===head.stdout.trim();
-  const outputReport={provider:'cursor-cli',modelRequested:opts.model,cliVersion:agent.stdout.trim(),repositoryCommit:head.stdout.trim(),manifestDigest:digest,distinctTasks:opts.limit,...report,
+  const outputReport={provider:'cursor-cli',experiment:'synthetic-autonomous-edits',modelRequested:opts.model,cliVersion:agent.stdout.trim(),repositoryCommit:head.stdout.trim(),manifestDigest:digest,distinctTasks:opts.limit,...report,
     gitIntegrity:integrity?'PASS':'FAIL',scope:'Synthetic narrow byte-exact code edits, not a production agent benchmark. Provider token usage and costs unknown (null). Cursor tools are NOT OS-level isolation; only run on a disposable VM/account.'};
   if(!integrity){outputReport.state='invalid';outputReport.reason='git_integrity_failure';}
+  // Attach comparable quality and local-input metrics on complete experiments.
+  // Paid cost remains null until matched external owner-supplied evidence exists.
+  outputReport.efficiency=null;
+  if(outputReport.state==='completed'&&outputReport.comparisonComplete){
+    try{outputReport.efficiency=analyzeEfficiency(outputReport);}
+    catch{outputReport.efficiencyStatus='invalid_quality_evidence';}
+  }
   fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(outputReport,null,2),{mode:0o600});return outputReport;
 }
 if(require.main===module)try{const r=runCli();console.log(JSON.stringify(r,null,2));if(r.state!=='dry_run'&&(!r.comparisonComplete||r.passed!==r.planned||r.gitIntegrity!=='PASS'))process.exitCode=1;}catch(e){console.error(e.message);process.exitCode=1;}
