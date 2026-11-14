@@ -95,6 +95,19 @@ test('out-of-scope patch stops subsequent trials even if model terminal says suc
   let n=0;const r=evaluateEdits(cases.slice(0,3),()=>{n++;return {execution:completed(),grade:{acceptancePassed:false,scopeViolations:['protected_changed:README.md'],wrongAllowed:[]}};});
   assert.equal(n,1);assert.equal(r.attempted,1);assert.equal(r.runs[0].failureReason,'scope_violation');
 });
+test('model identity drift across A/B arms invalidates the paired comparison',()=>{
+  let n=0;
+  const r=evaluateEdits(cases.slice(0,1),()=>{
+    const response={status:0,stdout:[{...init,model:n++===0?'model-a':'model-b'},good]
+      .map(JSON.stringify).join('\n')+'\n'};
+    return {execution:response,grade:{acceptancePassed:true,scopeViolations:[],wrongAllowed:[]}};
+  });
+  assert.equal(r.modelCompleted,2);
+  assert.equal(r.state,'invalid');
+  assert.equal(r.comparisonComplete,false);
+  assert.equal(r.reason,'reported_model_drift');
+  assert.deepEqual(r.reportedModels,['model-a','model-b']);
+});
 test('Cursor tool stream terminal checks and forbidden shell evidence',()=>{
   assert.equal(parseTerminal(completed()).state,'completed');
   assert.equal(parseTerminal({status:1,stderr:'Workspace Trust Required'}).reason,'workspace_trust_required');
