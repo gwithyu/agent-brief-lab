@@ -136,3 +136,16 @@ test('reject unsupported argument combinations and never invoke local agent',()=
   assert.equal(parseArgs(['--source','x.ts','--json']).mode,'source');
   const help=call(['--help']);assert.equal(help.status,0);assert.match(help.stdout,/--history FILE/);
 });
+
+test('npm run try is a working public entrypoint with no paid calls',()=>{
+  const p=spawnSync('npm',['run','try','--','--json'],{
+    cwd:root,encoding:'utf8',timeout:45000,maxBuffer:256*1024});
+  assert.equal(p.status,0,p.stderr);
+  const begin=p.stdout.indexOf('{\n');
+  assert.ok(begin>=0);
+  const d=JSON.parse(p.stdout.slice(begin));
+  assert.equal(d.modelCalls,0);assert.equal(d.fileWrites,0);
+  assert.equal(d.repeated.exactRestore,true);
+  assert.equal(d.noRepeat.tokensSaved,0);
+  assert.equal(d.billedSavingsUsd,null);
+});
