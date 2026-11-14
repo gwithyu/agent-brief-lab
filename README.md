@@ -344,6 +344,52 @@ fixture; coding-edit accuracy and true provider cost remain unverified. An
 authenticated local CLI and live execution are required; this adapter and its
 mocked regression tests do not establish live A/B results.
 
+## Cursor Ask-mode code-replacement proposal A/B (read-only preview)
+
+The new `evaluation/patch-run.cjs` is a **bridge between the original four
+understanding questions and the full autonomous-edit benchmark**. It reuses the
+**same frozen 30 coding-edit fixtures**, but asks Cursor to return a strict
+JSON object of complete replacement source strings, instead of giving the
+model permission to edit any file. `evaluation/patch-proposals.cjs` grades the
+exact new bytes independently; unchanged or protected paths must never be
+returned as edits. Two unresolved tasks must request clarification without
+proposing any replacements.
+
+```sh
+node evaluation/patch-run.cjs --dry-run
+# Zero model calls; inspect the 30 tasks and the new proposal manifest SHA-256.
+
+# Opt-in: run on a machine with an already authenticated Cursor CLI.
+# One task pair = 2 actual model calls, by default.
+ROOT="$(mktemp -d "${TMPDIR:-/tmp/}agentbrief-proposals.XXXXXX")"
+node evaluation/patch-run.cjs --live \
+  --model gpt-5.3-codex-low --limit 1 --out "$ROOT/first-pair"
+# For more than 5 paired tasks, also pass --confirm-batch YES.
+```
+
+Only a fresh private `prompt.txt` is placed in each temporary run directory.
+The runner reuses the proven `--print --trust --mode=ask --sandbox enabled
+--output-format stream-json` invocation; **any recorded tool call makes the
+attempt invalid and stops the remaining calls**. No patch is applied, no
+model-authored source is executed, and original repository files must remain
+unchanged. Each arm is independently scored by exact final source bytes and
+a strict JSON response schema; malformed answers, invented paths, extra files,
+duplicate replacements, and failure to ask about unresolved questions fail.
+
+**Safety limitation:** Ask mode and Cursor sandbox settings are *not an OS
+process isolation boundary*. The CLI may still load user rules, discover MCP
+integrations, or access files outside the temporary directory under local
+permissions. A disposable OS account or VM with no personal data is still
+preferable. There is no automatic new login, credential transfer or
+`--force`/`--yolo` option. The runner keeps model receipts private in
+the system temp directory, and does not publish them to GitHub.
+
+**Evidence limitation:** passing this benchmark would show the model can
+**propose exact code replacements**, not that a coding agent safely performed
+edits in its own workspace. Local text-token counts are **not** native
+Cursor usage/cost, provider-billed savings, or a proof of real-world quality.
+A `--dry-run` report is not model evidence; it consumes zero Cursor quota.
+
 ## Synthetic coding-edit paired benchmark (experimental)
 
 A separate **30-distinct-task edit suite** now exists in
