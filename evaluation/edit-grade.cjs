@@ -23,8 +23,15 @@ function inspectTree(root) {
       const rel=prefix?prefix+'/'+ent.name:ent.name;
       const full=path.join(dir,ent.name);
       const st=fs.lstatSync(full);
+      if(found.size>64)throw Error('Exceeded 64 synthetic workspace entries');
       if(st.isSymbolicLink()||(!st.isFile()&&!st.isDirectory())){found.set(rel,{type:'nonregular'});continue;}
-      if(st.isDirectory()){visit(full,rel);continue;}
+      if(st.isDirectory()){
+        if(prefix.split('/').length>=5)throw Error('Synthetic workspace nesting limit exceeded');
+        if(fs.readdirSync(full).length===0)found.set(rel,{type:'empty_directory'});
+        else visit(full,rel);
+        continue;
+      }
+      if(st.size>256*1024){found.set(rel,{type:'oversized'});continue;}
       found.set(rel,{type:'file',content:fs.readFileSync(full),mode:st.mode&0o777});
     }
   }
