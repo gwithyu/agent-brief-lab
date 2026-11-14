@@ -7,6 +7,23 @@ const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const object=o=>o!==null&&typeof o==='object'&&!Array.isArray(o);
 const finiteMoney=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0;
 const round=n=>Math.round((n+Number.EPSILON)*1e8)/1e8;
+// Use integer units of 10^-12 USD to avoid binary floating-point summation
+// inventing or erasing changes near the price-of-a-single-token scale.
+const USD_SCALE=1000000000000n;
+function moneyUnits(value){
+  if(!finiteMoney(value)||value>1e9)throw Error('invalid_charge_amount');
+  const m=String(value).match(/^(\d+)(?:\.(\d+))?(?:e([+-]?\d+))?$/i);
+  if(!m)throw Error('invalid_charge_amount');
+  const digits=BigInt(m[1]+(m[2]??''));
+  const power=12-(m[2]?.length??0)+Number(m[3]??0);
+  if(power>25||power< -330)throw Error('unsupported_charge_precision');
+  if(power>=0)return digits*10n**BigInt(power);
+  const divisor=10n**BigInt(-power);
+  if(digits%divisor!==0n)throw Error('unsupported_charge_precision');
+  return digits/divisor;
+}
+function fromMoneyUnits(units){return Number(units)/Number(USD_SCALE);}
+
 function checkKeys(o,required,optional=[]){
   if(!object(o)||required.some(k=>!own(o,k))||Object.keys(o).some(k=>![...required,...optional].includes(k)))
     throw Error('invalid_observation_schema');
@@ -102,8 +119,7 @@ function analyzeEfficiency(report,charges=null){
       ||o.attemptCount!==1)throw Error('invalid_charge_observation');
     // The current Cursor harness invokes exactly one CLI process per arm and
     // does not log native retry usage. Refuse fictional retry counts.
-    if(o.billedCostUsd!==null&&(!finiteMoney(o.billedCostUsd)||o.billedCostUsd>1e9))
-      throw Error('invalid_charge_amount');
+    if(o.billedCostUsd!==null)moneyUnits(o.billedCostUsd);
     const tokenFields=['providerInputTokens','providerCachedInputTokens','providerOutputTokens','providerReasoningTokens'];
     for(const k of tokenFields)
       if(own(o,k)&&o[k]!==null&&(!Number.isSafeInteger(o[k])||o[k]<0))
@@ -125,12 +141,13 @@ function analyzeEfficiency(report,charges=null){
     output.cost.status='missing_billed_cost';
     return output;
   }
-  const amounts=arm=>all.filter(x=>x.arm===arm).reduce((n,x)=>n+x.billedCostUsd,0);
-  const raw=amounts('raw'),prepared=amounts('prepared');
-  if(!Number.isFinite(raw)||!Number.isFinite(prepared))throw Error('invalid_charge_total');
-  const rawPer=rawPassed?raw/rawPassed:null;
-  const preparedPer=preparedPassed?prepared/preparedPassed:null;
-  const advantage=rawPer!==null&&preparedPer!==null&&preparedPer<rawPer;
+  const units=arm=>all.filter(x=>x.arm===arm).reduce((n,x)=>n+moneyUnits(x.billedCostUsd),0n);
+  const rawUnits=units('raw'),preparedUnits=units('prepared');
+  const raw=fromMoneyUnits(rawUnits),prepared=fromMoneyUnits(preparedUnits);
+  const rawPer=rawPassed?fromMoneyUnits(rawUnits)/rawPassed:null;
+  const preparedPer=preparedPassed?fromMoneyUnits(preparedUnits)/preparedPassed:null;
+  const advantage=rawPassed>0&&preparedPassed>0
+    &&preparedUnits*BigInt(rawPassed)<rawUnits*BigInt(preparedPassed);
   const tokenTotals=arm=>{
     const relevant=all.filter(x=>x.arm===arm);
     const fields=['providerInputTokens','providerCachedInputTokens','providerOutputTokens','providerReasoningTokens'];
@@ -143,7 +160,9 @@ function analyzeEfficiency(report,charges=null){
     rawTotalUsd:raw,preparedTotalUsd:prepared,
     rawUsdPerSuccess:rawPer,preparedUsdPerSuccess:preparedPer,
     rawProviderTokenCounts:tokenTotals('raw'),preparedProviderTokenCounts:tokenTotals('prepared'),
-    deltaUsdPerSuccess:rawPer===null||preparedPer===null?null:rawPer-preparedPer,
+    deltaUsdPerSuccess:rawPer===null||preparedPer===null?null:
+      fromMoneyUnits(rawUnits*BigInt(preparedPassed)-preparedUnits*BigInt(rawPassed))
+        /(rawPassed*preparedPassed),
     reductionFractionPerSuccess:rawPer===null||rawPer<=0||preparedPer===null
       ?null:round((rawPer-preparedPer)/rawPer),
     actualInvoiceVerified:false
