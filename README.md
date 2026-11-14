@@ -371,14 +371,13 @@ without private files, install dependencies in a clean checkout and use a
 OUT="$(mktemp -d "${TMPDIR:-/tmp/}agentbrief-edit.XXXXXX")"
 # The runner creates the result directory itself, so choose an unused child.
 node evaluation/edit-run.cjs --live --model gpt-5.3-codex-low \
-  --limit 1 --out "$OUT/first-pair"
+  --confirm-isolated-env YES --limit 1 --out "$OUT/first-pair"
 # Up to 30 pairs (= 60 agent calls), explicit opt-in and additional quota:
 # node evaluation/edit-run.cjs --live --model MODEL --limit 30 \
-#   --confirm-batch YES --out "$OUT/all-pairs"
+#   --confirm-isolated-env YES --confirm-batch YES --out "$OUT/all-pairs"
 ```
 
-**Live mode defaults to only one task pair (two model calls)** and requires
-`--confirm-batch YES` for more than five task pairs. Never copy credentials
+**Live mode defaults to only one task pair (two model calls)**, and will refuse any live edit run without the explicit `--confirm-isolated-env YES` acknowledgement that the caller has provisioned a disposable OS account/VM. This flag is an informed-consent gate, **not a sandbox detection or security guarantee**. More than five task pairs also require `--confirm-batch YES`. Never copy credentials
 or publish raw receipts. Jobs have independent, mode-0700 workspaces inside the
 system temporary directory. Cursor CLI uses `--print --trust --mode=agent
 --sandbox enabled --output-format stream-json` without `--force` /
@@ -387,7 +386,7 @@ without approval; **neither `--trust` nor Cursor sandboxing confines the
 agent to that directory**. Local rules, plugins or MCP integrations may still
 be loaded. Use a disposable account/VM for actual agent editing tests.
 
-The runner also audits Cursor `stream-json` tool events: only recognized file read/edit tool types are eligible; unknown tools, shell/terminal/MCP activity, path escapes, symlink targets outside the workspace, unmatched tool-call events and incomplete streams invalidate the run. The per-run report includes a count of audited tool calls and a stable failure reason. **This is after-the-fact evidence validation, not prevention, confinement, or proof that the model could not access private files.** Tests use a fake Cursor executable for complete CLI-path coverage; no new real editing-agent calls are implied.
+The runner also audits Cursor `stream-json` receipts: it requires a consistent session ID and exact CLI-reported working directory; only recognized file read/edit tool types are eligible. Unknown tools, shell/terminal/MCP activity, hidden tool-use events, path escapes, symlink targets outside the workspace, mismatched start/completion arguments, unsuccessful tool receipts and incomplete streams invalidate the run. An actual expected file change with **no recorded tool call** also fails as `unaudited_edit`. The per-run report includes a count of audited tool calls and a stable failure reason. **This is after-the-fact evidence validation, not prevention, confinement, or proof that the model could not access private files.** Tests use a fake Cursor executable for complete CLI-path coverage; no new real editing-agent calls are implied.
 
 The external grader reads actual workspace files as bytes, **does not
 execute model-authored code**, rejects missing/extra/renamed/symlinked files,
