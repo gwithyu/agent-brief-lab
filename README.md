@@ -406,9 +406,11 @@ A `--dry-run` report is not model evidence; it consumes zero Cursor quota.
 ## Cost per successful task (quality-gated, experimental)
 
 The new **read-only** `evaluation/cost-quality.cjs` summarizes a **completed**
-Cursor Ask-mode patch A/B report. It is **not** a price estimator from local
-Token counts and does **not** call Cursor, apply patches or read your code.
-After a real paired run has produced `report.json`:
+Cursor Ask-mode code-proposal A/B **or** synthetic autonomous-edit A/B report.
+Both runners also attach a cost-unknown quality summary automatically when
+their pair comparison is complete and valid. This tool is **not** a price
+estimator from local Token counts and does **not** call Cursor, apply patches
+or read your code. After a real paired run has produced `report.json`:
 
 ```sh
 node evaluation/cost-quality.cjs --report "$ROOT/first-pair/report.json"
