@@ -7,7 +7,7 @@ const {captureBaseline}=require('./execution.cjs');
 const {validateIntent,intentDigest,tokens}=require('./index.cjs');
 
 const safeText=(x,max)=>typeof x==='string'&&x.trim()&&x.length<=max
-  &&!x.includes('\0')&&!/[\uD800-\uDFFF]/u.test(x);
+  &&!x.includes('\0')&&Buffer.from(x,'utf8').toString('utf8')===x;
 function parseArgs(args){
   if(args.length===1&&['--help','-h'].includes(args[0]))return {help:true};
   if(args.length<8||args.length%2!==0)throw Error('invalid_arguments');
