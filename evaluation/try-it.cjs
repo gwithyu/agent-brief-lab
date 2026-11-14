@@ -105,13 +105,18 @@ function display(x){
       'In-memory accepted boolean changes: '+x.acceptedInMemory,
     'No file content printed, files changed or provider billing measured.'].join('\n');
 }
-if(require.main===module){
-  try{const r=run();console.log(r.help?HELP:r.json?JSON.stringify(r.value,null,2):display(r.value))}
-  catch(e){
+function runCli(args=process.argv.slice(2),io={out:console.log,err:console.error}){
+  try{
+    const r=run(args);
+    io.out(r.help?HELP:r.json?JSON.stringify(r.value,null,2):display(r.value));
+    return 0;
+  }catch(e){
+    // Source content, absolute paths and stack traces must not escape.
     const safe=['invalid_arguments','invalid_file','unsupported_source','invalid_history',
       'invalid_history_json','restore_failure','unexpected_no_gain'];
-    console.error('First run refused: '+(safe.includes(e.message)?e.message:'invalid_input'));
-    process.exitCode=1;
+    io.err('First run refused: '+(safe.includes(e.message)?e.message:'invalid_input'));
+    return 1;
   }
 }
-module.exports={parseArgs,readFile,historyResult,sourceResult,demo,run,display};
+if(require.main===module)process.exitCode=runCli();
+module.exports={parseArgs,readFile,historyResult,sourceResult,demo,run,display,runCli};
