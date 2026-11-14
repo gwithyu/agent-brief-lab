@@ -123,8 +123,15 @@ function evaluateEdits(items,invoke){
       auditedToolCalls:completion.toolEvents??null,failureReason});
     if(completion.state!=='completed'||grade.scopeViolations.length)stopped=true;
   }
-  return {state:stopped?'blocked':runs.every(r=>r.state==='completed')?'completed':'invalid',planned:runs.length,attempted:runs.filter(r=>r.state!=='not_run').length,
-    modelCompleted:runs.filter(r=>r.state==='completed').length,passed:runs.filter(r=>r.passed).length,comparisonComplete:runs.every(r=>r.state==='completed'),runs};
+  const reportedModels=[...new Set(runs.filter(r=>r.state==='completed').map(r=>r.reportedModel))];
+  const sameModel=reportedModels.length<=1;
+  const allCompleted=runs.every(r=>r.state==='completed');
+  return {state:stopped?'blocked':allCompleted&&sameModel?'completed':'invalid',
+    reason:!sameModel?'reported_model_drift':null,
+    planned:runs.length,attempted:runs.filter(r=>r.state!=='not_run').length,
+    modelCompleted:runs.filter(r=>r.state==='completed').length,
+    passed:runs.filter(r=>r.passed).length,
+    comparisonComplete:allCompleted&&sameModel,reportedModels,runs};
 }
 function parseArgs(args){
   if(!args.length||args.length===1&&args[0]==='--dry-run')return {live:false};
