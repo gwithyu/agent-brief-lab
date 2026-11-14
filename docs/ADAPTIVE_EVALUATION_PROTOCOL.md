@@ -124,8 +124,9 @@ benchmark has **not yet produced real Cursor model results**.
 
 ## Quality-gated cost per successful task (owner-supplied billing evidence)
 
-After an actual **completed** Cursor Ask-mode code-proposal A/B run,
-`evaluation/patch-run.cjs` now attaches an `efficiency` summary to its
+After an actual **completed** Cursor Ask-mode code-proposal A/B or
+synthetic autonomous-edit A/B run, `evaluation/patch-run.cjs` and
+`evaluation/edit-run.cjs` attach an `efficiency` summary to their
 private `report.json`. Task pairs must match by ID and repeat, every arm
 must have a completed terminal, report source and Git integrity must pass,
 and one reported model identity must be consistent. The summary compares
