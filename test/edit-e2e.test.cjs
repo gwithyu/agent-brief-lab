@@ -22,6 +22,15 @@ test('tool audit rejects shell, unseen tools, pending calls and missing workspac
     const clean=parseTerminal(stream([base,call('readToolCall'),call('readToolCall','completed'),finish]),root);
     assert.equal(clean.state,'completed');assert.equal(clean.toolEvents,1);
     assert.equal(parseTerminal(stream([base,{type:'unexpected'},finish]),root).reason,'invalid_event');
+    const outside=path.join(path.dirname(root),'unrelated-'+path.basename(root)+'.txt');
+    fs.writeFileSync(outside,'do not inspect');
+    try {
+      assert.equal(parseTerminal(stream([base,call('readToolCall','started',outside),finish]),root).reason,
+        'out_of_workspace_tool_path');
+      fs.symlinkSync(outside,path.join(root,'link'));
+      assert.equal(parseTerminal(stream([base,call('readToolCall','started','link'),finish]),root).reason,
+        'out_of_workspace_tool_path');
+    } finally {fs.rmSync(outside,{force:true});}
   }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
 function fakeAgentMain(){
@@ -75,6 +84,7 @@ test('end-to-end CLI invokes fake Cursor twice and grades real disk edits',()=>{
     assert.equal(report.planned,2);assert.equal(report.attempted,2);
     assert.equal(report.modelCompleted,2);assert.equal(report.passed,2);
     assert.equal(report.state,'completed');assert.equal(report.gitIntegrity,'PASS');
+    assert.deepEqual(report.runs.map(x=>x.auditedToolCalls),[1,1]);
     assert.ok(report.runs.every(x=>x.providerInputTokens===null&&x.providerBilledCost===null));
     for(const dir of fs.readdirSync(path.join(out,'workspaces'))){
       const full=path.join(out,'workspaces',dir);
