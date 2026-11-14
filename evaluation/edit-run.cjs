@@ -128,10 +128,11 @@ function evaluateEdits(items,invoke){
 }
 function parseArgs(args){
   if(!args.length||args.length===1&&args[0]==='--dry-run')return {live:false};
-  if(args[0]!=='--live'||args.length%2!==1)throw Error('Usage: --dry-run or --live --model ID --out NEW_TEMP_DIR [--limit 1..30] [--confirm-batch YES]');
-  const vals={};for(let i=1;i<args.length;i+=2){if(!['--model','--out','--limit','--confirm-batch'].includes(args[i])||!args[i+1]||Object.hasOwn(vals,args[i]))throw Error('Invalid live options');vals[args[i]]=args[i+1];}
+  if(args[0]!=='--live'||args.length%2!==1)throw Error('Usage: --dry-run or --live --model ID --out NEW_TEMP_DIR --confirm-isolated-env YES [--limit 1..30] [--confirm-batch YES]');
+  const vals={};for(let i=1;i<args.length;i+=2){if(!['--model','--out','--limit','--confirm-batch','--confirm-isolated-env'].includes(args[i])||!args[i+1]||Object.hasOwn(vals,args[i]))throw Error('Invalid live options');vals[args[i]]=args[i+1];}
   const limit=vals['--limit']===undefined?1:Number(vals['--limit']);
   if(!Number.isInteger(limit)||limit<1||limit>30||!vals['--model']||!vals['--out'])throw Error('Model, output and limit 1..30 required');
+  if(vals['--confirm-isolated-env']!=='YES')throw Error('Live editing requires --confirm-isolated-env YES: only run in a disposable OS account/VM without secrets or personal integrations');
   if(limit>5&&vals['--confirm-batch']!=='YES')throw Error('For >5 tasks specify --confirm-batch YES (uses Cursor quota)');
   return {live:true,model:vals['--model'],out:vals['--out'],limit};
 }
