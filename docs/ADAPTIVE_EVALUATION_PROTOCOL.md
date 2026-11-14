@@ -54,6 +54,28 @@ Otherwise return the baseline with a reason code: `NO_GAIN`, `MISSING_REQUIREMEN
 
 Use `null` for unavailable observations, never zero. Preserve raw run receipts outside public source if they contain secrets or user data. Redact before publication.
 
+## Cursor CLI comprehension smoke adapter
+
+`node evaluation/cursor-run.cjs --dry-run` prepares four fixed synthetic
+requirement-comprehension cases without any model calls. The opt-in
+`--live --model MODEL --out /private/new/dir` mode uses the owner's
+**locally authenticated** Cursor CLI and attempts eight separate
+`agent --print --mode=ask --sandbox enabled --output-format stream-json`
+sessions by default. It requires an explicitly selected model.
+
+The stream parser checks for exactly one successful terminal event and
+rejects recorded tool calls/interactions, missing events, invalid JSON,
+wrong answers, dirty Git state or a changing HEAD. All traces are
+private by default and each task/arm gets a fresh directory. Ask mode
+and CLI sandbox settings must **not** be represented as absolute
+isolation; tool execution could already have occurred before detection.
+Use only synthetic data and a disposable environment.
+
+Model provider tokens, cached input tokens, billed cost and reasoning
+tokens remain `null` unless independently supported by provider data.
+The four synthetic A/B pairs are **not** the preregistered >=30 distinct
+coding-agent tasks and cannot satisfy the full release gate.
+
 ## Release gates
 
 1. Deterministic local measurements and negative cases reproducible on supported Node versions.
