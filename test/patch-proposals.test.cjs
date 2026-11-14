@@ -91,6 +91,11 @@ test('dry run is zero-call; live defaults to one pair and high quota needs confi
   assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/unique','--limit','30']),/confirm-batch/);
   assert.equal(parseArgs(['--live','--model','m','--out','/tmp/unique','--limit','30','--confirm-batch','YES']).limit,30);
   assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/unique','--repeats','4']));
+  assert.deepEqual(parseArgs(['--live','--model','m','--out','/tmp/unique','--cases','multi-theme,unresolved-spacing']).caseIds,
+    ['multi-theme','unresolved-spacing']);
+  assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/unique','--cases','multi-theme,multi-theme']),/Invalid case/);
+  assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/unique','--cases','multi-theme','--limit','2']),/both/);
+  assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/unique','--cases','multi-theme,js-limit,css-opacity,unresolved-spacing,js-debug,multi-speed']),/confirm-batch/);
 });
 function fakeAgentMain(){
   const fs=require('node:fs');
@@ -120,9 +125,9 @@ function withFakeAgent(fn){
     const js=path.join(dir,'stub.cjs');fs.writeFileSync(js,'('+fakeAgentMain.toString()+')();\n',{mode:0o600});
     const agent=path.join(bin,'agent');
     fs.writeFileSync(agent,'#!/bin/sh\nexec "'+process.execPath+'" "'+js+'" "$@"\n',{mode:0o700});
-    const run=(name,bad=false)=>{
+    const run=(name,bad=false,extra=[])=>{
       const out=path.join(dir,name);
-      const r=spawnSync(process.execPath,['evaluation/patch-run.cjs','--live','--model','fake','--out',out],
+      const r=spawnSync(process.execPath,['evaluation/patch-run.cjs','--live','--model','fake','--out',out,...extra],
         {cwd:path.resolve(__dirname,'..'),encoding:'utf8',timeout:30000,
           env:{...process.env,STUB_BAD_TOOL:bad?'1':'',PATH:bin+path.delimiter+process.env.PATH}});
       return {r,report:fs.existsSync(path.join(out,'report.json'))
@@ -153,5 +158,14 @@ test('full Ask-mode subprocess E2E blocks if Cursor uses any tool',()=>{
     assert.equal(report.modelCompleted,0);
     assert.equal(report.state,'blocked');
     assert.equal(report.runs[1].state,'not_run');
+  });
+});
+
+test('specified unknown case fails before any billable Cursor call',()=>{
+  withFakeAgent(run=>{
+    const {r,report}=run('unknown',false,['--cases','nonexistent-case']);
+    assert.equal(r.status,1);
+    assert.equal(report,null);
+    assert.match(r.stderr,/Unknown case ID/);
   });
 });
