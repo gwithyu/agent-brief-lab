@@ -100,7 +100,10 @@ strict and not a substitute for task-specific behavioral tests.
 
 `evaluation/edit-run.cjs --dry-run` (default) makes zero model calls;
 live mode is explicitly opted in and limited to one pair by default.
->5 pairs require `--confirm-batch YES`. Each arm has an independent
+Any live invocation also requires `--confirm-isolated-env YES` to acknowledge
+that the caller has prepared a disposable OS account or VM without private
+files or personal integrations. This is **not an automatic isolation check**.
+>5 pairs additionally require `--confirm-batch YES`. Each arm has an independent
 private temporary directory and fresh Cursor CLI session in Agent mode;
 model token usage and billing remain `null`. `--trust` only skips workspace
 trust; it is not a sandbox or an authorization to run everything.
@@ -108,11 +111,15 @@ Cursor might still read outside the workspace under local settings; use a
 disposable OS account or VM with no credentials or private files.
 The output report includes the manifest fingerprint, code revision,
 model selection, per-arm status, exact acceptance and scope results. Cursor
-`stream-json` event receipts are audited for recognized file tools, matching
-started/completed call IDs and file paths located inside the synthetic
-workspace. Unknown/forbidden tools, path escapes, dangling tool calls or
-missing terminal events fail closed. This is after-the-fact evidence
-validation; it does not isolate the process or undo side effects.
+`stream-json` event receipts are audited for a single stable session
+ID, CLI-reported working-directory identity, recognized file tools, matching
+started/completed call IDs, equal tool arguments and paths located inside
+the synthetic workspace. Unknown/forbidden tools, path escapes,
+unexpected assistant tool-use events, failed tool receipts or missing
+terminal events fail closed. An observed expected file change without an
+audited edit tool event is graded `unaudited_edit`, not success.
+This is after-the-fact evidence validation; it does not isolate the
+process or undo side effects.
 
 Full CLI integration tests launch a synthetic fake `agent` executable
 and verify that expected file modifications pass, forbidden protected-file
