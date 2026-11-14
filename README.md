@@ -451,9 +451,7 @@ comparison sets `ownerReportedSavingsCandidate: true`, never
 A 30-distinct-task threshold is recorded as a study-design signal, not
 proof that synthetic tasks represent real development workloads.
 
-The comparison counts every observed failure in the denominator and makes
-the tradeoff visible: **total observed USD spent / number of correctly
-completed tasks** for each arm, with task pairs matched by ID and repeat.
+The comparison includes the cost of **every attempted task, including failures, in the numerator** and uses only the number of **correctly completed tasks in the denominator**. Its metric is **total observed USD spent / number of correctly completed tasks** for each arm, with pairs matched by ID and repeat.
 Any raw-correct/prepared-wrong case is explicitly reported as a quality
 regression, preventing a positive recommendation for that sample.
 As a synthetic *illustration only*: spending $0.20 for two successes costs
