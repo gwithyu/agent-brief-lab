@@ -95,10 +95,20 @@ function analyzeEfficiency(report,charges=null){
       deltaUsdPerSuccess:null,reductionFractionPerSuccess:null,
       actualInvoiceVerified:false
     },
+    sample:{
+      distinctTaskCount:new Set(pairs.map(p=>p.case)).size,
+      meets30DistinctTaskGate:new Set(pairs.map(p=>p.case)).size>=30,
+      isRepresentativeProductionSample:false,
+      evidenceAuthenticatedByProvider:false
+    },
     observedOnThisSample:{
       qualityNonInferior:regressions.length===0&&preparedPassed>=rawPassed,
       lowerCostPerSuccess:null,
-      qualifiesAsMeasuredWin:false
+      ownerReportedSavingsCandidate:false,
+      // A declaration is never independent evidence. This is deliberately
+      // false even if a user-supplied price table looks favorable.
+      qualifiesAsMeasuredWin:false,
+      verifiedSavingsClaim:false
     },
     warning:'Local tokenizer counts are not provider usage or invoice charges. These are narrow synthetic tasks, not representative production workloads; imported costs are owner-supplied and not independently authenticated.'
   };
@@ -168,8 +178,12 @@ function analyzeEfficiency(report,charges=null){
     actualInvoiceVerified:false
   };
   output.observedOnThisSample.lowerCostPerSuccess=rawPer===null||preparedPer===null?null:advantage;
-  output.observedOnThisSample.qualifiesAsMeasuredWin=
+  output.observedOnThisSample.ownerReportedSavingsCandidate=
     output.observedOnThisSample.qualityNonInferior&&advantage;
+  // Owner-imported cost entries are not an authenticated Cursor invoice or
+  // native usage receipt. Never upgrade them to a verified savings claim.
+  output.observedOnThisSample.qualifiesAsMeasuredWin=false;
+  output.observedOnThisSample.verifiedSavingsClaim=false;
   return output;
 }
 function buildChargeTemplate(report){
