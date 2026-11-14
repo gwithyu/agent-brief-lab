@@ -20,7 +20,7 @@ test('manifest has 30 distinct preregistered tasks and immutable fingerprint',()
   for(const c of cases){
     assert.ok(c.allowed.length);
     for(const prompt of Object.values(c.prompts)){
-      const document=JSON.parse(prompt.split('DOCUMENT:\\n').at(-1));
+      const document=JSON.parse(prompt.split('DOCUMENT:').at(-1).trim());
       const readable=document.instruction;
       let embedded;try{embedded=JSON.parse(readable).request;}catch{embedded=readable;}
       assert.ok(embedded.includes(c.intent.request),c.id);
