@@ -60,7 +60,12 @@ test('same exact quality and lower declared cost may win on this sample only',()
   assert.equal(result.cost.rawUsdPerSuccess,0.10);
   assert.equal(result.cost.preparedUsdPerSuccess,0.06);
   assert.equal(result.cost.reductionFractionPerSuccess,0.4);
-  assert.equal(result.observedOnThisSample.qualifiesAsMeasuredWin,true);
+  assert.equal(result.observedOnThisSample.ownerReportedSavingsCandidate,true);
+  assert.equal(result.observedOnThisSample.qualifiesAsMeasuredWin,false);
+  assert.equal(result.observedOnThisSample.verifiedSavingsClaim,false);
+  assert.equal(result.sample.distinctTaskCount,2);
+  assert.equal(result.sample.meets30DistinctTaskGate,false);
+  assert.equal(result.sample.evidenceAuthenticatedByProvider,false);
   assert.equal(result.cost.source[0],'provider_export');
   assert.deepEqual(result.cost.rawProviderTokenCounts,{providerInputTokens:200,providerCachedInputTokens:80,providerOutputTokens:40,providerReasoningTokens:10});
 });
@@ -158,7 +163,8 @@ test('sub-cent charges retain real precision in cost comparisons',()=>{
   assert.ok(x.cost.preparedTotalUsd>0);
   assert.equal(x.cost.rawUsdPerSuccess,0.000000001);
   assert.equal(x.cost.preparedUsdPerSuccess,0.0000000005);
-  assert.equal(x.observedOnThisSample.qualifiesAsMeasuredWin,true);
+  assert.equal(x.observedOnThisSample.ownerReportedSavingsCandidate,true);
+  assert.equal(x.observedOnThisSample.qualifiesAsMeasuredWin,false);
 });
 test('read-only command consumes private JSON and writes only sanitized aggregate stdout',()=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'brief-cost-check-'));
