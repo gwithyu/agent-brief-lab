@@ -344,6 +344,60 @@ fixture; coding-edit accuracy and true provider cost remain unverified. An
 authenticated local CLI and live execution are required; this adapter and its
 mocked regression tests do not establish live A/B results.
 
+## Synthetic coding-edit paired benchmark (experimental)
+
+A separate **30-distinct-task edit suite** now exists in
+`evaluation/edit-cases.cjs`, with file-system acceptance grading in
+`evaluation/edit-grade.cjs` and a **default dry-run** Cursor runner:
+
+```sh
+node evaluation/edit-run.cjs --dry-run
+# Runs zero model calls; prints 30 fixture IDs, local text-token counts,
+# category labels and a SHA-256 digest of complete task inputs and expectations.
+```
+
+The 30 deliberately small, preregistered synthetic tasks comprise
+9 JSON configuration edits, 9 CSS declaration edits, 8 CommonJS setting
+edits, 2 multi-file changes and 2 unresolved/no-change tasks. Historical
+tool snapshots vary from no repeats to eight repeats and include intentionally
+stale requests or instruction-like text. **No live editing-agent quality
+measurements are claimed yet.**
+
+For an **opt-in** Cursor CLI execution, in a disposable VM or OS account
+without private files, install dependencies in a clean checkout and use a
+**new path inside the OS temporary directory**:
+
+```sh
+OUT="$(mktemp -d "${TMPDIR:-/tmp/}agentbrief-edit.XXXXXX")"
+# The runner creates the result directory itself, so choose an unused child.
+node evaluation/edit-run.cjs --live --model gpt-5.3-codex-low \
+  --limit 1 --out "$OUT/first-pair"
+# Up to 30 pairs (= 60 agent calls), explicit opt-in and additional quota:
+# node evaluation/edit-run.cjs --live --model MODEL --limit 30 \
+#   --confirm-batch YES --out "$OUT/all-pairs"
+```
+
+**Live mode defaults to only one task pair (two model calls)** and requires
+`--confirm-batch YES` for more than five task pairs. Never copy credentials
+or publish raw receipts. Jobs have independent, mode-0700 workspaces inside the
+system temporary directory. Cursor CLI uses `--print --trust --mode=agent
+--sandbox enabled --output-format stream-json` without `--force` /
+`--yolo` or session resumption. In print mode, some operations can proceed
+without approval; **neither `--trust` nor Cursor sandboxing confines the
+agent to that directory**. Local rules, plugins or MCP integrations may still
+be loaded. Use a disposable account/VM for actual agent editing tests.
+
+The external grader reads actual workspace files as bytes, **does not
+execute model-authored code**, rejects missing/extra/renamed/symlinked files,
+protected-file modifications and unexpected modes, and requires exact
+targeted output with unrelated bytes preserved. This strict byte-exact
+benchmark is *narrow*, not a representative sample of real-world coding
+projects. A model's written success claim cannot create a pass. Blocked
+starts and scope violations stop later calls; wrong answers are recorded,
+not hidden. Provider usage and billing fields remain **null**, not guessed
+from local token counts. The current 30-case runner is **not** a full
+production-quality or cost-equivalence validation.
+
 ## Evidence, with limits
 
 141 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
