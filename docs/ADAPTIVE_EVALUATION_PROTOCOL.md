@@ -81,6 +81,40 @@ tokens remain `null` unless independently supported by provider data.
 The four synthetic A/B pairs are **not** the preregistered >=30 distinct
 coding-agent tasks and cannot satisfy the full release gate.
 
+## Deterministic 30-task coding-edit experiment (synthetic preview)
+
+The frozen generator `evaluation/edit-cases.cjs` creates exactly 30
+**distinct narrow synthetic edit instructions** (JSON/CSS/JS single-file,
+multi-file and unresolved/no-change). Case input histories deliberately mix
+0/1/2/4/8 repeated snapshots, stale user text and untrusted tool text.
+`manifestDigest` covers **complete raw/prepared prompts**, case files,
+expected output bytes and allowed paths. Each arm receives the exact same
+task intent and protected scope; source-code rewrite candidates are rejected
+for this benchmark rather than silently shipped to an editing model.
+
+`evaluation/edit-grade.cjs` materializes fixed bytes and checks real
+post-run files against expected bytes. Protected-file changes, added/deleted
+paths, symlinks and mode changes fail. It deliberately **never runs code
+authored by the editing agent**. This byte-for-byte oracle is intentionally
+strict and not a substitute for task-specific behavioral tests.
+
+`evaluation/edit-run.cjs --dry-run` (default) makes zero model calls;
+live mode is explicitly opted in and limited to one pair by default.
+>5 pairs require `--confirm-batch YES`. Each arm has an independent
+private temporary directory and fresh Cursor CLI session in Agent mode;
+model token usage and billing remain `null`. `--trust` only skips workspace
+trust; it is not a sandbox or an authorization to run everything.
+Cursor might still read outside the workspace under local settings; use a
+disposable OS account or VM with no credentials or private files.
+The output report includes the manifest fingerprint, code revision,
+model selection, per-arm status, exact acceptance and scope results.
+
+**Caution:** having 30 **fixture tasks** does not itself satisfy the
+preregistered >=30 real coding-agent task quality gate. These narrow
+synthetic tasks, static byte equality and unavailable provider usage
+cannot support claims of general coding reliability, production safety,
+or billed savings. The live 30-task edit suite has not yet been run.
+
 ## Release gates
 
 1. Deterministic local measurements and negative cases reproducible on supported Node versions.
