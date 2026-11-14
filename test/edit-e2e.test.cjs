@@ -6,30 +6,46 @@ const base={type:'system',subtype:'init',model:'test-model',session_id:'syntheti
 const finish={type:'result',subtype:'success',is_error:false,duration_ms:17,result:'Done',session_id:'synthetic'};
 const stream=items=>({status:0,stdout:items.map(JSON.stringify).join('\n')+'\n',stderr:''});
 
-test('tool audit rejects shell, unseen tools, pending calls and missing workspace',()=>{
+test('tool audit rejects unsafe operations, mismatched receipts and inaccurate workspace/session evidence',()=>{
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'brief-tool-audit-'));
   try{
     fs.writeFileSync(path.join(root,'source.txt'),'safe');
+    fs.writeFileSync(path.join(root,'other.txt'),'other');
+    const scoped=items=>parseTerminal(stream(items.map(e=>({
+      ...e,session_id:e.session_id??'synthetic',...(e.type==='system'?{cwd:e.cwd??root}:{})
+    }))),root);
     const call=(kind,subtype='started',target='source.txt',call_id='x')=>({
-      type:'tool_call',subtype,call_id,tool_call:{[kind]:{args:{path:target}}}});
-    assert.equal(parseTerminal(stream([base,call('shellToolCall'),finish]),root).reason,'forbidden_tool_reported');
-    assert.equal(parseTerminal(stream([base,call('mysteryToolCall'),finish]),root).reason,'forbidden_tool_reported');
-    assert.equal(parseTerminal(stream([base,call('readToolCall'),finish]),root).reason,'unfinished_tool_call');
-    assert.equal(parseTerminal(stream([base,call('readToolCall','completed'),finish]),root).reason,'unmatched_tool_completion');
-    assert.equal(parseTerminal(stream([base,call('readToolCall','started'),call('readToolCall','started'),finish]),root).reason,'duplicate_tool_start');
+      type:'tool_call',subtype,call_id,tool_call:{[kind]:{args:{path:target},
+        ...(subtype==='completed'?{result:{success:{}}}:{})}}});
+    assert.equal(scoped([base,call('shellToolCall'),finish]).reason,'forbidden_tool_reported');
+    assert.equal(scoped([base,call('mysteryToolCall'),finish]).reason,'forbidden_tool_reported');
+    assert.equal(scoped([base,call('readToolCall'),finish]).reason,'unfinished_tool_call');
+    assert.equal(scoped([base,call('readToolCall','completed'),finish]).reason,'unmatched_tool_completion');
+    assert.equal(scoped([base,call('readToolCall','started'),call('readToolCall','started'),finish]).reason,'duplicate_tool_start');
     assert.equal(parseTerminal(stream([base,call('readToolCall'),call('readToolCall','completed'),finish])).reason,'unverified_tool_workspace');
-    assert.equal(parseTerminal(stream([base,call('readToolCall','started','../outside'),finish]),root).reason,'unverifiable_tool_path');
-    const clean=parseTerminal(stream([base,call('readToolCall'),call('readToolCall','completed'),finish]),root);
+    assert.equal(scoped([base,call('readToolCall','started','../outside'),finish]).reason,'unverifiable_tool_path');
+    const clean=scoped([base,call('readToolCall'),call('readToolCall','completed'),finish]);
     assert.equal(clean.state,'completed');assert.equal(clean.toolEvents,1);
-    assert.equal(parseTerminal(stream([base,{type:'unexpected'},finish]),root).reason,'invalid_event');
+    assert.equal(scoped([base,{type:'unexpected'},finish]).reason,'invalid_event');
+    assert.equal(scoped([{...base,cwd:os.tmpdir()},finish]).reason,'workspace_mismatch');
+    assert.equal(scoped([base,{...finish,session_id:'wrong-session'}]).reason,'session_mismatch');
+    assert.equal(scoped([base,{type:'assistant',subtype:'tool_use_start',tool_call:{readToolCall:{}}},finish]).reason,'unaudited_assistant_tool');
+    assert.equal(scoped([base,call('readToolCall'),call('readToolCall','completed','other.txt'),finish]).reason,'tool_event_mismatch');
+    const noSuccess=call('readToolCall','completed');
+    noSuccess.tool_call.readToolCall.result={};
+    assert.equal(scoped([base,call('readToolCall'),noSuccess,finish]).reason,'tool_failed_or_unverified');
     const outside=path.join(path.dirname(root),'unrelated-'+path.basename(root)+'.txt');
     fs.writeFileSync(outside,'do not inspect');
     try {
-      assert.equal(parseTerminal(stream([base,call('readToolCall','started',outside),finish]),root).reason,
+      assert.equal(scoped([base,call('readToolCall','started',outside),finish]).reason,
         'out_of_workspace_tool_path');
       fs.symlinkSync(outside,path.join(root,'link'));
-      assert.equal(parseTerminal(stream([base,call('readToolCall','started','link'),finish]),root).reason,
+      assert.equal(scoped([base,call('readToolCall','started','link'),finish]).reason,
         'out_of_workspace_tool_path');
+      const wrongResult=call('readToolCall','completed');
+      wrongResult.tool_call.readToolCall.result.success.path=outside;
+      assert.equal(scoped([base,call('readToolCall'),wrongResult,finish]).reason,
+        'out_of_workspace_tool_result');
     } finally {fs.rmSync(outside,{force:true});}
   }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
@@ -48,10 +64,10 @@ function fakeAgentMain(){
   const data=fs.readFileSync(config,'utf8');
   if(mode==='edit')fs.writeFileSync(config,data.replace('"enabled": false','"enabled": true'));
   if(mode==='scope')fs.writeFileSync(path.join(process.cwd(),'README.md'),'bad protected edit');
-  const system={type:'system',subtype:'init',model:'fake-cursor-e2e/1',session_id:'test'};
-  const tool={type:'tool_call',subtype:'started',call_id:'one',
+  const system={type:'system',subtype:'init',model:'fake-cursor-e2e/1',session_id:'test',cwd:process.cwd()};
+  const tool={type:'tool_call',subtype:'started',call_id:'one',session_id:'test',
     tool_call:{writeToolCall:{args:{path:'src/config.json'}}}};
-  const done={type:'tool_call',subtype:'completed',call_id:'one',
+  const done={type:'tool_call',subtype:'completed',call_id:'one',session_id:'test',
     tool_call:{writeToolCall:{args:{path:'src/config.json'},result:{success:{}}}}};
   const end={type:'result',subtype:'success',is_error:false,duration_ms:20,result:'Done',session_id:'test'};
   const events=mode==='no-tools'?[system,end]:[system,tool,done,end];
