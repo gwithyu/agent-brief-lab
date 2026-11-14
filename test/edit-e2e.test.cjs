@@ -83,7 +83,7 @@ function fakeEnvironment(){
   const repo=path.resolve(__dirname,'..');
   const run=(mode,limit=1)=>{
     const out=path.join(parent,'results-'+mode+'-'+limit);
-    const argv=['evaluation/edit-run.cjs','--live','--model','test-model','--limit',String(limit),'--out',out];
+    const argv=['evaluation/edit-run.cjs','--live','--model','test-model','--limit',String(limit),'--out',out,'--confirm-isolated-env','YES'];
     const result=spawnSync(process.execPath,argv,{cwd:repo,encoding:'utf8',timeout:30000,maxBuffer:1024*1024,
       env:{...process.env,PATH:bin+path.delimiter+process.env.PATH,BRIEF_STUB_MODE:mode}});
     const report=fs.existsSync(path.join(out,'report.json'))
