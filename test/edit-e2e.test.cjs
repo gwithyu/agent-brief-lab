@@ -26,6 +26,9 @@ test('tool audit rejects unsafe operations, mismatched receipts and inaccurate w
     assert.equal(scoped([base,call('readToolCall','started','../outside'),finish]).reason,'unverifiable_tool_path');
     const clean=scoped([base,call('readToolCall'),call('readToolCall','completed'),finish]);
     assert.equal(clean.state,'completed');assert.equal(clean.toolEvents,1);
+    const relativeResult=call('readToolCall','completed');
+    relativeResult.tool_call.readToolCall.result.success.path='source.txt';
+    assert.equal(scoped([base,call('readToolCall'),relativeResult,finish]).state,'completed');
     assert.equal(scoped([base,{type:'unexpected'},finish]).reason,'invalid_event');
     assert.equal(scoped([{...base,cwd:os.tmpdir()},finish]).reason,'workspace_mismatch');
     assert.equal(scoped([base,{...finish,session_id:'wrong-session'}]).reason,'session_mismatch');
