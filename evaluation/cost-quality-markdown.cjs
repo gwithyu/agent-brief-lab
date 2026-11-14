@@ -22,14 +22,11 @@ function money(n){
   if(n<1e-6)return '$'+n.toPrecision(5);
   return '$'+n.toFixed(n<0.01?8:4);
 }
-function safeId(id){
-  return String(id).replace(/[^A-Za-z0-9_-]/g,'_').slice(0,64);
-}
-function flagCases(items){
+// Aggregate-only public summary: user-defined case IDs may encode private
+// customer names or filesystem paths, so never render them in Markdown.
+function caseCount(items){
   if(!Array.isArray(items))throw Error('invalid_cases');
-  if(!items.length)return 'None observed';
-  return items.slice(0,8).map(x=>safeId(x.case)+' (repeat '+count(x.repeat)+')').join(', ')
-    +(items.length>8?' and '+(items.length-8)+' more':'');
+  return count(items.length);
 }
 function formatEfficiencyMarkdown(s){
   if(!s||s.schema!=='agent-brief-efficiency.v1'||!s.quality||!s.localInputText||!s.cost
@@ -73,7 +70,7 @@ function formatEfficiencyMarkdown(s){
     '**Raw-pass / prepared-fail regressions:** '+count(q.regressions)+
       '. **Prepared-only improvements:** '+count(q.improvements)+'.',
     '',
-    '**Regression cases:** '+flagCases(q.regressionCases),
+    '**Regression case IDs:** omitted for privacy ('+caseCount(q.regressionCases)+' regressions; inspect private JSON locally).',
     '',
     '**Non-saving input pairs:** '+count(local.nonSavingPairs.length)+'.',
     '',
