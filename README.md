@@ -400,7 +400,7 @@ production-quality or cost-equivalence validation.
 
 ## Evidence, with limits
 
-141 automated tests pass on Node 20.20.2 and 24.22.1, including a fresh install. [VERIFICATION.md](VERIFICATION.md) records release checks.
+184 automated tests pass on Node 20.20.2 and 24.22.1 at the preregistered edit-suite commit `8c7bcda`, including real dependency installation and full checks. [VERIFICATION.md](VERIFICATION.md) records earlier release checks; the latest edit-suite results are recorded in PR #1.
 
 | Same synthetic task | Original complete input | Prepared input | Net saved tokens |
 | --- | ---: | ---: | ---: |
@@ -409,7 +409,7 @@ production-quality or cost-equivalence validation.
 
 Numbers use `o200k_base`, include brief/reference/fingerprint overhead, and are reproduced by `npm run demo`. Read counts are constructed, not an observed agent trace. Five inspected real scanner/dependency files yield **zero source savings**. Do not generalize synthetic percentages to real projects. More history and source observations are in [RESULTS.md](RESULTS.md), `demo-results.json` and `real-source-results.json`.
 
-No controlled live-model task-success, semantic-understanding, actual-billing or rework improvement has been demonstrated. The alpha is for review and integration experiments, not a production quality/cost guarantee.
+Two authenticated Cursor CLI structured-comprehension smoke runs completed 16/16 exact expected answers at earlier commit `6aacc019` (four distinct synthetic tasks, repeated twice). This is limited evidence for those fixed probes, **not** general agent quality or semantic equivalence. The new 30-distinct-task editing suite has passed *offline engineering tests only*; its live Cursor coding-edit evaluation has not run. Actual provider-billed input/output tokens, cost savings and rework improvements remain **unverified**. The alpha is for review and integration experiments, not a production quality/cost guarantee.
 
 ## License
 
