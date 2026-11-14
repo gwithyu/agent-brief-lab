@@ -364,6 +364,12 @@ node evaluation/patch-run.cjs --dry-run
 ROOT="$(mktemp -d "${TMPDIR:-/tmp/}agentbrief-proposals.XXXXXX")"
 node evaluation/patch-run.cjs --live \
   --model gpt-5.3-codex-low --limit 1 --out "$ROOT/first-pair"
+
+# Select a harder multi-file task directly instead of consuming the first 26:
+# node evaluation/patch-run.cjs --live \
+#   --model gpt-5.3-codex-low --cases multi-theme \
+#   --out "$ROOT/multi-theme-pair"
+# Use --cases multi-theme,unresolved-spacing for two distinct pairs.
 # For more than 5 paired tasks, also pass --confirm-batch YES.
 ```
 
@@ -383,6 +389,13 @@ permissions. A disposable OS account or VM with no personal data is still
 preferable. There is no automatic new login, credential transfer or
 `--force`/`--yolo` option. The runner keeps model receipts private in
 the system temp directory, and does not publish them to GitHub.
+
+Preflight measurements for the same 30 tasks, including this proposal-only
+header, include **21,189 raw vs 18,208 prepared local input-text tokens**
+(**2,981 fewer; 14.07%**). Three cases have no positive local token gain:
+`json-language`, `unresolved-spacing`, `unresolved-toggle`; they are
+deliberately retained in the benchmark instead of being excluded. These
+counts are not native Cursor billed tokens or cost savings.
 
 **Evidence limitation:** passing this benchmark would show the model can
 **propose exact code replacements**, not that a coding agent safely performed
