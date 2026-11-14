@@ -3,6 +3,7 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawnSync}=require('node:child_process');
 const {parseCursorCompletion,invokeCursor}=require('./cursor.cjs');
 const {proposalCases,proposalManifestDigest,gradeProposal}=require('./patch-proposals.cjs');
+const {analyzeEfficiency}=require('./cost-quality.cjs');
 
 function parseArgs(args){
   if(!args.length||(args.length===1&&args[0]==='--dry-run'))
@@ -120,6 +121,14 @@ function runCli(args=process.argv.slice(2)){
     distinctTasks:selected.length,selectedCaseIds:selected.map(i=>i.id),repeats:opts.repeats,...report,gitIntegrity:integrity?'PASS':'FAIL',
     scope:'Exact UTF-8 replacement proposal quality ONLY. Not autonomous edits, a security guarantee, native token usage or billed cost. Provider usage fields are null.'};
   if(!integrity){output.state='invalid';output.reason='git_integrity_failure';}
+  // Generate a quality-and-local-token summary automatically after a complete
+  // real paired trial. Costs stay explicitly unknown until separately imported
+  // from independent native-provider or invoice observations.
+  output.efficiency=null;
+  if(output.state==='completed'&&output.comparisonComplete){
+    try{output.efficiency=analyzeEfficiency(output);}
+    catch{output.efficiencyStatus='invalid_quality_evidence';}
+  }
   fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(output,null,2),{mode:0o600});
   return output;
 }
