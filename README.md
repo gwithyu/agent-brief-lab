@@ -6,6 +6,40 @@ Local experiments for preparing smaller coding-agent inputs while keeping explic
 
 This is an experimental CLI/library, **not a proven agent-cost optimizer or a natural-language understanding system**. It does not intercept ChatGPT or automatically change any agent's context. Live agent A/B testing is blocked in the release environment; see [EVALUATION.md](EVALUATION.md).
 
+## First try it yourself — 3 steps, no model or API credentials
+
+For a **first-time external developer**, use the experimental Draft PR,
+rather than the older `main` alpha:
+
+```sh
+git clone --depth 1 --branch experiment/adaptive-evaluation-protocol \
+  https://github.com/gwithyu/agent-brief-lab.git
+cd agent-brief-lab
+npm ci --ignore-scripts --no-audit --no-fund
+npm run try
+```
+
+The synthetic one-command preview measures **repeated tool history**, proves
+its exact reconstruction, displays a **no-repeat/no-gain control**, and
+measures one complete guided context input. No Cursor login, model call,
+source rewrite on disk, invoice or working-tree modification is involved.
+The preview runs locally after dependencies are installed. It is **not**
+evidence of real AI task accuracy or API savings.
+
+To test **one explicitly selected local** JS/TS source file, use
+`npm run try -- --source /absolute/path/to/file.js`. To test a normalized
+JSON array of `{role,content}` messages with repeated tool outputs, use
+`npm run try -- --history /absolute/path/to/messages.json`.
+Append `--json` to return aggregate-only data. Private source, messages and
+paths are **not printed or sent** by the preview; it never writes into the
+input file. It accepts regular files up to 1 MiB (not symlinks). The
+`--source` mode only tests two simple boolean-return rewrite patterns;
+the history format is **not** a built-in Cursor/ChatGPT transcript import.
+
+**[Read the first-user walkthrough](docs/FIRST_RUN.md)** for sample input,
+privacy limitations, and safe feedback. This is **experimental source code
+in an unmerged Draft PR**, not an npm registry release.
+
 ## Quick run without cloning this tool
 
 Requires Node.js 20+, npm, and Git for workspace features. This command fetches a
