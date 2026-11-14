@@ -37,8 +37,12 @@ function analyzeEfficiency(report,charges=null){
   const pairs=[...map.values()];
   if(pairs.some(p=>!p.raw||!p.prepared)||pairs.length*2!==report.runs.length)
     throw Error('missing_paired_arm');
-  const seenModels=new Set(report.runs.map(r=>r.reportedModel).filter(x=>typeof x==='string'));
-  if(seenModels.size>1)throw Error('reported_model_drift');
+  const seenModels=new Set(report.runs.map(r=>r.reportedModel));
+  if(seenModels.size!==1||[...seenModels].some(m=>typeof m!=='string'||!m.trim()))
+    throw Error('missing_or_drifted_reported_model');
+  if(report.modelCompleted!==report.runs.length
+    ||report.passed!==report.runs.filter(r=>r.passed).length)
+    throw Error('inconsistent_report_summary');
 
   const rawPassed=pairs.filter(x=>x.raw.passed).length;
   const preparedPassed=pairs.filter(x=>x.prepared.passed).length;
@@ -70,7 +74,7 @@ function analyzeEfficiency(report,charges=null){
       status:'unknown_without_complete_external_charges',source:'none',
       rawTotalUsd:null,preparedTotalUsd:null,
       rawUsdPerSuccess:null,preparedUsdPerSuccess:null,
-      rawBilledTokens:null,preparedBilledTokens:null,
+      rawProviderTokenCounts:null,preparedProviderTokenCounts:null,
       deltaUsdPerSuccess:null,reductionFractionPerSuccess:null,
       actualInvoiceVerified:false
     },
@@ -98,7 +102,7 @@ function analyzeEfficiency(report,charges=null){
       ||o.attemptCount!==1)throw Error('invalid_charge_observation');
     // The current Cursor harness invokes exactly one CLI process per arm and
     // does not log native retry usage. Refuse fictional retry counts.
-    if(o.billedCostUsd!==null&&!finiteMoney(o.billedCostUsd))
+    if(o.billedCostUsd!==null&&(!finiteMoney(o.billedCostUsd)||o.billedCostUsd>1e9))
       throw Error('invalid_charge_amount');
     const tokenFields=['providerInputTokens','providerCachedInputTokens','providerOutputTokens','providerReasoningTokens'];
     for(const k of tokenFields)
@@ -122,7 +126,8 @@ function analyzeEfficiency(report,charges=null){
     return output;
   }
   const amounts=arm=>all.filter(x=>x.arm===arm).reduce((n,x)=>n+x.billedCostUsd,0);
-  const raw=round(amounts('raw')),prepared=round(amounts('prepared'));
+  const raw=amounts('raw'),prepared=amounts('prepared');
+  if(!Number.isFinite(raw)||!Number.isFinite(prepared))throw Error('invalid_charge_total');
   const rawPer=rawPassed?raw/rawPassed:null;
   const preparedPer=preparedPassed?prepared/preparedPassed:null;
   const advantage=rawPer!==null&&preparedPer!==null&&preparedPer<rawPer;
@@ -136,10 +141,9 @@ function analyzeEfficiency(report,charges=null){
     status:'owner_supplied_complete_unverified',
     source:[...new Set(all.map(x=>x.source))].sort(),
     rawTotalUsd:raw,preparedTotalUsd:prepared,
-    rawUsdPerSuccess:rawPer===null?null:round(rawPer),
-    preparedUsdPerSuccess:preparedPer===null?null:round(preparedPer),
-    rawBilledTokens:tokenTotals('raw'),preparedBilledTokens:tokenTotals('prepared'),
-    deltaUsdPerSuccess:rawPer===null||preparedPer===null?null:round(rawPer-preparedPer),
+    rawUsdPerSuccess:rawPer,preparedUsdPerSuccess:preparedPer,
+    rawProviderTokenCounts:tokenTotals('raw'),preparedProviderTokenCounts:tokenTotals('prepared'),
+    deltaUsdPerSuccess:rawPer===null||preparedPer===null?null:rawPer-preparedPer,
     reductionFractionPerSuccess:rawPer===null||rawPer<=0||preparedPer===null
       ?null:round((rawPer-preparedPer)/rawPer),
     actualInvoiceVerified:false
@@ -149,19 +153,38 @@ function analyzeEfficiency(report,charges=null){
     output.observedOnThisSample.qualityNonInferior&&advantage;
   return output;
 }
+function buildChargeTemplate(report){
+  // First require a genuinely comparable recorded A/B experiment. A
+  // zero/partial record is not a valid target for cost extrapolation.
+  analyzeEfficiency(report);
+  return {
+    schema:'agent-brief-charges.v1',
+    manifestDigest:report.manifestDigest,
+    repositoryCommit:report.repositoryCommit,
+    modelRequested:report.modelRequested,
+    currency:'USD',
+    observations:report.runs.map(r=>({
+      case:r.case,repeat:r.repeat??0,arm:r.arm,
+      attemptCount:1,billedCostUsd:null,source:'provider_export'
+    }))
+  };
+}
 function readPrivateJson(name){
   const st=fs.lstatSync(name);
   if(!st.isFile()||st.isSymbolicLink()||st.size>MAX_BYTES||st.size===0)throw Error('invalid_input_file');
   return JSON.parse(fs.readFileSync(name,'utf8'));
 }
 function runCli(argv=process.argv.slice(2)){
-  if(![2,4].includes(argv.length)||argv[0]!=='--report'
+  if(![2,3,4].includes(argv.length)||argv[0]!=='--report'
+    ||(argv.length===3&&argv[2]!=='--template')
     ||(argv.length===4&&argv[2]!=='--charges'))
-    throw Error('Usage: node evaluation/cost-quality.cjs --report PRIVATE_REPORT_JSON [--charges PRIVATE_OWNER_SUPPLIED_CHARGES_JSON]');
-  return analyzeEfficiency(readPrivateJson(argv[1]),argv.length===4?readPrivateJson(argv[3]):null);
+    throw Error('Usage: node evaluation/cost-quality.cjs --report PRIVATE_REPORT_JSON [--template | --charges PRIVATE_OWNER_SUPPLIED_CHARGES_JSON]');
+  const report=readPrivateJson(argv[1]);
+  if(argv.length===3)return buildChargeTemplate(report);
+  return analyzeEfficiency(report,argv.length===4?readPrivateJson(argv[3]):null);
 }
 if(require.main===module){
   try{console.log(JSON.stringify(runCli(),null,2));}
   catch(e){console.error('Efficiency evaluation refused: '+e.message);process.exitCode=1;}
 }
-module.exports={analyzeEfficiency,runCli};
+module.exports={analyzeEfficiency,buildChargeTemplate,runCli};
