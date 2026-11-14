@@ -117,7 +117,11 @@ started/completed call IDs, equal tool arguments and paths located inside
 the synthetic workspace. Unknown/forbidden tools, path escapes,
 unexpected assistant tool-use events, failed tool receipts or missing
 terminal events fail closed. An observed expected file change without an
-audited edit tool event is graded `unaudited_edit`, not success.
+audited edit tool event is graded `unaudited_edit`, not success. If the
+reported model display identity drifts between the A and B arms, the
+comparison is marked invalid (`reported_model_drift`) even if both edited
+files match expectations. Model identity reported by the CLI is still
+not independent provider-side attestation.
 This is after-the-fact evidence validation; it does not isolate the
 process or undo side effects.
 
