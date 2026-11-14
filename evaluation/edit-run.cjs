@@ -64,14 +64,21 @@ function evaluateEdits(items,invoke){
   for(const [i,item] of items.entries())for(const arm of (i%2?['prepared','raw']:['raw','prepared'])){
     const base={case:item.id,kind:item.kind,arm,localInputTextTokens:item.localInputTextTokens[arm],providerInputTokens:null,providerCachedInputTokens:null,providerOutputTokens:null,providerReasoningTokens:null,providerBilledCost:null};
     if(stopped){runs.push({...base,state:'not_run',passed:false,acceptancePassed:null,scopeViolations:[],failureReason:'previous_block'});continue;}
-    let outcome;try{outcome=invoke(item,arm);}catch{outcome={execution:{status:-1},grade:null};}
-    const completion=parseTerminal(outcome.execution,outcome.workspace);
+    let outcome;
+    try{outcome=invoke(item,arm);}catch{
+      // Never hide a harness exception as an ordinary Cursor CLI startup error.
+      // Details might include private paths; keep the public reason code stable.
+      outcome={execution:{status:-1},grade:null,harnessError:true};
+    }
+    const completion=outcome.harnessError
+      ?{state:'blocked',reason:'harness_exception',elapsedMs:null,reportedModel:null}
+      :parseTerminal(outcome.execution,outcome.workspace);
     const grade=outcome.grade??{acceptancePassed:false,scopeViolations:[],wrongAllowed:[]};
     const passed=completion.state==='completed'&&grade.acceptancePassed;
     const failureReason=completion.state!=='completed'?completion.reason:passed?null:grade.scopeViolations.length?'scope_violation':'acceptance_failed';
     runs.push({...base,state:completion.state,passed,acceptancePassed:grade.acceptancePassed,scopeViolations:grade.scopeViolations,
       wrongAllowed:grade.wrongAllowed??[],elapsedMs:completion.elapsedMs,reportedModel:completion.reportedModel??null,
-      failureReason});
+      auditedToolCalls:completion.toolEvents??null,failureReason});
     if(completion.state!=='completed'||grade.scopeViolations.length)stopped=true;
   }
   return {state:stopped?'blocked':runs.every(r=>r.state==='completed')?'completed':'invalid',planned:runs.length,attempted:runs.filter(r=>r.state!=='not_run').length,
@@ -111,7 +118,14 @@ function runCli(args=process.argv.slice(2),overrides={}){
     const dest=path.join(output,'receipts',id);fs.mkdirSync(dest,{mode:0o700});
     fs.writeFileSync(path.join(dest,'events.jsonl'),result.stdout??'',{mode:0o600});
     fs.writeFileSync(path.join(dest,'stderr.txt'),result.stderr??'',{mode:0o600});
-    return {execution:result,grade:gradeEdits(job,item,arm),workspace:job};
+    let grade;
+    try{grade=gradeEdits(job,item,arm);}
+    catch{
+      // File inspection can fail on unreadable entries or concurrent edits.
+      // Never convert that into an accepted run or delete the raw receipts.
+      grade={acceptancePassed:false,scopeViolations:['grade_unavailable'],wrongAllowed:[]};
+    }
+    return {execution:result,grade,workspace:job};
   });
   const later=status(),after=spawnSync('git',['rev-parse','--verify','HEAD'],{cwd:repository,encoding:'utf8'});
   const integrity=later.status===0&&!later.stdout.trim()&&after.status===0&&after.stdout.trim()===head.stdout.trim();
