@@ -387,6 +387,8 @@ without approval; **neither `--trust` nor Cursor sandboxing confines the
 agent to that directory**. Local rules, plugins or MCP integrations may still
 be loaded. Use a disposable account/VM for actual agent editing tests.
 
+The runner also audits Cursor `stream-json` tool events: only recognized file read/edit tool types are eligible; unknown tools, shell/terminal/MCP activity, path escapes, symlink targets outside the workspace, unmatched tool-call events and incomplete streams invalidate the run. The per-run report includes a count of audited tool calls and a stable failure reason. **This is after-the-fact evidence validation, not prevention, confinement, or proof that the model could not access private files.** Tests use a fake Cursor executable for complete CLI-path coverage; no new real editing-agent calls are implied.
+
 The external grader reads actual workspace files as bytes, **does not
 execute model-authored code**, rejects missing/extra/renamed/symlinked files,
 protected-file modifications and unexpected modes, and requires exact
@@ -400,7 +402,7 @@ production-quality or cost-equivalence validation.
 
 ## Evidence, with limits
 
-184 automated tests pass on Node 20.20.2 and 24.22.1 at the preregistered edit-suite commit `8c7bcda`, including real dependency installation and full checks. [VERIFICATION.md](VERIFICATION.md) records earlier release checks; the latest edit-suite results are recorded in PR #1.
+The full suite has been extended with complete CLI-path fake-agent integration checks. Exact latest Node 20/24 verification is recorded in PR #1; [VERIFICATION.md](VERIFICATION.md) retains earlier release checks. These simulated runs assert file modifications and failure stops without making any real model calls.
 
 | Same synthetic task | Original complete input | Prepared input | Net saved tokens |
 | --- | ---: | ---: | ---: |
