@@ -81,6 +81,38 @@ tokens remain `null` unless independently supported by provider data.
 The four synthetic A/B pairs are **not** the preregistered >=30 distinct
 coding-agent tasks and cannot satisfy the full release gate.
 
+## Intermediate real-model path: Cursor Ask-mode full-source proposals
+
+`evaluation/patch-proposals.cjs` derives *raw* and *prepared* model prompts
+from the frozen 30 synthetic code-edit manifest without changing the
+original tasks or the expected file bytes. Instead of enabling Agent tools,
+each model must return **exactly**:
+`{"needsClarification":boolean,"replacements":[{"path":string,"source":string}]}`.
+Every replacement is a complete source file. An independent grader checks
+the precise UTF-8 result for each previously allowed changed path, forbids
+added/protected/unmodified paths, rejects duplicate paths, extra fields and
+malformed answers, and requires an empty proposal when questions remain.
+
+`node evaluation/patch-run.cjs --dry-run` generates the new immutable
+prompt+answer manifest, all local input-token counts, and **zero model
+calls**. Live mode (opt-in) runs one raw/prepared pair by default, via an
+existing locally authenticated Cursor CLI in `--mode=ask --sandbox enabled`.
+Each arm uses a fresh 0700 system temporary directory containing only its
+synthetic prompt text. The stream parser rejects all observed tool calls,
+unusable terminal evidence and invalid JSON. Paired model-identity drift
+invalidates the comparison. Over five pairs requires `--confirm-batch YES`.
+No model-authored code is executed or written into the project's repository.
+
+This is **not** a real autonomous coding-agent edit: the model generates a
+replacement proposal. It is useful as a lower-risk experiment measuring
+whether compact context preserves **exact file-content decisions**, bridging
+four understanding-only questions and the writable 30-task agent benchmark.
+It does not guarantee security, especially against Cursor CLI's potential
+read access outside the temporary directory. Prefer disposable OS accounts
+without private files or connected personal integrations. No provider token
+billing fields are inferred; unknown remains `null`. This new proposal
+benchmark has **not yet produced real Cursor model results**.
+
 ## Deterministic 30-task coding-edit experiment (synthetic preview)
 
 The frozen generator `evaluation/edit-cases.cjs` creates exactly 30
