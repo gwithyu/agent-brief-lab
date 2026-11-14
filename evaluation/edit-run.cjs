@@ -81,7 +81,7 @@ function parseTerminal(r,workspace) {
         ||op.result.error||op.result.failure)return bad('tool_failed_or_unverified');
       if(typeof op.result.success.path==='string'){
         let resolved;
-        try{resolved=fs.realpathSync(op.result.success.path);}catch{return bad('unverifiable_tool_result_path');}
+        try{resolved=fs.realpathSync(path.resolve(root,op.result.success.path));}catch{return bad('unverifiable_tool_result_path');}
         const resultRel=path.relative(root,resolved);
         if(!resultRel||resultRel==='..'||resultRel.startsWith('..'+path.sep)||path.isAbsolute(resultRel))
           return bad('out_of_workspace_tool_result');
