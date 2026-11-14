@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process');
-const {analyzeEfficiency,runCli}=require('../evaluation/cost-quality.cjs');
+const {analyzeEfficiency,buildChargeTemplate,runCli}=require('../evaluation/cost-quality.cjs');
 
 function fixture({raw=[true,true],prepared=[true,true],rawTokens=[100,80],preparedTokens=[70,90]}={}){
   const runs=[];
@@ -62,7 +62,7 @@ test('same exact quality and lower declared cost may win on this sample only',()
   assert.equal(result.cost.reductionFractionPerSuccess,0.4);
   assert.equal(result.observedOnThisSample.qualifiesAsMeasuredWin,true);
   assert.equal(result.cost.source[0],'provider_export');
-  assert.deepEqual(result.cost.rawBilledTokens,{providerInputTokens:200,providerCachedInputTokens:80,providerOutputTokens:40,providerReasoningTokens:10});
+  assert.deepEqual(result.cost.rawProviderTokenCounts,{providerInputTokens:200,providerCachedInputTokens:80,providerOutputTokens:40,providerReasoningTokens:10});
 });
 test('missing or null charges cannot produce a monetary claim',()=>{
   const report=fixture();
@@ -128,6 +128,37 @@ test('quality improvements and regression pairs are never hidden by total succes
   assert.equal(result.quality.improvements,1);
   assert.deepEqual(result.quality.regressionCases,[{case:'task-0',repeat:0}]);
   assert.equal(result.observedOnThisSample.qualityNonInferior,false);
+});
+test('generate a null-cost import template without receipts, secrets or fabricated charges',()=>{
+  const report=fixture();
+  const template=buildChargeTemplate(report);
+  assert.equal(template.schema,'agent-brief-charges.v1');
+  assert.equal(template.manifestDigest,report.manifestDigest);
+  assert.equal(template.observations.length,4);
+  assert.ok(template.observations.every(x=>x.billedCostUsd===null&&x.attemptCount===1));
+  const empty=analyzeEfficiency(report,template);
+  assert.equal(empty.cost.status,'missing_billed_cost');
+  assert.equal(empty.cost.rawTotalUsd,null);
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'brief-cost-template-'));
+  try{
+    const file=path.join(dir,'report.json');fs.writeFileSync(file,JSON.stringify(report));
+    assert.deepEqual(runCli(['--report',file,'--template']),template);
+  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+test('reported aggregate pass counts and missing model attribution cannot be silently trusted',()=>{
+  const wrong=fixture();wrong.passed+=1;
+  assert.throws(()=>analyzeEfficiency(wrong),/inconsistent_report_summary/);
+  const absent=fixture();absent.runs[0].reportedModel=null;
+  assert.throws(()=>analyzeEfficiency(absent),/missing_or_drifted_reported_model/);
+});
+test('sub-cent charges retain real precision in cost comparisons',()=>{
+  const report=fixture(),cost=charges(report,[0.000000001,0.000000001],[0.0000000005,0.0000000005]);
+  const x=analyzeEfficiency(report,cost);
+  assert.ok(x.cost.rawTotalUsd>0);
+  assert.ok(x.cost.preparedTotalUsd>0);
+  assert.equal(x.cost.rawUsdPerSuccess,0.000000001);
+  assert.equal(x.cost.preparedUsdPerSuccess,0.0000000005);
+  assert.equal(x.observedOnThisSample.qualifiesAsMeasuredWin,true);
 });
 test('read-only command consumes private JSON and writes only sanitized aggregate stdout',()=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'brief-cost-check-'));
