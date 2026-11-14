@@ -403,6 +403,52 @@ edits in its own workspace. Local text-token counts are **not** native
 Cursor usage/cost, provider-billed savings, or a proof of real-world quality.
 A `--dry-run` report is not model evidence; it consumes zero Cursor quota.
 
+## Cost per successful task (quality-gated, experimental)
+
+The new **read-only** `evaluation/cost-quality.cjs` summarizes a **completed**
+Cursor Ask-mode patch A/B report. It is **not** a price estimator from local
+Token counts and does **not** call Cursor, apply patches or read your code.
+After a real paired run has produced `report.json`:
+
+```sh
+node evaluation/cost-quality.cjs --report "$ROOT/first-pair/report.json"
+# Generate a private, blank owner-side charge import file:
+node evaluation/cost-quality.cjs --report "$ROOT/first-pair/report.json" \
+  --template > "$ROOT/owner-charges.json"
+# ONLY if you have matching external provider/statement amounts:
+# Fill billedCostUsd for EVERY case/arm using your own original evidence.
+node evaluation/cost-quality.cjs --report "$ROOT/first-pair/report.json" \
+  --charges "$ROOT/owner-charges.json"
+```
+
+With no external USD charges (the current default), money totals and
+cost-per-success are **`null`**, not guessed from local text tokens or
+model latency. The generated blank template uses a null `billedCostUsd`.
+Per-arm source labels (`provider_export` or `invoice_transcription`) merely
+describe what the **owner says they supplied**; the program cannot authenticate
+the export or independently verify invoices. This is not an automated
+provider billing integration. Keep reports and charge records outside
+public Git history. The current harness makes **one CLI attempt per arm**:
+the charge importer rejects invented retry counts rather than pretending
+it observed unseen retries.
+
+The comparison counts every observed failure in the denominator and makes
+the tradeoff visible: **total observed USD spent / number of correctly
+completed tasks** for each arm, with task pairs matched by ID and repeat.
+Any raw-correct/prepared-wrong case is explicitly reported as a quality
+regression, preventing a positive recommendation for that sample.
+As a synthetic *illustration only*: spending $0.20 for two successes costs
+$0.10 per success; spending $0.12 for one success costs $0.12 per success.
+**40% less total expenditure is actually 20% higher cost per success.**
+
+Complete paired evidence, matching manifest+Git revision+model and all-arm
+external charge coverage are prerequisites for a **sample-level** cost
+comparison. Missing values, unknown provider usage, invalid worktree
+integrity and unmatched runs fail closed. Dollar values are accumulated
+using decimal units of 10⁻¹² USD to avoid floating-point summation errors.
+No observed savings on this tiny synthetic sample can prove savings in
+production, nor does code proposal correctness prove autonomous edits.
+
 ## Synthetic coding-edit paired benchmark (experimental)
 
 A separate **30-distinct-task edit suite** now exists in
