@@ -6,7 +6,45 @@ Local experiments for preparing smaller coding-agent inputs while keeping explic
 
 This is an experimental CLI/library, **not a proven agent-cost optimizer or a natural-language understanding system**. It does not intercept ChatGPT or automatically change any agent's context. Live agent A/B testing is blocked in the release environment; see [EVALUATION.md](EVALUATION.md).
 
-## First try it yourself — 3 steps, no model or API credentials
+## Run a verified one-command preview (no clone required)
+
+The latest experimental try-it binary is available as **source directly from
+GitHub**, without publishing anything to the npm registry. We pin the exact
+tested source revision instead of silently changing the code you execute:
+
+```sh
+npm exec --yes --ignore-scripts \
+  --package="https://github.com/gwithyu/agent-brief-lab/archive/83a52efc17d3e92fa03a6a2d0577482f2fd20efd.tar.gz" \
+  -- agent-brief try
+```
+
+Requirements: Node.js **20 or 24**, npm, internet connectivity for the
+initial source/dependency download. This path has been exercised in a
+**fresh consumer directory** (Node 24.22.1): the remote GitHub archive was
+installed via `npm exec`, the `agent-brief try` binary executed, and
+nothing was written in that consumer directory. `--ignore-scripts` skips
+npm package lifecycle hooks, **not** the executable you explicitly request.
+As always, review third-party source before running it on your computer.
+
+It performs a synthetic in-memory repeated-history/complete-input demo,
+with **zero model/API calls**, no need to log into Cursor, and no source
+file edits. It does **not** auto-intercept any agent or prove actual bill
+savings. If a model cannot resolve custom history references, it cannot
+consume the prepared representation directly.
+
+To preview one specific local source file without modifying it, append
+`--source "/absolute/path/to/file.js"` after `agent-brief try`. To
+measure normalized JSON tool histories use `--history "/absolute/path/to/messages.json"`.
+The tool prints only aggregate metrics; file contents and paths are not
+printed. `--json` produces structured aggregate output.
+
+The pinned tarball represents one immutable experiment snapshot;
+the unmerged Draft PR can evolve independently. The npm registry package
+is **still unpublished**.
+
+## Alternative: clone source and run locally
+
+### First try it yourself — 3 steps, no model or API credentials
 
 For a **first-time external developer**, use the experimental Draft PR,
 rather than the older `main` alpha:
