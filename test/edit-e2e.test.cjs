@@ -103,6 +103,12 @@ test('end-to-end CLI invokes fake Cursor twice and grades real disk edits',()=>{
     assert.equal(report.planned,2);assert.equal(report.attempted,2);
     assert.equal(report.modelCompleted,2);assert.equal(report.passed,2);
     assert.equal(report.state,'completed');assert.equal(report.gitIntegrity,'PASS');
+    assert.equal(report.experiment,'synthetic-autonomous-edits');
+    assert.equal(report.efficiency.pairCount,1);
+    assert.equal(report.efficiency.evidence,'synthetic_coding_agent_edits');
+    assert.equal(report.efficiency.quality.rawPasses,1);
+    assert.equal(report.efficiency.quality.preparedPasses,1);
+    assert.equal(report.efficiency.cost.rawUsdPerSuccess,null);
     assert.deepEqual(report.runs.map(x=>x.auditedToolCalls),[1,1]);
     assert.ok(report.runs.every(x=>x.providerInputTokens===null&&x.providerBilledCost===null));
     for(const dir of fs.readdirSync(path.join(out,'workspaces'))){
