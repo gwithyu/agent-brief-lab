@@ -108,8 +108,16 @@ function evaluateEdits(items,invoke){
       ?{state:'blocked',reason:'harness_exception',elapsedMs:null,reportedModel:null}
       :parseTerminal(outcome.execution,outcome.workspace);
     const grade=outcome.grade??{acceptancePassed:false,scopeViolations:[],wrongAllowed:[]};
-    const passed=completion.state==='completed'&&grade.acceptancePassed;
-    const failureReason=completion.state!=='completed'?completion.reason:passed?null:grade.scopeViolations.length?'scope_violation':'acceptance_failed';
+    // Disk changes without corresponding audited tool events are evidence
+    // gaps, never validated agent edits. Pure no-change tasks may legitimately
+    // have zero tool calls. This applies only to real workspace-backed runs.
+    const unauditedEdit=!!outcome.workspace && completion.state==='completed'
+      &&grade.observedExpectedEdits>0 &&completion.toolEvents===0;
+    const passed=completion.state==='completed'&&grade.acceptancePassed&&!unauditedEdit;
+    const failureReason=completion.state!=='completed'?completion.reason
+      :grade.scopeViolations.length?'scope_violation'
+      :unauditedEdit?'unaudited_edit'
+      :passed?null:'acceptance_failed';
     runs.push({...base,state:completion.state,passed,acceptancePassed:grade.acceptancePassed,scopeViolations:grade.scopeViolations,
       wrongAllowed:grade.wrongAllowed??[],elapsedMs:completion.elapsedMs,reportedModel:completion.reportedModel??null,
       auditedToolCalls:completion.toolEvents??null,failureReason});
