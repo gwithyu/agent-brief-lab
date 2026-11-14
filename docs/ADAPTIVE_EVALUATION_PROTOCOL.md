@@ -107,7 +107,18 @@ trust; it is not a sandbox or an authorization to run everything.
 Cursor might still read outside the workspace under local settings; use a
 disposable OS account or VM with no credentials or private files.
 The output report includes the manifest fingerprint, code revision,
-model selection, per-arm status, exact acceptance and scope results.
+model selection, per-arm status, exact acceptance and scope results. Cursor
+`stream-json` event receipts are audited for recognized file tools, matching
+started/completed call IDs and file paths located inside the synthetic
+workspace. Unknown/forbidden tools, path escapes, dangling tool calls or
+missing terminal events fail closed. This is after-the-fact evidence
+validation; it does not isolate the process or undo side effects.
+
+Full CLI integration tests launch a synthetic fake `agent` executable
+and verify that expected file modifications pass, forbidden protected-file
+edits stop all remaining sessions, and unmodified code cannot be passed
+by a model success message alone. These are **offline harness tests**, not
+real Cursor model trials.
 
 **Caution:** having 30 **fixture tasks** does not itself satisfy the
 preregistered >=30 real coding-agent task quality gate. These narrow
@@ -125,4 +136,4 @@ or billed savings. The live 30-task edit suite has not yet been run.
 
 ## Current status
 
-The experimental `prepare` CLI compares complete input variants and falls back on no measured token/byte gain, reporting its selection reason. An opt-in local minimum reduction is enforced via `MARGIN_NOT_MET`. Two **authenticated** Cursor CLI comprehension smoke rounds have completed on four synthetic understanding tasks, with **16/16** exact answers across raw and prepared arms; the two local model-produced reports were inspected, but raw events/provider invoices were not independently audited. The separate **30-distinct-task synthetic coding-edit corpus and static grader have been implemented and tested**, with Node 20 and Node 24 full suites each **184/184** at commit `8c7bcda`. The 30-case edit runner has **not** been exercised against a live Cursor editing agent. General model-comprehension equivalence, editing-agent task success, provider-billed token savings and production performance remain unverified.
+The experimental `prepare` CLI compares complete input variants and falls back on no measured token/byte gain, reporting its selection reason. An opt-in local minimum reduction is enforced via `MARGIN_NOT_MET`. Two **authenticated** Cursor CLI comprehension smoke rounds have completed on four synthetic understanding tasks, with **16/16** exact answers across raw and prepared arms; the two local model-produced reports were inspected, but raw events/provider invoices were not independently audited. The separate **30-distinct-task synthetic coding-edit corpus and static grader have been implemented and tested**, with Node 20 and Node 24 full suites as independently recorded for each exact commit in PR #1. The 30-case edit runner has **not** been exercised against a live Cursor editing agent. General model-comprehension equivalence, editing-agent task success, provider-billed token savings and production performance remain unverified.
