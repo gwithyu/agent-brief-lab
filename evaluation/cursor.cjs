@@ -1,11 +1,13 @@
 'use strict';
 const {spawnSync}=require('node:child_process');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 
 // The Cursor CLI stream contract is distinct from Codex JSONL. Never infer
 // provider usage or cost from the locally counted prompt text or wall clock.
 function parseCursorCompletion(result) {
   if(!result || result.error || result.status!==0 || result.signal) {
-    return {state:'blocked',reason:result?.error?.code??'cli_failed',answer:null,
+    const trustRequired=/Workspace Trust Required/i.test(result?.stderr??'');
+    return {state:'blocked',reason:trustRequired?'workspace_trust_required':result?.error?.code??'cli_failed',answer:null,
       providerInputTokens:null,providerOutputTokens:null,providerBilledCost:null};
   }
   let events;
@@ -53,9 +55,22 @@ function parseCursorCompletion(result) {
 function invokeCursor(prompt,cwd,model,{command='agent',timeoutMs=120000}={}) {
   if(typeof prompt!=='string'||!prompt.trim()||typeof cwd!=='string'||!cwd
     ||typeof model!=='string'||!model.trim()||model.includes('\0'))throw Error('Prompt, cwd and explicit model are required');
-  // Don't use --force or --resume. Ask mode alone isn't isolation: sandbox is
-  // explicitly enabled, and callers must supply an empty per-run directory.
-  return spawnSync(command,['--print','--mode=ask','--sandbox','enabled',
+  // --trust bypasses ONLY the workspace trust dialog; NOT the tool permission
+  // system. Never auto-trust arbitrary user/repository paths.
+  const resolved=fs.realpathSync(cwd);
+  const temporary=fs.realpathSync(os.tmpdir());
+  const relative=path.relative(temporary,resolved);
+  if(!relative||relative==='..'||relative.startsWith('..'+path.sep)||path.isAbsolute(relative))
+    throw Error('Cursor automatic trust requires a fresh private temporary directory');
+  const st=fs.statSync(resolved);
+  if(!st.isDirectory()||(st.mode&0o077)!==0)
+    throw Error('Cursor experiment directory must be private (mode 0700)');
+  const files=fs.readdirSync(resolved,{withFileTypes:true});
+  if(files.length!==1||files[0].name!=='prompt.txt'||!files[0].isFile())
+    throw Error('Cursor experiment workspace must contain only a regular prompt.txt');
+  // --mode=ask and --sandbox enabled are defense in depth, NOT read isolation.
+  // Do NOT use --force/--yolo or --resume.
+  return spawnSync(command,['--print','--trust','--mode=ask','--sandbox','enabled',
     '--output-format','stream-json','--model',model,prompt],
     {cwd,encoding:'utf8',timeout:timeoutMs,maxBuffer:2*1024*1024,killSignal:'SIGKILL'});
 }
