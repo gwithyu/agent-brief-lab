@@ -3,7 +3,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const {spawnSync}=require('node:child_process');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {parseCursorCompletion,invokeCursor}=require('../evaluation/cursor.cjs');
-const {evaluateCursor}=require('../evaluation/cursor-run.cjs');
+const {evaluateCursor,runCli}=require('../evaluation/cursor-run.cjs');
 const answer={allowedFiles:['src/navigation.css'],targetOpacity:'0.5',targetPadding:'8px',questionCount:0,canProceed:true};
 const init={type:'system',subtype:'init',model:'test-model',session_id:'123'};
 const success={type:'result',subtype:'success',is_error:false,duration_ms:101,result:JSON.stringify(answer),session_id:'123'};
@@ -35,6 +35,8 @@ test('tool calls and interactions reject the entire run even with correct final 
   }
 });
 test('errors, malformed JSONL and non-object assistant answers fail closed',()=>{
+  const trust=parseCursorCompletion({status:1,stdout:'',stderr:'⚠ Workspace Trust Required\nPass --trust'});
+  assert.equal(trust.state,'blocked');assert.equal(trust.reason,'workspace_trust_required');
   for(const result of [{status:1,stdout:''},{status:0,stdout:'not-json\n'},
     {status:0,stdout:'\n'},{status:null,signal:'SIGKILL'},
     {status:0,stdout:JSON.stringify(init)+'\n'+JSON.stringify({...success,result:'"not an object"'})+'\n'}]) {
@@ -67,17 +69,41 @@ test('invalid repeats and case configurations fail before invoking',()=>{
   for(const n of [0,6,1.5,'2'])assert.throws(()=>evaluateCursor(cases,()=>encode(pair),n));
   assert.throws(()=>evaluateCursor([],()=>encode(pair)));
 });
-test('Cursor invocation pins sandbox and Ask mode, avoids --force, --resume',()=>{
+test('Cursor invocation auto-trusts only private synthetic directories; never uses --yolo',()=>{
   const temp=fs.mkdtempSync(path.join(os.tmpdir(),'cursor-invoke-'));
   try {
     const script=path.join(temp,'fake-agent');
     fs.writeFileSync(script,'#!/bin/sh\nprintf "%s\\n" "$@"\n',{mode:0o700});
-    const p=invokeCursor('Handle synthetic code only',temp,'sample-model',{command:script,timeoutMs:5000});
+    const work=path.join(temp,'job');
+    fs.mkdirSync(work,{mode:0o700});
+    fs.writeFileSync(path.join(work,'prompt.txt'),'Synthetic prompt only',{mode:0o600});
+    const p=invokeCursor('Handle synthetic code only',work,'sample-model',{command:script,timeoutMs:5000});
     assert.equal(p.status,0,p.stderr);
     const args=p.stdout.trim().split('\n');
-    assert.ok(args.includes('--print'));assert.ok(args.includes('--mode=ask'));
+    assert.ok(args.includes('--print'));assert.ok(args.includes('--trust'));assert.ok(args.includes('--mode=ask'));
     assert.ok(args.includes('--sandbox'));assert.ok(args.includes('enabled'));
     assert.ok(args.includes('stream-json'));assert.ok(args.includes('sample-model'));
-    assert.ok(!args.includes('--force')&&!args.includes('--resume'));
+    assert.ok(!args.includes('--force')&&!args.includes('--yolo')&&!args.includes('-f')&&!args.includes('--resume'));
+    fs.writeFileSync(path.join(work,'extraneous.txt'),'bad');
+    assert.throws(()=>invokeCursor('synthetic',work,'sample-model',{command:script}),/only a regular prompt/);
   } finally {fs.rmSync(temp,{recursive:true,force:true});}
+});
+
+test('auto-trust rejects nonprivate directory and symlinked prompt',()=>{
+  const parent=fs.mkdtempSync(path.join(os.tmpdir(),'cursor-trust-'));
+  try {
+    const work=path.join(parent,'case');
+    fs.mkdirSync(work,{mode:0o700});
+    fs.writeFileSync(path.join(work,'prompt.txt'),'Synthetic prompt only',{mode:0o600});
+    fs.chmodSync(work,0o755);
+    assert.throws(()=>invokeCursor('synthetic',work,'model',{command:'/bin/true'}),/private/);
+    fs.chmodSync(work,0o700);
+    fs.unlinkSync(path.join(work,'prompt.txt'));
+    fs.symlinkSync(path.join(parent,'outside.txt'),path.join(work,'prompt.txt'));
+    assert.throws(()=>invokeCursor('synthetic',work,'model',{command:'/bin/true'}),/only a regular prompt/);
+  } finally {fs.rmSync(parent,{recursive:true,force:true});}
+});
+test('live runner refuses automatic trust outside the system temporary directory',()=>{
+  assert.throws(()=>runCli(['--live','--model','model','--out',path.join(os.homedir(),'cursor-ab-outside-temp')]),
+    /requires --out inside the system temporary directory/);
 });
