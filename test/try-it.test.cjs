@@ -137,6 +137,35 @@ test('reject unsupported argument combinations and never invoke local agent',()=
   const help=call(['--help']);assert.equal(help.status,0);assert.match(help.stdout,/--history FILE/);
 });
 
+test('agent-brief try binary dispatches default and private file preview with aggregate JSON',()=>{
+  const executable=path.join(root,'index.cjs');
+  const defaultRun=spawnSync(process.execPath,[executable,'try'],{
+    cwd:os.tmpdir(),encoding:'utf8',timeout:25000,maxBuffer:128*1024});
+  assert.equal(defaultRun.status,0,defaultRun.stderr);
+  assert.match(defaultRun.stdout,/synthetic first run/);
+  const r=spawnSync(process.execPath,[executable,'try','--json'],{
+    cwd:os.tmpdir(),encoding:'utf8',timeout:25000,maxBuffer:128*1024});
+  assert.equal(r.status,0,r.stderr);
+  assert.equal(JSON.parse(r.stdout).modelCalls,0);
+  temp(dir=>{
+    const n=path.join(dir,'customer-secret.js');
+    const raw='function f(x){if(x){return true;}else{return false;}}\n';
+    fs.writeFileSync(n,raw);
+    const result=spawnSync(process.execPath,[executable,'try','--source',n,'--json'],{
+      cwd:os.tmpdir(),encoding:'utf8',timeout:25000,maxBuffer:128*1024});
+    assert.equal(result.status,0,result.stderr);
+    assert.ok(JSON.parse(result.stdout).tokensSaved>0);
+    assert.equal(fs.readFileSync(n,'utf8'),raw);
+    assert.doesNotMatch(result.stdout,/customer-secret|function f/);
+    const rejected=spawnSync(process.execPath,[executable,'try','--source',n,'--json','--unexpected'],{
+      cwd:os.tmpdir(),encoding:'utf8',timeout:25000,maxBuffer:128*1024});
+    assert.equal(rejected.status,1);
+    assert.doesNotMatch(rejected.stderr,/customer-secret|\/tmp\//);
+  });
+  const help=spawnSync(process.execPath,[executable,'--help'],{encoding:'utf8',timeout:5000});
+  assert.equal(help.status,0);
+  assert.match(help.stdout,/try \[--history FILE/);
+});
 test('npm run try is a working public entrypoint with no paid calls',()=>{
   const p=spawnSync('npm',['run','try','--','--json'],{
     cwd:root,encoding:'utf8',timeout:45000,maxBuffer:256*1024});
