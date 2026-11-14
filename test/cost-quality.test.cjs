@@ -217,7 +217,8 @@ test('human scorecard shows regressions even when owner enters cheaper total cha
   const page=formatEfficiencyMarkdown(analyzeEfficiency(report,charges(report,[0.1,0.1],[0.07,0.05])));
   assert.match(page,/Quality regression — not recommended/);
   assert.match(page,/Raw-pass \/ prepared-fail regressions:\*\* 1/);
-  assert.match(page,/task-1 \(repeat 0\)/);
+  assert.match(page,/Regression case IDs:\*\* omitted for privacy \(1 regressions/);
+  assert.doesNotMatch(page,/task-1/);
   assert.match(page,/Verified real-world savings: NO/);
 });
 test('markdown only shows aggregate facts; private prompt snippets and paths never render',()=>{
@@ -229,6 +230,16 @@ test('markdown only shows aggregate facts; private prompt snippets and paths nev
   assert.doesNotMatch(page,/PRIVATE_SOURCE_DO_NOT_PRINT/);
   assert.doesNotMatch(page,/\/Users\/private/);
   assert.ok(page.length<8000);
+});
+test('shareable scorecard never emits user-supplied private task identifiers',()=>{
+  const report=fixture({raw:[true,false],prepared:[false,true]});
+  for(const run of report.runs)
+    if(run.case==='task-0')run.case='client-ACME_secret_path_/Users/alice';
+  const summary=analyzeEfficiency(report);
+  const text=formatEfficiencyMarkdown(summary);
+  assert.match(text,/Regression case IDs:\*\* omitted for privacy/);
+  assert.doesNotMatch(text,/ACME|alice|secret_path|task-0/);
+  assert.equal(summary.quality.regressionCases[0].case,'client-ACME_secret_path_/Users/alice');
 });
 test('30 synthetic tasks do not unlock a real-world cost-savings claim',()=>{
   const yes=Array(30).fill(true);
