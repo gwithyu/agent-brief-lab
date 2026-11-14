@@ -2,6 +2,11 @@
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process');
 const {editCases,manifestDigest}=require('./edit-cases.cjs');
 const {materializeCase,gradeEdits,inspectTree}=require('./edit-grade.cjs');
+function stableJSON(x) {
+  if(Array.isArray(x))return '['+x.map(stableJSON).join(',')+']';
+  if(x&&typeof x==='object')return '{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+stableJSON(x[k])).join(',')+'}';
+  return JSON.stringify(x);
+}
 function parseTerminal(r,workspace) {
   const bad=(reason,state='invalid')=>({state,reason,elapsedMs:null,reportedModel:null});
   if(!r||r.error||r.status!==0||r.signal)
@@ -20,12 +25,27 @@ function parseTerminal(r,workspace) {
   const t=results[0];
   if(t.subtype!=='success'||t.is_error!==false||!Number.isSafeInteger(t.duration_ms)||t.duration_ms<0)
     return bad('failed_terminal');
+  if(typeof init[0].model!=='string'||!init[0].model.trim())return bad('missing_model_evidence');
+  if(workspace){
+    let expected,reported;
+    try {
+      expected=fs.realpathSync(workspace);
+      if(typeof init[0].cwd!=='string'||!init[0].cwd.trim())return bad('missing_workspace_evidence');
+      reported=fs.realpathSync(init[0].cwd);
+    }catch{return bad('invalid_workspace_evidence');}
+    if(reported!==expected)return bad('workspace_mismatch');
+    const sid=init[0].session_id;
+    if(typeof sid!=='string'||!sid.trim()
+      ||es.some(e=>typeof e.session_id!=='string'||e.session_id!==sid))
+      return bad('session_mismatch');
+  }
+  if(es.some(e=>e.type==='assistant'&&(e.tool_call||/^tool_use/i.test(e.subtype??'')
+    ||e.message?.content?.some?.(v=>v.type==='tool_use'))))
+    return bad('unaudited_assistant_tool');
 
-  // Fail closed on unknown tool names, unmatched event pairs and paths outside
-  // the exact synthetic workspace. This is AFTER-THE-FACT receipt checking,
-  // NOT a security boundary or a way to undo an executed operation.
+  // Post-hoc evidence audit. This cannot prevent or undo an operation.
   const types=new Set(['readToolCall','writeToolCall','editToolCall','strReplaceToolCall']);
-  const pending=new Set();
+  const pending=new Map();
   let seen=0;
   for(const e of es.filter(e=>e.type==='tool_call')){
     const v=e.tool_call;
@@ -33,7 +53,8 @@ function parseTerminal(r,workspace) {
     const [tool]=Object.keys(v);
     if(!types.has(tool))return bad('forbidden_tool_reported');
     const op=v[tool];
-    if(!op||typeof op!=='object'||Array.isArray(op)||!op.args||typeof op.args!=='object')return bad('invalid_tool_event');
+    if(!op||typeof op!=='object'||Array.isArray(op)||!op.args||typeof op.args!=='object'
+      ||Array.isArray(op.args))return bad('invalid_tool_event');
     const target=op.args.path??op.args.filePath??op.args.targetPath;
     if(typeof target!=='string'||!target.trim()||target.includes('\0'))return bad('unverifiable_tool_path');
     if(!workspace)return bad('unverified_tool_workspace');
@@ -45,18 +66,31 @@ function parseTerminal(r,workspace) {
     const rel=path.relative(root,real);
     if(!rel||rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel))
       return bad('out_of_workspace_tool_path');
-    if(!e.call_id||typeof e.call_id!=='string')return bad('invalid_tool_event');
+    if(typeof e.call_id!=='string'||!e.call_id.trim())return bad('invalid_tool_event');
+    const evidence={tool,rel,args:stableJSON(op.args)};
     if(e.subtype==='started'){
       if(pending.has(e.call_id))return bad('duplicate_tool_start');
-      pending.add(e.call_id);seen++;
+      pending.set(e.call_id,evidence);seen++;
     }else if(e.subtype==='completed'){
-      if(!pending.delete(e.call_id))return bad('unmatched_tool_completion');
-      if(op.result?.error||op.result?.failure)return bad('tool_failed');
+      if(!pending.has(e.call_id))return bad('unmatched_tool_completion');
+      const original=pending.get(e.call_id);
+      if(original.tool!==tool||original.rel!==rel||original.args!==evidence.args)
+        return bad('tool_event_mismatch');
+      pending.delete(e.call_id);
+      if(!op.result||typeof op.result!=='object'||!op.result.success
+        ||op.result.error||op.result.failure)return bad('tool_failed_or_unverified');
+      if(typeof op.result.success.path==='string'){
+        let resolved;
+        try{resolved=fs.realpathSync(op.result.success.path);}catch{return bad('unverifiable_tool_result_path');}
+        const resultRel=path.relative(root,resolved);
+        if(!resultRel||resultRel==='..'||resultRel.startsWith('..'+path.sep)||path.isAbsolute(resultRel))
+          return bad('out_of_workspace_tool_result');
+      }
     }else return bad('unexpected_tool_event');
   }
   if(pending.size)return bad('unfinished_tool_call');
   return {state:'completed',reason:null,elapsedMs:t.duration_ms,
-    reportedModel:typeof init[0].model==='string'?init[0].model:null,toolEvents:seen};
+    reportedModel:init[0].model,toolEvents:seen};
 }
 function evaluateEdits(items,invoke){
   if(!Array.isArray(items)||!items.length||typeof invoke!=='function')throw Error('Nonempty case set and invoker required');
