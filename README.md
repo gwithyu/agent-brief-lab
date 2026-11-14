@@ -78,6 +78,19 @@ the history format is **not** a built-in Cursor/ChatGPT transcript import.
 privacy limitations, and safe feedback. This is **experimental source code
 in an unmerged Draft PR**, not an npm registry release.
 
+### Try it, then tell us what got in the way
+
+If the preview works, or if it reports **zero savings**, both outcomes
+help identify where this experiment is useful. Use the GitHub **First-run
+feedback** issue template in `.github/ISSUE_TEMPLATE/first-run-feedback.md`.
+It asks only for operating system, Node version, optional **aggregate
+numbers**, and usability feedback. **Never paste private code, raw prompts,
+chat logs, file paths, customer information or API credentials.**
+
+The 30-task synthetic A/B experiment and any monetary cost verdict remain
+unverified as real-world usefulness, regardless of how smooth installation
+gets.
+
 ## Quick run without cloning this tool
 
 Requires Node.js 20+, npm, and Git for workspace features. This command fetches a
