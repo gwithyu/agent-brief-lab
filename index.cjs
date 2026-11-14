@@ -160,6 +160,8 @@ if (require.main === module) {
 
 Commands:
   try [--history FILE | --source FILE] [--json]   Preview compression locally (no model calls)
+  handoff --repo ROOT --task TEXT --file FILE --out NEW_DIR [--constraint TEXT] [--check TEXT]
+                                               Private native-JSON handoff to an existing agent
   measure <source> [encoding]                 Measure a conservative rewrite candidate
   compact <source> [encoding]                 Print a smaller candidate without overwriting source
   brief <intent.json>                         Print the complete explicit intent brief
@@ -190,7 +192,9 @@ Exit status: 0 success; 1 invalid/rejected/check failure; 2 incorrect CLI usage.
 `;
   if(args.length===1 && ['--help','-h'].includes(args[0])) process.stdout.write(help);
   else if(args.length===1 && ['--version','-V'].includes(args[0])) console.log(require('./package.json').version);
-  else if(args[0]==='try') {
+  else if(args[0]==='handoff') {
+    process.exitCode=require('./handoff.cjs').runCli(args.slice(1));
+  } else if(args[0]==='try') {
     process.exitCode=require('./evaluation/try-it.cjs').runCli(args.slice(1));
   } else if(args[0]==='propose') {
     try {
