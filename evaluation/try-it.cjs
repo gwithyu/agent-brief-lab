@@ -97,7 +97,7 @@ function display(x){
       'Net vs unguided request: '+x.completeGuidedInput.netSavedVersusRawRequest+' tokens',
       'No billed USD savings established. Try --history FILE or --source FILE.'].join('\n');
   }
-  return ['Agent Brief Lab — local '+x.kind,
+  return ['Agent Brief Lab — '+(x.kind==='local_source'?'local source':'local history'),
     'Local tokens: '+x.beforeTokens+' -> '+x.afterTokens+
       ' ('+x.tokensSaved+' fewer)',
     'Bytes: '+x.beforeBytes+' -> '+x.afterBytes,
