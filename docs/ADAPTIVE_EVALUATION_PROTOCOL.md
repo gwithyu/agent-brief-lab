@@ -98,7 +98,10 @@ prompt+answer manifest, all local input-token counts, and **zero model
 calls**. Live mode (opt-in) runs one raw/prepared pair by default, via an
 existing locally authenticated Cursor CLI in `--mode=ask --sandbox enabled`.
 Each arm uses a fresh 0700 system temporary directory containing only its
-synthetic prompt text. The stream parser rejects all observed tool calls,
+synthetic prompt text. Select a single difficult case with `--cases multi-theme`
+(or comma-separated distinct IDs), without having to spend quota on all
+earlier cases; `--cases` and `--limit` are mutually exclusive.
+The stream parser rejects all observed tool calls,
 unusable terminal evidence and invalid JSON. Paired model-identity drift
 invalidates the comparison. Over five pairs requires `--confirm-batch YES`.
 No model-authored code is executed or written into the project's repository.
@@ -110,7 +113,13 @@ four understanding-only questions and the writable 30-task agent benchmark.
 It does not guarantee security, especially against Cursor CLI's potential
 read access outside the temporary directory. Prefer disposable OS accounts
 without private files or connected personal integrations. No provider token
-billing fields are inferred; unknown remains `null`. This new proposal
+billing fields are inferred; unknown remains `null`. The 30-case zero-call preflight reports **21,189 raw versus 18,208
+prepared local input-text tokens**, a 2,981 token (**14.07%**) reduction
+*for the text only*. The no-positive-gain cases (`json-language`,
+`unresolved-spacing`, `unresolved-toggle`) remain in the corpus.
+The proposal manifest digest and local counts differ from the older
+editing-agent task runner because of the additional output instructions.
+This new proposal
 benchmark has **not yet produced real Cursor model results**.
 
 ## Deterministic 30-task coding-edit experiment (synthetic preview)
