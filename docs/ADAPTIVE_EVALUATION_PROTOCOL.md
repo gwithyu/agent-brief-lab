@@ -122,6 +122,61 @@ editing-agent task runner because of the additional output instructions.
 This new proposal
 benchmark has **not yet produced real Cursor model results**.
 
+## Quality-gated cost per successful task (owner-supplied billing evidence)
+
+After an actual **completed** Cursor Ask-mode code-proposal A/B run,
+`evaluation/patch-run.cjs` now attaches an `efficiency` summary to its
+private `report.json`. Task pairs must match by ID and repeat, every arm
+must have a completed terminal, report source and Git integrity must pass,
+and one reported model identity must be consistent. The summary compares
+raw/prepared success rates, failures, regressions and local text token
+counts; **monetary fields remain `null`** without external charges.
+
+`evaluation/cost-quality.cjs` is a separate *offline*, read-only consumer:
+
+```sh
+node evaluation/cost-quality.cjs --report /private/report.json
+node evaluation/cost-quality.cjs --report /private/report.json \
+  --template > /private/owner-charges.json
+node evaluation/cost-quality.cjs --report /private/report.json \
+  --charges /private/owner-charges.json
+```
+
+A generated template contains one entry for each recorded arm, with
+`billedCostUsd: null`, the exact frozen manifest digest, code revision,
+model ID, currency `USD`, and `attemptCount: 1`. The user must fill
+charges from **their own provider exports or invoice records**. The schema
+also permits nullable native token counters
+`providerInputTokens`, `providerCachedInputTokens`,
+`providerOutputTokens` and `providerReasoningTokens`; cached input is
+a subset of input (not an extra token stream to double count).
+The importer refuses duplicate/mismatched tasks, missing coverage, invalid
+negative costs, impossible cached token counts, and unsupported retry
+counts. The current benchmark does not capture actual retries or provider
+billing, so a user cannot safely claim their costs are included without
+separate evidence. Imported values are **owner-reported and not independently
+verified**, even if the owner labels a file `provider_export`.
+
+The primary statistic is:
+`cost_per_success = sum(all observed attempts' USD charges) / correct tasks`.
+The existing single-call-per-arm runner cannot measure additional retry
+costs, which remains a limitation. When success count is zero, this metric
+is undefined (`null`). Quality regression counts are always displayed:
+a local input-token reduction and even lower total spend do **not** qualify
+as a win if prepared loses a raw-passing task. A prepared-vs-raw
+sample-level win requires comparable complete arms, no raw-pass/prepared-fail
+regressions, and **lower USD per correctly completed task**. It is never a
+production guarantee, general model quality claim or independently verified
+invoice comparison. Input-only tokenizer differences cannot substantiate
+a total-cost claim.
+
+Currency totals use fixed-decimal 10⁻¹² USD units before aggregation,
+refusing unsupported excess precision rather than silently rounding a
+small charge to zero. Summary output contains aggregate statistics only,
+never the raw tool traces, file source contents, or invoice artifacts.
+The blank template and imported charges must stay in a private directory,
+not GitHub or a user-facing social media screenshot.
+
 ## Deterministic 30-task coding-edit experiment (synthetic preview)
 
 The frozen generator `evaluation/edit-cases.cjs` creates exactly 30
