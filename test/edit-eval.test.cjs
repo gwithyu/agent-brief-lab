@@ -104,9 +104,11 @@ test('Cursor tool stream terminal checks and forbidden shell evidence',()=>{
 });
 test('dry-run never invokes a model and live batch needs deliberate quota confirmation',()=>{
   const r=runCli(['--dry-run']);assert.equal(r.modelRuns,0);assert.equal(r.distinctTasks,30);
-  assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/example','--limit','30']),/confirm-batch/);
-  assert.equal(parseArgs(['--live','--model','m','--out','/tmp/example','--limit','30','--confirm-batch','YES']).limit,30);
-  assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/example','--limit','31']));
+  assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/example']),/confirm-isolated-env/);
+  assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/example','--confirm-isolated-env','NO']),/confirm-isolated-env/);
+  assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/example','--confirm-isolated-env','YES','--limit','30']),/confirm-batch/);
+  assert.equal(parseArgs(['--live','--model','m','--out','/tmp/example','--confirm-isolated-env','YES','--limit','30','--confirm-batch','YES']).limit,30);
+  assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/example','--confirm-isolated-env','YES','--limit','31']));
 });
 
 test('unexpected empty folder and oversized file cannot evade scope checker',()=>{
