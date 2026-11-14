@@ -113,6 +113,14 @@ For paired task-quality checks, see
 `evaluation/patch-run.cjs` **dry-run**. Genuine model A/B tests are opt-in
 and require separate, locally authenticated infrastructure.
 
+## Feedback template for outside developers
+
+Open a new issue using the **First-run feedback (privacy-safe)** template
+in `.github/ISSUE_TEMPLATE/first-run-feedback.md` (or find it through
+the repository's GitHub Issues UI). Include only sanitized error codes,
+Node version and optional aggregate counts. Never share original source,
+model transcripts, private prompts, names, paths or credentials.
+
 ## Feedback that would be most useful
 
 Tell us which mode you tried (`synthetic`, `source`, or `history`);
