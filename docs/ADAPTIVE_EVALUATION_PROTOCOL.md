@@ -143,6 +143,22 @@ node evaluation/cost-quality.cjs --report /private/report.json \
   --charges /private/owner-charges.json
 ```
 
+`--markdown` formats a compact privacy-preserving scorecard. It shows
+correct task counts, local text-token usage, owner-declared monetary values
+if complete, raw-pass/prepared-fail regression cases, study-size limitations,
+and a prominent **Verified real-world savings: NO** banner. The renderer
+does not include prompts, model source snippets, private filesystem paths,
+invoice artifacts or raw stream JSON. It caps the displayed regression
+case list and normalizes unusual case IDs before rendering.
+
+An owner-entered favorable comparison is marked
+`ownerReportedSavingsCandidate: true`, not `qualifiesAsMeasuredWin`
+or `verifiedSavingsClaim`. Both verified flags stay false because no
+independent provider-side cost authentication or representative production
+outcome data is available. A 30-distinct-task minimum is recorded as a
+descriptive sample gate only; satisfying it on synthetic tasks does not
+establish external validity or guarantee cost savings.
+
 A generated template contains one entry for each recorded arm, with
 `billedCostUsd: null`, the exact frozen manifest digest, code revision,
 model ID, currency `USD`, and `attemptCount: 1`. The user must fill
