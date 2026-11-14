@@ -17,6 +17,11 @@ test('manifest has 30 distinct preregistered tasks and immutable fingerprint',()
   assert.equal(manifestDigest(cases),manifestDigest(editCases()));
   assert.equal(cases.filter(c=>c.kind==='no_change').length,2);
   assert.equal(cases.filter(c=>c.kind==='multi').length,2);
+  assert.equal(cases.filter(c=>c.historyRepeats===0).length,6);
+  const priorDigest=manifestDigest(cases);
+  const copy=cases.map(c=>({...c,prompts:{...c.prompts}}));
+  copy[0].prompts.raw+='tampered';
+  assert.notEqual(manifestDigest(copy),priorDigest,'Entire prompt is part of benchmark fingerprint');
   for(const c of cases){
     assert.ok(c.allowed.length);
     for(const prompt of Object.values(c.prompts)){
@@ -102,4 +107,20 @@ test('dry-run never invokes a model and live batch needs deliberate quota confir
   assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/example','--limit','30']),/confirm-batch/);
   assert.equal(parseArgs(['--live','--model','m','--out','/tmp/example','--limit','30','--confirm-batch','YES']).limit,30);
   assert.throws(()=>parseArgs(['--live','--model','m','--out','/tmp/example','--limit','31']));
+});
+
+test('unexpected empty folder and oversized file cannot evade scope checker',()=>{
+  const c=cases.find(c=>c.kind==='css');
+  withJob(c,'prepared',job=>{
+    for(const file of c.allowed)fs.writeFileSync(path.join(job,file),c.expected[file]);
+    fs.mkdirSync(path.join(job,'unexpected_dir'));
+    let grade=gradeEdits(job,c,'prepared');
+    assert.equal(grade.acceptancePassed,false);
+    assert.ok(grade.scopeViolations.some(v=>v.includes('unexpected:unexpected_dir')));
+    fs.rmdirSync(path.join(job,'unexpected_dir'));
+    fs.writeFileSync(path.join(job,'unwanted.bin'),Buffer.alloc(300*1024));
+    grade=gradeEdits(job,c,'prepared');
+    assert.equal(grade.acceptancePassed,false);
+    assert.ok(grade.scopeViolations.some(v=>v.includes('unexpected:unwanted.bin')));
+  });
 });
