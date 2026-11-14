@@ -77,7 +77,7 @@ function formatEfficiencyMarkdown(s){
     '',
     '**Non-saving input pairs:** '+count(local.nonSavingPairs.length)+'.',
     '',
-    '**Sample:** '+count(s.pairCount)+' matched pairs / '+count(s.sample?.distinctTaskCount??s.sample?.count??s.sampleCount??s.sample?.taskCount??s.pairCount)+' tasks.',
+    '**Sample:** '+count(s.pairCount)+' matched pairs / '+count(s.sample.distinctTaskCount)+' distinct tasks.',
     '',
     '## Evidence limits',
     ...notes.map(n=>'- '+n),
