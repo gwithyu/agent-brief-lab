@@ -148,8 +148,8 @@ correct task counts, local text-token usage, owner-declared monetary values
 if complete, raw-pass/prepared-fail regression cases, study-size limitations,
 and a prominent **Verified real-world savings: NO** banner. The renderer
 does not include prompts, model source snippets, private filesystem paths,
-invoice artifacts or raw stream JSON. It caps the displayed regression
-case list and normalizes unusual case IDs before rendering.
+invoice artifacts, raw stream JSON **or user-defined task IDs**. It shows
+regression counts only; exact task IDs remain in the private JSON report.
 
 An owner-entered favorable comparison is marked
 `ownerReportedSavingsCandidate: true`, not `qualifiesAsMeasuredWin`
