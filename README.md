@@ -421,6 +421,13 @@ node evaluation/cost-quality.cjs --report "$ROOT/first-pair/report.json" \
 # Fill billedCostUsd for EVERY case/arm using your own original evidence.
 node evaluation/cost-quality.cjs --report "$ROOT/first-pair/report.json" \
   --charges "$ROOT/owner-charges.json"
+
+# A compact, shareable aggregate-only Markdown scorecard:
+node evaluation/cost-quality.cjs --report "$ROOT/first-pair/report.json" \
+  --markdown > "$ROOT/scorecard.md"
+# With complete owner-entered charges, it clearly says NOT VERIFIED:
+# node evaluation/cost-quality.cjs --report "$ROOT/first-pair/report.json" \
+#   --charges "$ROOT/owner-charges.json" --markdown > "$ROOT/scorecard.md"
 ```
 
 With no external USD charges (the current default), money totals and
@@ -433,6 +440,16 @@ provider billing integration. Keep reports and charge records outside
 public Git history. The current harness makes **one CLI attempt per arm**:
 the charge importer rejects invented retry counts rather than pretending
 it observed unseen retries.
+
+The Markdown scorecard shows one readable table with success counts,
+local input-text tokens, externally entered USD where available, quality
+regressions and explicit evidence limits. It excludes original source text,
+prompts, file paths, transcripts and raw billing receipts. **It always labels
+real-world money savings as unverified**: an owner-reported favorable
+comparison sets `ownerReportedSavingsCandidate: true`, never
+`qualifiesAsMeasuredWin: true` or `verifiedSavingsClaim: true`.
+A 30-distinct-task threshold is recorded as a study-design signal, not
+proof that synthetic tasks represent real development workloads.
 
 The comparison counts every observed failure in the denominator and makes
 the tradeoff visible: **total observed USD spent / number of correctly
