@@ -1,5 +1,5 @@
 'use strict';
-const fs=require('node:fs'),path=require('node:path'),{spawnSync}=require('node:child_process');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process');
 const {isDeepStrictEqual}=require('node:util');
 const {parseCursorCompletion,invokeCursor}=require('./cursor.cjs');
 
@@ -51,6 +51,11 @@ function runCli(argv=process.argv.slice(2)) {
   const out=path.join(fs.realpathSync(path.dirname(requested)),path.basename(requested));
   const relative=path.relative(root,out);
   if(relative===''||(!relative.startsWith('..'+path.sep)&&relative!=='..'&&!path.isAbsolute(relative)))throw Error('Keep private model traces outside the package repository');
+  // The invoker uses --trust only for synthetic, newly created, private
+  // workspaces inside the system temporary directory.
+  const temporary=fs.realpathSync(os.tmpdir()),tempRelative=path.relative(temporary,out);
+  if(!tempRelative||tempRelative==='..'||tempRelative.startsWith('..'+path.sep)||path.isAbsolute(tempRelative))
+    throw Error('Cursor trust automation requires --out inside the system temporary directory');
   const head=spawnSync('git',['rev-parse','--verify','HEAD'],{cwd:root,encoding:'utf8'});
   const beforeStatus=spawnSync('git',['status','--porcelain','--untracked-files=normal'],{cwd:root,encoding:'utf8'});
   if(head.status!==0||beforeStatus.status!==0||beforeStatus.stdout.trim())throw Error('Clean Git checkout required');
