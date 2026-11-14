@@ -30,7 +30,7 @@ function checkKeys(o,required,optional=[]){
 }
 function analyzeEfficiency(report,charges=null){
   if(!object(report)||report.provider!=='cursor-cli'
-    ||!['read-only-code-proposals'].includes(report.experiment)
+    ||!['read-only-code-proposals','synthetic-autonomous-edits'].includes(report.experiment)
     ||report.gitIntegrity!=='PASS'||report.comparisonComplete!==true||report.state!=='completed')
     throw Error('incomplete_or_unsupported_report');
   if(!Array.isArray(report.runs)||report.runs.length<2||report.runs.length>180
@@ -71,7 +71,7 @@ function analyzeEfficiency(report,charges=null){
     .map(x=>({case:x.case,repeat:x.repeat}));
   const output={
     schema:'agent-brief-efficiency.v1',
-    evidence:'synthetic_coding_proposal_tasks',
+    evidence:report.experiment==='synthetic-autonomous-edits'?'synthetic_coding_agent_edits':'synthetic_coding_proposal_tasks',
     identity:{manifestDigest:report.manifestDigest,repositoryCommit:report.repositoryCommit,modelRequested:report.modelRequested},
     pairCount:pairs.length,quality:{
       rawPasses:rawPassed,preparedPasses:preparedPassed,
@@ -100,7 +100,7 @@ function analyzeEfficiency(report,charges=null){
       lowerCostPerSuccess:null,
       qualifiesAsMeasuredWin:false
     },
-    warning:'Local tokenizer counts are not provider usage or invoice charges; this is a narrow synthetic proposal benchmark, not autonomous editing. Imported costs are owner-supplied and not independently authenticated.'
+    warning:'Local tokenizer counts are not provider usage or invoice charges. These are narrow synthetic tasks, not representative production workloads; imported costs are owner-supplied and not independently authenticated.'
   };
   if(charges===null)return output;
   checkKeys(charges,['schema','manifestDigest','repositoryCommit','modelRequested','currency','observations']);
