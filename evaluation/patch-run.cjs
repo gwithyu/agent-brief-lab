@@ -8,22 +8,27 @@ function parseArgs(args){
   if(!args.length||(args.length===1&&args[0]==='--dry-run'))
     return {live:false};
   if(args[0]!=='--live'||args.length%2!==1)
-    throw Error('Usage: --dry-run or --live --model ID --out NEW_TEMP_DIR [--limit 1..30] [--repeats 1..3] [--confirm-batch YES]');
+    throw Error('Usage: --dry-run or --live --model ID --out NEW_TEMP_DIR [--limit 1..30 | --cases ID1,ID2] [--repeats 1..3] [--confirm-batch YES]');
   const vals={};
   for(let i=1;i<args.length;i+=2){
-    if(!['--model','--out','--limit','--repeats','--confirm-batch'].includes(args[i])
+    if(!['--model','--out','--limit','--cases','--repeats','--confirm-batch'].includes(args[i])
       ||!args[i+1]||Object.hasOwn(vals,args[i]))throw Error('Invalid live options');
     vals[args[i]]=args[i+1];
   }
   const limit=vals['--limit']===undefined?1:Number(vals['--limit']);
   const repeats=vals['--repeats']===undefined?1:Number(vals['--repeats']);
+  if(vals['--cases']!==undefined&&vals['--limit']!==undefined)
+    throw Error('Use --cases or --limit, not both');
+  const caseIds=vals['--cases']===undefined?null:vals['--cases'].split(',');
+  if(caseIds&&(!caseIds.length||caseIds.length>30||caseIds.some(x=>!/^[a-z][a-z0-9-]*$/.test(x))
+    ||new Set(caseIds).size!==caseIds.length))throw Error('Invalid case ID list');
   if(!Number.isInteger(limit)||limit<1||limit>30||!Number.isInteger(repeats)
     ||repeats<1||repeats>3||!vals['--model']||!vals['--model'].trim()
     ||vals['--model'].includes('\0')||!vals['--out'])
     throw Error('Explicit model, output, --limit 1..30 and --repeats 1..3 required');
-  if(limit*repeats>5&&vals['--confirm-batch']!=='YES')
+  if((caseIds?.length??limit)*repeats>5&&vals['--confirm-batch']!=='YES')
     throw Error('More than five pairs consumes quota: specify --confirm-batch YES');
-  return {live:true,model:vals['--model'],out:vals['--out'],limit,repeats};
+  return {live:true,model:vals['--model'],out:vals['--out'],limit,caseIds,repeats};
 }
 function evaluateProposals(cases,invoke,repeats=1){
   if(!Array.isArray(cases)||!cases.length||typeof invoke!=='function')
@@ -89,7 +94,12 @@ function runCli(args=process.argv.slice(2)){
   fs.mkdirSync(out,{mode:0o700});
   const reports=path.join(out,'receipts');fs.mkdirSync(reports,{mode:0o700});
   let seq=0;
-  const report=evaluateProposals(items.slice(0,opts.limit),(item,arm,n)=>{
+  const selected=opts.caseIds?opts.caseIds.map(id=>{
+    const found=items.find(item=>item.id===id);
+    if(!found)throw Error('Unknown case ID: '+id);
+    return found;
+  }):items.slice(0,opts.limit);
+  const report=evaluateProposals(selected,(item,arm,n)=>{
     const id=String(seq++).padStart(3,'0')+'-'+item.id+'-'+n+'-'+arm;
     const job=path.join(out,id);fs.mkdirSync(job,{mode:0o700});
     fs.writeFileSync(path.join(job,'prompt.txt'),item.prompts[arm],{mode:0o600,flag:'wx'});
@@ -107,7 +117,7 @@ function runCli(args=process.argv.slice(2)){
     &&s.status===0&&!s.stdout.trim();
   const output={provider:'cursor-cli',experiment:'read-only-code-proposals',modelRequested:opts.model,
     cliVersion:cli.stdout.trim(),repositoryCommit:sha.stdout.trim(),manifestDigest:digest,
-    distinctTasks:opts.limit,repeats:opts.repeats,...report,gitIntegrity:integrity?'PASS':'FAIL',
+    distinctTasks:selected.length,selectedCaseIds:selected.map(i=>i.id),repeats:opts.repeats,...report,gitIntegrity:integrity?'PASS':'FAIL',
     scope:'Exact UTF-8 replacement proposal quality ONLY. Not autonomous edits, a security guarantee, native token usage or billed cost. Provider usage fields are null.'};
   if(!integrity){output.state='invalid';output.reason='git_integrity_failure';}
   fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(output,null,2),{mode:0o600});
