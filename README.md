@@ -318,11 +318,23 @@ directory, a fresh CLI session, a pinned requested model, and counterbalanced
 raw/prepared order. It stores private event, prompt and stderr receipts outside
 the tracked repository and checks that its Git HEAD and worktree stayed intact.
 
-The invocation uses `--mode=ask --sandbox enabled` and never `--force` or
-`--resume`. These settings are **not an operating-system security boundary**;
-a tool call may have effects before a disqualifying event is received. The
-runner rejects any recorded tool call or interaction and stops remaining pairs.
-Use only **synthetic fixtures**, in a disposable environment, without secrets.
+The invocation uses `--trust --mode=ask --sandbox enabled`, and never
+`--force`, `--yolo` or `--resume`. The explicit `--trust` flag avoids the
+`Workspace Trust Required` startup failure for **new, private (mode 0700),
+single-prompt temporary directories** created by this harness. The runner
+rejects non-temporary `--out` roots, extra files, symlinks and nonprivate
+working directories before invoking Cursor. `--trust` is **only workspace
+trust**, not authorization for unrestricted commands.
+
+**Important:** Ask mode and Cursor sandbox settings are **not an operating-
+system read-isolation boundary**. Cursor may still be able to read files
+outside the working directory according to the user's Cursor permissions,
+and a tool call may have effects before a disqualifying event is received.
+The runner rejects any recorded tool call or interaction and stops remaining
+pairs. Use only **synthetic fixtures**, ideally in a disposable OS account or
+VM without secrets. The `--out` directory must be newly created under the
+machine's system temporary directory. A failed or incomplete run should be
+rerun to a *new* directory, never overwriting existing receipts.
 
 Cursor CLI's documented JSONL terminal response does not guarantee native
 token billing details. Results therefore leave provider input/output tokens
