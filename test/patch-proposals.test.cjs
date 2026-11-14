@@ -138,7 +138,7 @@ test('full Ask-mode subprocess E2E handles two correct proposals with zero works
     assert.equal(report.passed,2);assert.equal(report.modelCompleted,2);
     assert.equal(report.gitIntegrity,'PASS');assert.equal(report.comparisonComplete,true);
     assert.equal(report.experiment,'read-only-code-proposals');
-    for(const d of fs.readdirSync(out).filter(x=>x!=='receipts')){
+    for(const d of fs.readdirSync(out).filter(x=>x!=='receipts'&&x!=='report.json')){
       const work=path.join(out,d);
       assert.deepEqual(fs.readdirSync(work),['prompt.txt']);
       assert.equal(fs.statSync(work).mode&0o077,0);
