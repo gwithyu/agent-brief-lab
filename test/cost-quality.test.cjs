@@ -2,6 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process');
 const {analyzeEfficiency,buildChargeTemplate,runCli}=require('../evaluation/cost-quality.cjs');
+const {formatEfficiencyMarkdown}=require('../evaluation/cost-quality-markdown.cjs');
 
 function fixture({raw=[true,true],prepared=[true,true],rawTokens=[100,80],preparedTokens=[70,90]}={}){
   const runs=[];
@@ -182,6 +183,80 @@ test('read-only command consumes private JSON and writes only sanitized aggregat
     const parsed=JSON.parse(proc.stdout);
     assert.equal(parsed.pairCount,2);
     assert.ok(!proc.stdout.includes('invoice_transcription:secret'));
+    assert.deepEqual(fs.readdirSync(dir).sort(),['charges.json','report.json']);
+  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('human scorecard never labels self-reported amounts as verified savings',()=>{
+  const report=fixture();
+  const scored=analyzeEfficiency(report,charges(report,[0.1,0.1],[0.05,0.07]));
+  assert.equal(scored.observedOnThisSample.ownerReportedSavingsCandidate,true);
+  assert.equal(scored.observedOnThisSample.qualifiesAsMeasuredWin,false);
+  assert.equal(scored.observedOnThisSample.verifiedSavingsClaim,false);
+  const page=formatEfficiencyMarkdown(scored);
+  assert.match(page,/Verified real-world savings: NO/);
+  assert.match(page,/Owner-declared candidate only — NOT VERIFIED/);
+  assert.match(page,/Correct tasks/);
+  assert.match(page,/\$0.1000/);
+  assert.match(page,/\$0.0600/);
+  assert.match(page,/fewer than 30 distinct tasks/);
+  assert.match(page,/not independently verified/);
+  assert.doesNotMatch(page,/Verified real-world savings: YES/);
+});
+test('human scorecard marks price unknown without external charges',()=>{
+  const report=fixture();
+  const text=formatEfficiencyMarkdown(analyzeEfficiency(report));
+  assert.match(text,/Cost unknown — no savings claim/);
+  assert.match(text,/Owner-declared USD total \| Unknown \| Unknown/);
+  assert.match(text,/Local text reduction: 11.11%/);
+  assert.match(text,/Non-saving input pairs: 1/);
+  assert.match(text,/Sample: 2 matched pairs \/ 2 distinct tasks/);
+});
+test('human scorecard shows regressions even when owner enters cheaper total charges',()=>{
+  const report=fixture({prepared:[true,false]});
+  const page=formatEfficiencyMarkdown(analyzeEfficiency(report,charges(report,[0.1,0.1],[0.07,0.05])));
+  assert.match(page,/Quality regression — not recommended/);
+  assert.match(page,/Raw-pass \/ prepared-fail regressions: 1/);
+  assert.match(page,/task-1 \(repeat 0\)/);
+  assert.match(page,/Verified real-world savings: NO/);
+});
+test('markdown only shows aggregate facts; private prompt snippets and paths never render',()=>{
+  const report=fixture();
+  report.runs[0].prompt='PRIVATE_SOURCE_DO_NOT_PRINT';
+  report.runs[0].homeDirectory='/Users/private/demo';
+  const summary=analyzeEfficiency(report);
+  const page=formatEfficiencyMarkdown(summary);
+  assert.doesNotMatch(page,/PRIVATE_SOURCE_DO_NOT_PRINT/);
+  assert.doesNotMatch(page,/\/Users\/private/);
+  assert.ok(page.length<8000);
+});
+test('30 synthetic tasks do not unlock a real-world cost-savings claim',()=>{
+  const yes=Array(30).fill(true);
+  const report=fixture({raw:yes,prepared:yes,rawTokens:Array(30).fill(100),preparedTokens:Array(30).fill(70)});
+  const summary=analyzeEfficiency(report,charges(report,Array(30).fill(0.1),Array(30).fill(0.07)));
+  assert.equal(summary.sample.distinctTaskCount,30);
+  assert.equal(summary.sample.meets30DistinctTaskGate,true);
+  assert.equal(summary.sample.isRepresentativeProductionSample,false);
+  assert.equal(summary.observedOnThisSample.ownerReportedSavingsCandidate,true);
+  assert.equal(summary.observedOnThisSample.qualifiesAsMeasuredWin,false);
+  assert.match(formatEfficiencyMarkdown(summary),/Verified real-world savings: NO/);
+});
+test('markdown command outputs a screenshot-friendly scorecard and never a template',()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'brief-human-score-'));
+  try{
+    const file=path.join(dir,'report.json'),inv=path.join(dir,'charges.json');
+    const report=fixture();
+    fs.writeFileSync(file,JSON.stringify(report),{mode:0o600});
+    fs.writeFileSync(inv,JSON.stringify(charges(report,[0.1,0.1],[0.07,0.07])),{mode:0o600});
+    const text=runCli(['--report',file,'--charges',inv,'--markdown']);
+    assert.equal(typeof text,'string');
+    assert.match(text,/Verified real-world savings: NO/);
+    assert.match(runCli(['--report',file,'--markdown']),/Cost unknown/);
+    assert.throws(()=>runCli(['--report',file,'--template','--markdown']),/Usage/);
+    const command=spawnSync(process.execPath,['evaluation/cost-quality.cjs','--report',file,'--charges',inv,'--markdown'],
+      {cwd:path.resolve(__dirname,'..'),encoding:'utf8',timeout:15000});
+    assert.equal(command.status,0,command.stderr);
+    assert.match(command.stdout,/^# Agent Brief Lab/);
     assert.deepEqual(fs.readdirSync(dir).sort(),['charges.json','report.json']);
   }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
