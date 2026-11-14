@@ -208,15 +208,15 @@ test('human scorecard marks price unknown without external charges',()=>{
   const text=formatEfficiencyMarkdown(analyzeEfficiency(report));
   assert.match(text,/Cost unknown — no savings claim/);
   assert.match(text,/Owner-declared USD total \| Unknown \| Unknown/);
-  assert.match(text,/Local text reduction: 11.11%/);
-  assert.match(text,/Non-saving input pairs: 1/);
-  assert.match(text,/Sample: 2 matched pairs \/ 2 distinct tasks/);
+  assert.match(text,/Local text reduction:\*\* 11\.11%/);
+  assert.match(text,/Non-saving input pairs:\*\* 1/);
+  assert.match(text,/Sample:\*\* 2 matched pairs \/ 2 distinct tasks/);
 });
 test('human scorecard shows regressions even when owner enters cheaper total charges',()=>{
   const report=fixture({prepared:[true,false]});
   const page=formatEfficiencyMarkdown(analyzeEfficiency(report,charges(report,[0.1,0.1],[0.07,0.05])));
   assert.match(page,/Quality regression — not recommended/);
-  assert.match(page,/Raw-pass \/ prepared-fail regressions: 1/);
+  assert.match(page,/Raw-pass \/ prepared-fail regressions:\*\* 1/);
   assert.match(page,/task-1 \(repeat 0\)/);
   assert.match(page,/Verified real-world savings: NO/);
 });
