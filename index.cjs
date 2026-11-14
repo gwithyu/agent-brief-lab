@@ -159,6 +159,7 @@ if (require.main === module) {
   const help=`Usage: agent-brief <command> [options]
 
 Commands:
+  try [--history FILE | --source FILE] [--json]   Preview compression locally (no model calls)
   measure <source> [encoding]                 Measure a conservative rewrite candidate
   compact <source> [encoding]                 Print a smaller candidate without overwriting source
   brief <intent.json>                         Print the complete explicit intent brief
@@ -189,7 +190,9 @@ Exit status: 0 success; 1 invalid/rejected/check failure; 2 incorrect CLI usage.
 `;
   if(args.length===1 && ['--help','-h'].includes(args[0])) process.stdout.write(help);
   else if(args.length===1 && ['--version','-V'].includes(args[0])) console.log(require('./package.json').version);
-  else if(args[0]==='propose') {
+  else if(args[0]==='try') {
+    process.exitCode=require('./evaluation/try-it.cjs').runCli(args.slice(1));
+  } else if(args[0]==='propose') {
     try {
       const [_,intentFile,repo,out,...options]=args;
       if(!intentFile||!repo||!out||!(options.length===0||(options.length===3&&options[0]==='--live'&&options[1]==='--model')))throw Object.assign(new Error('Usage: agent-brief propose <intent.json> <repo> <new-output-dir> [--live --model MODEL]'),{exitCode:2});
