@@ -154,6 +154,20 @@ test('reject invented model, mismatched fingerprint, missing/duplicate job or fa
     assert.throws(()=>scoreTrial({trial,observations:name}));
   }
 }));
+test('infrastructure-blocked run must not be treated as a fair quality-cost comparison',()=>fixture(({trial})=>{
+  const {name,template}=fill(trial);
+  template.entries[0].terminal='blocked';
+  template.entries[0].correct=false;
+  fs.writeFileSync(name,JSON.stringify(template));
+  const scored=scoreTrial({trial,observations:name});
+  assert.equal(scored.trialStatus,'blocked_infrastructure');
+  assert.equal(scored.quality.rawCorrect,null);
+  assert.equal(scored.quality.qualityNoRegression,null);
+  assert.equal(scored.costs.rawUsdPerSuccess,null);
+  assert.equal(scored.ownerReportedCandidate,false);
+  assert.equal(scored.verifiedRealWorldSavings,false);
+  assert.match(scored.conclusion,/Infrastructure blocked/);
+}));
 test('tampered prompt bytes and symlinked prompt files are refused',()=>fixture(({trial})=>{
   const {name}=fill(trial);
   const prompt=path.join(trial,'slot-01.txt'),source=fs.readFileSync(prompt);
