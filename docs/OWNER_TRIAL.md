@@ -70,7 +70,11 @@ For each slot, fill these fields using **your own observed evidence**:
   independent grader/check log; **a hash alone is not proof that a test ran**
 
 Do not mark a failed/blocked terminal as correct. Record prices even for
-failed tasks. If the provider reports caching or retry details, keep the
+failed tasks. A `blocked` terminal indicates an infrastructure/auth/tool
+block; the scorer then marks the whole comparison **not comparable** and
+withholds cost-per-success and success-rate conclusions. A genuine model
+failure after a valid attempt can be recorded as `failed` with
+`correct: false` and its actual costs. If the provider reports caching or retry details, keep the
 original receipts *locally*; never insert API keys or raw logs into this
 JSON file. A provider-export source label is still just **your declaration**.
 
