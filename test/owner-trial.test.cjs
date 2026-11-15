@@ -181,6 +181,40 @@ test('small billed amounts use exact integer-unit accumulation',()=>fixture(({tr
   assert.equal(scored.costs.preparedTotalUsd,1e-9);
   assert.equal(scored.ownerReportedCandidate,true);
 }));
+test('trial identity is bound to the intent and order alternation is checked',()=>fixture(({trial,pair})=>{
+  const {name}=fill(trial);
+  const manifestPath=path.join(trial,'manifest-private.json');
+  const manifest=JSON.parse(fs.readFileSync(manifestPath));
+  const saved=structuredClone(manifest);
+  manifest.intentDigest='0'.repeat(64);
+  fs.writeFileSync(manifestPath,JSON.stringify(manifest));
+  assert.throws(()=>scoreTrial({trial,observations:name}),/invalid_trial_manifest/);
+  const changed=structuredClone(saved);
+  const third=path.join(trial,'slot-03.txt'),fourth=path.join(trial,'slot-04.txt');
+  const raw=fs.readFileSync(path.join(pair,'raw.txt'));
+  const prepared=fs.readFileSync(path.join(pair,'prepared.txt'));
+  changed.slots[2].arm='raw';changed.slots[2].promptSha256=changed.rawSha256;
+  changed.slots[3].arm='prepared';changed.slots[3].promptSha256=changed.preparedSha256;
+  fs.writeFileSync(third,raw);fs.writeFileSync(fourth,prepared);
+  fs.writeFileSync(manifestPath,JSON.stringify(changed));
+  assert.throws(()=>scoreTrial({trial,observations:name}),/trial_order_integrity_failure/);
+}));
+test('three-repeat trial alternates order but does not claim perfectly balanced order',()=>fixture(({trial})=>{
+  const {name}=fill(trial);
+  const scored=scoreTrial({trial,observations:name});
+  assert.equal(scored.trial.orderAlternated,true);
+  assert.equal(scored.trial.orderBalanced,false);
+  assert.equal(scored.pairedRepeats,3);
+  assert.equal(scored.distinctTasks,1);
+},{repeats:3}));
+test('reported multiple attempts are allowed only as owner-total charges',()=>fixture(({trial})=>{
+  const {name}=fill(trial,{attempts:3,rawCost:.1,preparedCost:.08});
+  const scored=scoreTrial({trial,observations:name});
+  assert.equal(scored.costs.rawTotalUsd,.2);
+  assert.equal(scored.costs.preparedTotalUsd,.16);
+  assert.equal(scored.costs.providerInvoiceAuthenticated,false);
+  assert.equal(scored.verifiedRealWorldSavings,false);
+}));
 test('CLI init/score does not echo source text or private task labels',()=>fixture(({root,trial})=>{
   const {name}=fill(trial);
   const score=spawnSync(process.execPath,[cli,'trial','score','--trial',trial,'--observations',name],
