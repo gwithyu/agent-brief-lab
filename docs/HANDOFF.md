@@ -5,6 +5,27 @@ a complete, scoped task without needing a plugin or a new model session.
 It is an alternative to the experimental compact/dictionary protocol:
 **the file contents are kept byte-for-byte as original text** inside native JSON.
 
+## No-clone option: pinned GitHub source archive
+
+This exact **immutable source snapshot** was independently executed via
+`npm exec` in a separate temporary consumer Git repository:
+
+```sh
+ROOT="$(mktemp -d "${TMPDIR:-/tmp}/agentbrief-handoff.XXXXXX")"
+npm exec --yes --ignore-scripts \
+  --package="https://github.com/gwithyu/agent-brief-lab/archive/515f5208170001d5d349c0eb334cc5bcd532b22b.tar.gz" \
+  -- agent-brief handoff \
+    --repo "/absolute/path/to/your/git-project" \
+    --task "Refactor logic without changing behavior" \
+    --file "src/logic.js" \
+    --out "$ROOT/task"
+```
+
+This still downloads and **executes** public source/dependencies with the
+local user's permissions; `--ignore-scripts` disables npm lifecycle hooks,
+not the explicitly invoked binary. It does not sandbox access to the Git
+repository. Review the source before using it on confidential code.
+
 ## Prepare a real, explicitly authorized task
 
 Requires Node.js 20/24, Git, a project with an existing commit, and a
@@ -25,6 +46,12 @@ node index.cjs handoff \
   --check "Run the project's existing behavior tests after editing" \
   --out "$ROOT/task"
 ```
+
+The command hashes tracked and nonignored files across the specified
+Git repository in order to support scope checks; it includes full source text
+**only for the files you explicitly select**. The private baseline also
+contains the repository's other file names and SHA-256 metadata. Nothing is
+sent to an external model automatically.
 
 The command returns the **private** paths of these files in `$ROOT/task`:
 
