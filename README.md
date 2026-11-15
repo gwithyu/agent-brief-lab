@@ -6,6 +6,36 @@ Local experiments for preparing smaller coding-agent inputs while keeping explic
 
 This is an experimental CLI/library, **not a proven agent-cost optimizer or a natural-language understanding system**. It does not intercept ChatGPT or automatically change any agent's context. Live agent A/B testing is blocked in the release environment; see [EVALUATION.md](EVALUATION.md).
 
+## Real tasks: give your existing AI a scoped, unmodified source handoff
+
+The new experimental `handoff` command prepares a **plain-JSON,
+copy-ready task bundle** for the coding assistant you already use.
+It reads only the explicit Git repo and the exact files you authorize,
+preserves your task/constraints verbatim, saves a trusted Git baseline
+and an **empty** plan template for later scope verification. It does
+not run a model, rewrite source, execute tests or claim Token savings.
+
+```sh
+ROOT="$(mktemp -d "${TMPDIR:-/tmp}/agent-brief-handoff.XXXXXX")"
+node index.cjs handoff --repo . \
+  --task "Simplify boolean returns but preserve the behavior" \
+  --file examples/boolean-before.js \
+  --constraint "Keep existing function names" \
+  --check "Run existing behavior tests" \
+  --out "$ROOT/task"
+```
+
+Open `$ROOT/task/handoff.txt` locally and **review its private source**
+before manually sharing it with an AI service; your code may be sent to
+that service when you paste it. The CLI never sends the source itself.
+It also writes `intent.json`, `baseline.json`, `plan-template.json`
+and `report.json` privately outside the repo. Use the existing
+`verify` command later to inspect the actual Git changes.
+
+**[Read the native handoff + verification walkthrough](docs/HANDOFF.md)**.
+This is **not** an automatic Cursor integration, semantic guarantee or
+model bill optimizer; it intentionally makes no compressed-source claim.
+
 ## Run a verified one-command preview (no clone required)
 
 The latest experimental try-it binary is available as **source directly from
