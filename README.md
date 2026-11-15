@@ -198,7 +198,11 @@ JSON array of `{role,content}` messages with repeated tool outputs, use
 `npm run try -- --history /absolute/path/to/messages.json`.
 Append `--json` to return aggregate-only data. Private source, messages and
 paths are **not printed or sent** by the preview; it never writes into the
-input file. It accepts regular files up to 1 MiB (not symlinks). The
+input file. It accepts regular files up to 1 MiB (not symlinks). Explicit
+previews above 8 KiB use a local 5-second, V8-heap-limited worker; known
+pathological repetition skips expensive work. Unavailable measurements return
+null counts and `measurementStatus: "unavailable"`, never invented zero savings
+or an unperformed reconstruction claim. The
 `--source` mode only tests two simple boolean-return rewrite patterns;
 the history format is **not** a built-in Cursor/ChatGPT transcript import.
 

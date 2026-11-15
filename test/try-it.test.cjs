@@ -178,3 +178,87 @@ test('npm run try is a working public entrypoint with no paid calls',()=>{
   assert.equal(d.noRepeat.tokensSaved,0);
   assert.equal(d.billedSavingsUsd,null);
 });
+test('pathological source preview returns unknown safely instead of hanging or claiming zero savings',()=>temp(dir=>{
+  const name=path.join(dir,'private-customer.js');
+  const source='const PRIVATE_CLIENT = "'+'x'.repeat(100000)+'";\n';
+  fs.writeFileSync(name,source);
+  const r=call(['--source',name,'--json']);
+  assert.equal(r.status,0,r.stderr);assert.equal(r.signal,null);
+  const d=JSON.parse(r.stdout);
+  assert.equal(d.measurementStatus,'unavailable');
+  assert.equal(d.beforeTokens,null);assert.equal(d.afterTokens,null);assert.equal(d.tokensSaved,null);
+  assert.equal(d.acceptedInMemory,null);assert.equal(d.modelCalls,0);assert.equal(d.fileWrites,0);
+  assert.equal(d.billedSavingsUsd,null);
+  assert.equal(d.beforeBytes,Buffer.byteLength(source));assert.equal(d.afterBytes,d.beforeBytes);
+  assert.equal(fs.readFileSync(name,'utf8'),source);
+  assert.doesNotMatch(r.stdout,/PRIVATE_CLIENT|private-customer|\/tmp\//);
+  const text=call(['--source',name]);
+  assert.match(text.stdout,/token savings remain unknown/);
+  assert.doesNotMatch(text.stdout,/null fewer|0 fewer|PRIVATE_CLIENT/);
+}));
+test('unavailable history measurement does not claim an exact reconstruction was checked',()=>temp(dir=>{
+  const name=path.join(dir,'history.json');
+  const messages=[{role:'tool',content:'PRIVATE_'+'x'.repeat(700)},
+    {role:'tool',content:'PRIVATE_'+'x'.repeat(700)}];
+  fs.writeFileSync(name,JSON.stringify(messages));
+  const r=call(['--history',name,'--json']);assert.equal(r.status,0,r.stderr);
+  const d=JSON.parse(r.stdout);
+  assert.equal(d.exactRestore,null);assert.equal(d.tokensSaved,null);
+  assert.equal(d.dictionaryEntries,null);assert.equal(d.historyMessages,2);
+  assert.equal(d.measurementStatus,'unavailable');assert.doesNotMatch(r.stdout,/PRIVATE_/);
+}));
+test('normal large history is measured in a worker with reconstruction and privacy intact',()=>temp(dir=>{
+  const text=Array.from({length:180},(_,i)=>`function item${i}(value) { return value + ${i}; }\n`).join('');
+  const messages=[{role:'user',content:'Keep the task'},
+    {role:'tool',content:text,tool_call_id:'PRIVATE_ID_1'},
+    {role:'tool',content:text,tool_call_id:'PRIVATE_ID_2'}];
+  const name=path.join(dir,'large-history.json'),original=JSON.stringify(messages);
+  assert.ok(Buffer.byteLength(original)>8192);fs.writeFileSync(name,original);
+  const r=call(['--history',name,'--json']);assert.equal(r.status,0,r.stderr);
+  const d=JSON.parse(r.stdout);
+  assert.equal(d.measurementStatus,'complete');assert.equal(d.measurementMethod,'bounded_worker');
+  assert.equal(d.exactRestore,true);assert.ok(d.tokensSaved>0);
+  assert.equal(d.providerUsage,null);assert.equal(d.billedSavingsUsd,null);
+  assert.doesNotMatch(r.stdout,/PRIVATE_ID|function item|large-history/);
+  assert.equal(fs.readFileSync(name,'utf8'),original);
+}));
+test('normal large source preview retains zero-gain measurements without editing source',()=>temp(dir=>{
+  const source=Array.from({length:220},(_,i)=>`export function item${i}(value) { return value + ${i}; }\n`).join('');
+  const name=path.join(dir,'large-source.js');fs.writeFileSync(name,source);
+  const r=call(['--source',name,'--json']);assert.equal(r.status,0,r.stderr);
+  const d=JSON.parse(r.stdout);
+  assert.equal(d.measurementStatus,'complete');assert.equal(d.measurementMethod,'bounded_worker');
+  assert.equal(d.tokensSaved,0);assert.equal(d.acceptedInMemory,0);
+  assert.equal(d.beforeTokens,d.afterTokens);assert.equal(fs.readFileSync(name,'utf8'),source);
+}));
+test('large syntax errors remain safe errors rather than successful worker measurements',()=>temp(dir=>{
+  const name=path.join(dir,'PRIVATE_BROKEN.js');
+  fs.writeFileSync(name,'// ordinary filler text\n'.repeat(500)+'function f( {');
+  const r=call(['--source',name,'--json']);
+  assert.equal(r.status,1);assert.match(r.stderr,/invalid_input/);
+  assert.equal(r.stdout,'');assert.doesNotMatch(r.stderr,/PRIVATE_BROKEN|ordinary filler|\/tmp\//);
+}));
+test('invalid history schema and unsupported files cannot bypass checks through repetition fallback',()=>temp(dir=>{
+  const name=path.join(dir,'invalid.json');
+  for(const messages of [[{role:'unknown',content:'x'.repeat(700)}],
+    [{role:'tool',content:'x'.repeat(700),value:null}]]){
+    const raw=JSON.stringify(messages).replace('"value":null','"value":1e400');
+    fs.writeFileSync(name,raw);const r=call(['--history',name,'--json']);
+    assert.equal(r.status,1);assert.equal(r.stdout,'');
+  }
+  const wrong=path.join(dir,'unsupported.txt');fs.writeFileSync(wrong,'x'.repeat(700));
+  const r=call(['--source',wrong,'--json']);
+  assert.equal(r.status,1);assert.match(r.stderr,/unsupported_source/);
+}));
+test('private worker protocol refuses invalid requests without leaking data or opening a public CLI mode',()=>{
+  for(const input of ['PRIVATE_SECRET',JSON.stringify({mode:'source',content:'SECRET',name:'a.js',extra:true}),
+    JSON.stringify({mode:'execute',content:'PRIVATE_COMMAND',name:'a.js'})]){
+    const r=spawnSync(process.execPath,[cli,'--internal-preview-worker'],
+      {input,encoding:'utf8',timeout:5000});
+    assert.equal(r.status,0);const reply=JSON.parse(r.stdout);
+    assert.equal(reply.ok,false);assert.equal(r.stderr,'');assert.doesNotMatch(r.stdout,/PRIVATE_|SECRET/);
+  }
+  const r=spawnSync(process.execPath,[path.join(root,'index.cjs'),'try','--internal-preview-worker'],
+    {encoding:'utf8',timeout:5000});
+  assert.equal(r.status,1);assert.match(r.stderr,/invalid_arguments/);
+});

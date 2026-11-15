@@ -89,6 +89,42 @@ Add `--json` to receive **aggregate-only** machine-readable output:
 npm run try -- --history /absolute/path/to/messages.json --json
 ```
 
+## Resource-limited local previews
+
+Explicit local inputs up to **8 KiB** are measured inline. Larger inputs
+still have the **1 MiB file limit**, but source analysis/history packing now
+runs in a separate local Node process with a **5-second deadline** and a
+**256 MiB V8 old-space limit**. This is not an OS-wide memory cap or a
+security sandbox. The worker receives content through private process stdin;
+no source file is copied to disk and no source text appears in arguments.
+Known pathological repeated-character runs skip expensive work immediately.
+
+Successful explicit-file JSON previews include `measurementStatus: "complete"` and
+`measurementMethod: "inline"` or `"bounded_worker"`. If work cannot safely
+complete, the preview returns **status unavailable**, keeping the original
+input unchanged:
+
+```json
+{
+  "measurementStatus": "unavailable",
+  "measurementMethod": "unavailable",
+  "beforeTokens": null,
+  "afterTokens": null,
+  "tokensSaved": null
+}
+```
+
+Other aggregate fields remain present. Unknown is **not zero savings**.
+For an unavailable history preview, `exactRestore`, dictionary entry counts
+and referenced-occurrence counts stay null: no reconstruction check was
+completed. Such a result exits 0 because the preview was handled safely;
+automations should inspect `measurementStatus` before consuming counts.
+Malformed input or a detected syntax error still produces a sanitized
+nonzero error. An unavailable source measurement does not establish syntax
+validity or a valid rewrite candidate. These guards apply to the explicit
+`try --source` / `try --history` CLI paths; direct library calls retain their
+existing behavior.
+
 ## Privacy and correctness
 
 - Only the one explicitly named file is opened. Input is processed **locally
@@ -98,9 +134,10 @@ npm run try -- --history /absolute/path/to/messages.json --json
   message text, IDs or local file paths. The output is numbers and status.
   `--source` never applies its suggested boolean change to a file.
 - Explicit local inputs are limited to **1 MiB**; directories, symlinks,
-  malformed source, invalid UTF-8 and malformed message schemas are refused.
-- History de-duplication uses **exact reversible references**, and verifies
-  reconstruction. The receiving agent or model must actually understand and
+  invalid UTF-8 and malformed message schemas are refused. Source syntax is
+  checked when source analysis completes; detected errors are refused.
+- Completed history de-duplication uses **exact reversible references** and
+  verifies reconstruction. The receiving agent or model must actually understand and
   expand those references; shorter JSON is not evidence that it will.
 - No duplicate output => a correct result can be **zero tokens saved**.
   Guidance and safety instructions may make a complete request larger.
