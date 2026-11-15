@@ -51,7 +51,8 @@ test('native task handoff creates a private, native-readable and unchanged-sourc
   assert.equal(report.modelCalls,0);
   assert.equal(report.localTokensSaved,null);
   assert.equal(report.billedSavingsUsd,null);
-  assert.ok(report.handoffLocalTextTokens>0);
+  assert.equal(report.handoffLocalTextTokens,null);
+  assert.ok(report.handoffBytes>report.sourceBytes);
 }));
 test('checks and constraints are declarations, never marked as performed',()=>fixture(({options,dir})=>{
   buildHandoff(options);
@@ -105,9 +106,19 @@ test('untrusted symlinks and oversized selected source are not packed',()=>fixtu
   const symlink={...options,files:['src/link.js']};
   assert.throws(()=>buildHandoff(symlink));
   assert.equal(fs.existsSync(dir),false);
-  fs.writeFileSync(path.join(repo,'src','logic.js'),'a'.repeat(131072));
+  fs.writeFileSync(path.join(repo,'src','logic.js'),'a'.repeat(131073));
   assert.throws(()=>buildHandoff(options),/selected_source_too_large/);
   assert.equal(fs.existsSync(dir),false);
+}));
+test('large repetitive but bounded input cannot trigger expensive tokenizer work',()=>fixture(({repo,options,dir})=>{
+  const long='a'.repeat(120000);
+  fs.writeFileSync(path.join(repo,'src','logic.js'),long);
+  const out=buildHandoff(options);
+  assert.equal(out.handoffLocalTextTokens,null);
+  assert.equal(out.modelCalls,0);
+  assert.equal(fs.readFileSync(path.join(repo,'src','logic.js'),'utf8'),long);
+  assert.ok(out.handoffBytes>=long.length);
+  assert.equal(fs.statSync(dir).mode&0o777,0o700);
 }));
 test('existing output, path outside temporary directory, and no output overwrite',()=>fixture(({options,dir,repo})=>{
   const wrong=path.resolve(repo,'../outside')+'/example-handoff-bundle';
