@@ -214,8 +214,11 @@ function scoreTrial({trial,observations}){
   }
   const pending=manifest.slots.filter(s=>record.get(s.id).terminal===null).length;
   const allCompleted=pending===0;
+  const blockedInfrastructure=manifest.slots.some(s=>record.get(s.id).terminal==='blocked');
   const missingGrades=manifest.slots.some(s=>record.get(s.id).correct===null);
-  const qualityComplete=allCompleted&&!missingGrades;
+  // Auth/workspace/tool blocks are not model task-quality outcomes; they
+  // invalidate comparability rather than counting as a real edit failure.
+  const qualityComplete=allCompleted&&!missingGrades&&!blockedInfrastructure;
   const arms={raw:[],prepared:[]};
   for(const slot of manifest.slots)arms[slot.arm].push(record.get(slot.id));
   const success=arm=>qualityComplete?arms[arm].filter(x=>x.correct===true).length:null;
@@ -225,7 +228,7 @@ function scoreTrial({trial,observations}){
     const prepared=manifest.slots.find(s=>s.repeat===rep&&s.arm==='prepared');
     return record.get(raw.id).correct===true&&record.get(prepared.id).correct===false;
   }).length:null;
-  const billingEligible=allCompleted&&manifest.slots.every(s=>{
+  const billingEligible=allCompleted&&!blockedInfrastructure&&manifest.slots.every(s=>{
     const o=record.get(s.id);
     return o.billedCostUsd!==null&&['provider_export','invoice_transcription'].includes(o.billingSource);
   });
@@ -245,6 +248,7 @@ function scoreTrial({trial,observations}){
   const ownerCandidate=Boolean(qualityNoRegression&&lowerCost);
   return {
     schema:'agent-brief-owner-trial-score.v1',trialStatus:!allCompleted?'incomplete_runs'
+      :blockedInfrastructure?'blocked_infrastructure'
       :!qualityComplete?'incomplete_quality_grades':'owner_reported_complete',
     plannedSlots:manifest.slots.length,pairedRepeats:manifest.repeats,distinctTasks:1,
     missingRunCount:pending,
@@ -273,6 +277,7 @@ function scoreTrial({trial,observations}){
     ownerReportedCandidate:ownerCandidate,
     verifiedRealWorldSavings:false,
     conclusion:!allCompleted?'Missing task runs: no complete A/B outcome'
+      :blockedInfrastructure?'Infrastructure blocked: no fair model-quality comparison'
       :!qualityComplete?'Missing quality outcomes: no quality comparison'
       :!billingEligible?'Costs missing or not supported by owner-declared receipt type'
       :ownerCandidate?'Provisional owner-reported candidate; NOT verified'
