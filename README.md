@@ -10,8 +10,10 @@ This is an experimental CLI/library, **not a proven agent-cost optimizer or a na
 
 The new experimental `handoff` command prepares a **plain-JSON,
 copy-ready task bundle** for the coding assistant you already use.
-It reads only the explicit Git repo and the exact files you authorize,
-preserves your task/constraints verbatim, saves a trusted Git baseline
+It inspects the specified Git repository (hashing its tracked and
+nonignored files for subsequent scope checks), includes **source text only
+for files you explicitly allow**, preserves task/constraints verbatim,
+and saves a trusted Git baseline
 and an **empty** plan template for later scope verification. It does
 not run a model, rewrite source, execute tests or claim Token savings.
 
@@ -31,6 +33,28 @@ that service when you paste it. The CLI never sends the source itself.
 It also writes `intent.json`, `baseline.json`, `plan-template.json`
 and `report.json` privately outside the repo. Use the existing
 `verify` command later to inspect the actual Git changes.
+
+For a **no-clone** run from a pinned, independently tested GitHub source
+archive, use this command with your own repo and a new private temp folder:
+
+```sh
+ROOT="$(mktemp -d "${TMPDIR:-/tmp}/agent-brief-handoff.XXXXXX")"
+npm exec --yes --ignore-scripts \
+  --package="https://github.com/gwithyu/agent-brief-lab/archive/515f5208170001d5d349c0eb334cc5bcd532b22b.tar.gz" \
+  -- agent-brief handoff \
+    --repo "/absolute/path/to/git-project" \
+    --task "Simplify logic without changing behavior" \
+    --file "src/logic.js" \
+    --out "$ROOT/task"
+```
+
+The exact pinned archive **has been executed against a separate temporary Git
+repo**. Downloaded CLI code and its dependencies still execute with your
+local permissions; `--ignore-scripts` is not an OS sandbox. Review the
+source before running it against confidential code. `handoff.txt` and
+`baseline.json` contain **private source and repository metadata**;
+do not upload them to public issues. Any manual paste into an online AI
+service may transmit the selected source.
 
 **[Read the native handoff + verification walkthrough](docs/HANDOFF.md)**.
 This is **not** an automatic Cursor integration, semantic guarantee or
