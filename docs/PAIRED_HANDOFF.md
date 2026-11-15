@@ -59,13 +59,27 @@ and fewer UTF-8 bytes** than raw. Local counts use `o200k_base`, not a
 Cursor-native provider usage receipt. If the candidate does not pass both
 gates, `prepared.txt` is identical to `raw.txt`.
 
-For safety, if a prompt exceeds **8 KiB** or includes very long repeated
-character runs, the program **skips tokenization entirely** to avoid
-pathological memory use. It then returns the raw fallback, with
-`rawLocalTextTokens`, `preparedLocalTextTokens` and
-`localTextTokensSaved` equal to **null** (unknown, not zero). This protects
-large-source workflows and does not silently equate byte savings with token
-savings.
+For normal prompts up to **8 KiB**, token counts are computed inline.
+Larger normal prompts (up to the existing **768 KiB** per-text limit) use a
+separate deterministic Node counting process, with a **3-second deadline**
+and a **256 MiB V8 old-space limit**. These are a timeout and JS heap limit,
+not an OS-wide memory cap or a security sandbox. Source travels through
+private process stdin, never command-line arguments or a temporary source
+file. This process only counts text; it does not run a model or execute code
+from the prompt. The tokenizer remains the same `o200k_base` implementation.
+
+Known long repeated-character runs still skip tokenization. If the counting
+process times out, exceeds its resource/output limit, fails, or cannot
+provide valid counts, the exporter returns the exact raw prompt, with
+`rawLocalTextTokens`, `preparedLocalTextTokens` and `localTextTokensSaved`
+equal to **null** (unknown, not zero). It never substitutes byte savings for
+measured token savings. `pair-report.json` records `tokenizationMethod` as
+`inline`, `bounded_worker` or `unavailable`.
+
+A fallback with identical Raw/Prepared prompt hashes is an **identical-input
+control**. The trial scorer can retain its observed bills/outcomes, but it
+cannot label random price differences on that control an owner-reported
+packing-treatment savings candidate.
 
 For one repository example (not representative user data), the exact
 raw/prepared prompts measured **380 → 303 local tokens** and

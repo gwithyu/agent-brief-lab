@@ -309,7 +309,8 @@ function scoreTrial({trial,observations}){
   const lowerCost=qualityComplete&&billingEligible&&rawPasses>0&&preparedPasses>0
     ?preparedUnit*BigInt(rawPasses)<rawUnit*BigInt(preparedPasses):null;
   const qualityNoRegression=qualityComplete?regressions===0:null;
-  const ownerCandidate=Boolean(qualityNoRegression&&lowerCost);
+  const promptTreatmentDistinct=manifest.rawSha256!==manifest.preparedSha256;
+  const ownerCandidate=Boolean(promptTreatmentDistinct&&qualityNoRegression&&lowerCost);
   return {
     schema:'agent-brief-owner-trial-score.v1',trialStatus:!allCompleted?'incomplete_runs'
       :blockedInfrastructure?'blocked_infrastructure'
@@ -347,6 +348,7 @@ function scoreTrial({trial,observations}){
       authenticated:false
     },
     trial:{orderAlternated:manifest.repeats>1,
+      promptTreatmentDistinct,
       orderBalanced:manifest.repeats>1&&manifest.repeats%2===0,
       modelDeclaredIdentical:true,
       modelIdentityIndependentlyVerified:false,
@@ -355,7 +357,8 @@ function scoreTrial({trial,observations}){
       localTokensSaved:manifest.inputReductionTokens},
     ownerReportedCandidate:ownerCandidate,
     verifiedRealWorldSavings:false,
-    conclusion:!allCompleted?'Missing task runs: no complete A/B outcome'
+    conclusion:!promptTreatmentDistinct?'Identical prompts: control trial only, no packing-treatment savings claim'
+      :!allCompleted?'Missing task runs: no complete A/B outcome'
       :blockedInfrastructure?'Infrastructure blocked: no fair model-quality comparison'
       :!qualityComplete?'Missing quality outcomes: no quality comparison'
       :!billingEligible?'Costs missing or not supported by owner-declared receipt type'

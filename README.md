@@ -66,8 +66,11 @@ An example of the full command's **local text counts** in our repository:
 This is a formatting-only experiment, **not** proof of billed usage
 or equal model success. Source bytes were not modified. If the compact
 candidate does not lower **both** local tokens and UTF-8 bytes, it
-falls back to original raw. Long/repetition-heavy data skip potentially
-expensive tokenization, report `null` counts and fall back safely.
+falls back to original raw. Normal prompts above 8 KiB now use an isolated
+counting process with a 3-second deadline and a 256 MiB V8 old-space limit.
+Known pathological repetition or failed counting still yields `null` and the
+exact raw fallback. Identical fallback prompts remain control trials and
+cannot qualify as packing-treatment savings candidates.
 
 No model call, file edit, API usage, external source transmission or
 billing measurement occurs in `pair`. Review the private files before

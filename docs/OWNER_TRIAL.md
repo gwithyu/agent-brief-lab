@@ -159,7 +159,11 @@ task got **more expensive**. The program also reports raw-pass /
 prepared-fail regressions and refuses to call that favorable.
 
 The script's `ownerReportedCandidate` can be true on a complete,
-non-regressing and cheaper owner-reported sample, but **always outputs**
+non-regressing and cheaper owner-reported sample **only if the Raw/Prepared
+prompt hashes differ**. If packing fell back to the exact raw prompt,
+`trial.promptTreatmentDistinct` is false: this is an identical-prompt
+control, and cheaper observed bills cannot establish a packing effect.
+The scorer **always outputs**
 `verifiedRealWorldSavings: false`. Neither source labels nor log SHA
 values authenticate a provider invoice or actual task quality. Only
 one distinct task is tested, so no production savings, typical success

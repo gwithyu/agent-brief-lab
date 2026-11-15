@@ -5,6 +5,7 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {createHash}=require('node:crypto');
 const {isDeepStrictEqual}=require('node:util');
 const {validateIntent,intentDigest,tokens}=require('./index.cjs');
+const {countPair}=require('./bounded-tokens.cjs');
 
 const MAX_INPUT=768*1024;
 const MAX_SAFE_TOKENIZE_BYTES=8192;
@@ -73,17 +74,23 @@ function readHandoff(dir){
 function planPair(raw,prefix,doc){
   const candidate=prefix+JSON.stringify(doc)+'\n';
   const rawBytes=Buffer.byteLength(raw),candidateBytes=Buffer.byteLength(candidate);
-  // Tokenizers can consume pathological RAM on large repeated input. Restrict
-  // tokenized data, and don't use byte savings to invent a token reduction.
-  const safe=rawBytes<=MAX_SAFE_TOKENIZE_BYTES
-    &&candidateBytes<=MAX_SAFE_TOKENIZE_BYTES
+  // Skip known pathological repetition. Larger normal text is measured in a
+  // bounded child; unavailable counts must never become a token-saving claim.
+  const eligible=rawBytes<=MAX_INPUT&&candidateBytes<=MAX_INPUT
     &&!/([^\s])\1{256}/u.test(raw)
     &&!/([^\s])\1{256}/u.test(candidate);
-  let rawTokens=null,candidateTokens=null;
-  if(safe){
-    rawTokens=tokens(raw);
-    candidateTokens=tokens(candidate);
+  let counts=null,tokenizationMethod='unavailable';
+  if(eligible){
+    if(rawBytes<=MAX_SAFE_TOKENIZE_BYTES&&candidateBytes<=MAX_SAFE_TOKENIZE_BYTES){
+      counts=[tokens(raw),tokens(candidate)];
+      tokenizationMethod='inline';
+    }else{
+      counts=countPair(raw,candidate);
+      if(counts!==null)tokenizationMethod='bounded_worker';
+    }
   }
+  const [rawTokens,candidateTokens]=counts??[null,null];
+  const safe=counts!==null;
   const useCompact=safe&&candidateBytes<rawBytes&&candidateTokens<rawTokens;
   const selected=useCompact?candidate:raw;
   const report={
@@ -100,6 +107,7 @@ function planPair(raw,prefix,doc){
     rawSha256:sha(raw),preparedSha256:sha(selected),
     providerInputTokens:null,providerCostUsd:null,
     qualityEvidence:'NO_MODEL_OUTCOMES',
+    tokenizationMethod,
     warning:'Only JSON formatting differs. Identical decoded task, constraints and source text. Local text counts are not provider billing or evidence of equal model behavior.'
   };
   return {raw,prepared:selected,report};
@@ -143,7 +151,7 @@ const HELP=[
   'Compare original vs compact native-JSON task prompts from an existing private handoff.',
   'agent-brief pair --handoff PRIVATE_HANDOFF_DIR --out NEW_PRIVATE_TEMP_DIR',
   'Both variants contain identical task, constraints and source code.',
-  'No model calls or USD savings claims. Long/repetitive input falls back to raw.',
+  'No model calls or USD savings claims. Large text uses bounded counting; unavailable counts fall back to raw.',
 ].join('\n');
 function runCli(args=process.argv.slice(2),io={out:console.log,err:console.error}){
   try{

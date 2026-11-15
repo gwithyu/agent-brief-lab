@@ -5,6 +5,7 @@ const {spawnSync}=require('node:child_process');
 const {isDeepStrictEqual}=require('node:util');
 const {buildHandoff}=require('../handoff.cjs');
 const {makePair,planPair,readHandoff,parseArgs}=require('../paired-handoff.cjs');
+const {tokens}=require('../index.cjs');
 const cli=path.resolve(__dirname,'../index.cjs');
 function fixture(fn,{source='function visible(value) {\n  if (value) return true;\n  else return false;\n}\n'}={}){
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'agent-brief-native-pair-'));
@@ -100,6 +101,28 @@ test('refuse tampered native content and source fingerprints before making files
   assert.throws(()=>makePair({handoff,out}),/handoff_content_mismatch|source_fingerprint/);
   assert.equal(fs.existsSync(out),false);
 }));
+test('normal code above 8 KiB gets exact bounded counts while preserving all source',()=>fixture(({handoff,out,source})=>{
+  const result=makePair({handoff,out});
+  const raw=fs.readFileSync(path.join(out,'raw.txt'),'utf8');
+  const prepared=fs.readFileSync(path.join(out,'prepared.txt'),'utf8');
+  const report=JSON.parse(fs.readFileSync(path.join(out,'pair-report.json')));
+  assert.ok(Buffer.byteLength(raw)>8192);
+  assert.equal(report.tokenizationMethod,'bounded_worker');
+  assert.equal(result.selection,'compact_native_json');
+  assert.equal(result.rawLocalTextTokens,tokens(raw));
+  assert.equal(result.preparedLocalTextTokens,tokens(prepared));
+  assert.equal(JSON.parse(prepared.split('JSON DOCUMENT:\n')[1]).sourceFiles[0].source,source);
+  assert.equal(report.sourceCodeRewritten,false);
+  assert.equal(report.modelCalls,0);
+},{source:Array.from({length:220},(_,i)=>`export function feature${i}(value) { return value + ${i}; }\n`).join('')}));
+test('unmeasurable oversized input remains unchanged and reports no invented count',()=>{
+  const prefix='Agent Brief Lab\nJSON DOCUMENT:\n';
+  const doc={source:'const value = 42;\n'.repeat(50000)};
+  const raw=prefix+JSON.stringify(doc,null,2)+'\n';
+  const r=planPair(raw,prefix,doc);
+  assert.equal(r.prepared,raw);assert.equal(r.report.rawLocalTextTokens,null);
+  assert.equal(r.report.tokenizationMethod,'unavailable');
+});
 test('reject dangerous paths, existing output and symlinked private input',()=>fixture(({handoff,out,root})=>{
   for(const target of [handoff,path.join(handoff,'sub'),root]){
     assert.throws(()=>makePair({handoff,out:target}));

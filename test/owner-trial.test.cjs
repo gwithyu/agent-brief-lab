@@ -6,12 +6,11 @@ const {buildHandoff}=require('../handoff.cjs');
 const {makePair}=require('../paired-handoff.cjs');
 const {createTrial,scoreTrial,importCodexTrial,runCli}=require('../evaluation/owner-trial.cjs');
 const cli=path.resolve(__dirname,'../index.cjs');
-function fixture(fn,{repeats=2}={}){
+function fixture(fn,{repeats=2,source='function f(v){\n  if (v) return true;\n  else return false;\n}\n'}={}){
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'brief-owner-trial-'));
   const repo=path.join(root,'repo'),handoff=path.join(root,'handoff'),
     pair=path.join(root,'pair'),trial=path.join(root,'trial');
-  fs.mkdirSync(repo);fs.writeFileSync(path.join(repo,'logic.js'),
-    'function f(v){\n  if (v) return true;\n  else return false;\n}\n');
+  fs.mkdirSync(repo);fs.writeFileSync(path.join(repo,'logic.js'),source);
   for(const args of [
     ['init','-b','main'],['add','.'],
     ['-c','user.name=Test','-c','user.email=test@example.invalid','-c','commit.gpgsign=false',
@@ -131,7 +130,17 @@ test('complete owner observations may suggest provisional cost gain but never ve
   assert.equal(scored.verifiedRealWorldSavings,false);
   assert.equal(scored.quality.independentlyVerified,false);
   assert.equal(scored.trial.distinctTasks,undefined);
+  assert.equal(scored.trial.promptTreatmentDistinct,true);
 }));
+test('identical fallback prompts are a control, even when declared bills look cheaper',()=>fixture(({trial})=>{
+  const {name}=fill(trial);
+  const s=scoreTrial({trial,observations:name});
+  assert.equal(s.costs.lowerUsdPerSuccess,true);
+  assert.equal(s.trial.promptTreatmentDistinct,false);
+  assert.equal(s.ownerReportedCandidate,false);
+  assert.equal(s.verifiedRealWorldSavings,false);
+  assert.match(s.conclusion,/Identical prompts: control trial only/);
+},{source:'x'.repeat(600)}));
 test('cheaper total cost with one prepared failure is more expensive per success',()=>fixture(({trial})=>{
   const {name,template,manifest}=fill(trial,{rawPass:true,preparedPass:true,rawCost:.1,preparedCost:.06});
   for(const e of template.entries){
