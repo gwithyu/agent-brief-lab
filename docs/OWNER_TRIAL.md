@@ -54,29 +54,71 @@ Copy the generated template to a private file; keep the original:
 cp "$ROOT/trial/observations.template.json" "$ROOT/observations.json"
 ```
 
-For each slot, fill these fields using **your own observed evidence**:
+New trials emit `agent-brief-owner-trial-observations.v2`. For each slot,
+fill `terminal` (`"completed"`, `"failed"` or `"blocked"`), `correct`
+(`true`, `false` or `null`), and `attempts`. Keep
+`independentCheckLogSha256` null unless you retained an independent check
+log privately; a hash alone does not prove a check ran.
 
-- `terminal`: `"completed"`, `"failed"` or `"blocked"`
-- `correct`: `true` only if the independent task acceptance actually
-  passed; `false` if it failed; `null` if not assessed
-- `modelObserved`: exact model string actually used, matching the
-  model requested at initialization
-- `attemptCount`: number of attempts (1–100), including retries
-- `billedCostUsd`: **total actual charge** for all attempts in that
-  slot, in USD, or `null` if it cannot be determined
-- `billingSource`: `"provider_export"`, `"invoice_transcription"`,
-  `"manual_estimate"` or `"unknown"`
-- `independentCheckLogSha256`: optional hash of a privately retained
-  independent grader/check log; **a hash alone is not proof that a test ran**
+`attempts` is an ordered list of **every attempt, including failed attempts
+and retries** (1–100). Each entry has exactly these fields:
 
-Do not mark a failed/blocked terminal as correct. Record prices even for
-failed tasks. A `blocked` terminal indicates an infrastructure/auth/tool
-block; the scorer then marks the whole comparison **not comparable** and
-withholds cost-per-success and success-rate conclusions. A genuine model
-failure after a valid attempt can be recorded as `failed` with
-`correct: false` and its actual costs. If the provider reports caching or retry details, keep the
-original receipts *locally*; never insert API keys or raw logs into this
-JSON file. A provider-export source label is still just **your declaration**.
+```json
+{
+  "terminal": "failed",
+  "modelObserved": "EXACT_PROVIDER_MODEL_ID",
+  "billedCostUsd": null,
+  "billingSource": "unknown",
+  "inputTokens": null,
+  "outputTokens": null,
+  "cachedInputTokens": null,
+  "usageSource": "unknown"
+}
+```
+
+- `terminal`: `"completed"`, `"failed"` or `"blocked"`. The final attempt
+  must match the slot terminal, except a blocked slot may retain a later
+  recovered attempt. A completed model response can still be
+  incorrect (`correct: false`). Do not mark a failed/blocked slot correct.
+- `modelObserved`: exact actual model ID. Every attempt must match the
+  requested model, including retries; switching to a stronger model cannot
+  silently qualify as a same-model comparison.
+- `billedCostUsd`: actual USD charge for **this attempt**, or `null`.
+  `billingSource` is `"provider_export"`, `"invoice_transcription"`,
+  `"manual_estimate"` or `"unknown"`. Do not put a slot total in each
+  attempt. The scorer sums these amounts using exact integer units;
+  one missing charge or manual estimate withholds comparative costs.
+- `inputTokens`, `outputTokens`, `cachedInputTokens`: provider-native
+  nonnegative integer counts, or `null` individually if unavailable.
+  `usageSource` is `"provider_export"` or `"unknown"` (all token fields
+  must be null for unknown). **Input includes cached input**: cached
+  input is a subset, never added to input again. Normalize a provider's
+  uncached-only input count before recording it. Do not insert local
+  tokenizer estimates or infer a bill from these counts.
+
+For a failed first attempt followed by a successful retry, retain the failed
+entry above with its actual charge/usage, then append the successful entry.
+Counts and charges are derived from the list, so there is no separately
+entered retry count or total that can disagree with the recorded attempts.
+Partial token fields remain unknown independently; a missing output count
+need not erase a known input count. Unsafe aggregate token totals stay null.
+
+A `blocked` attempt denotes an infrastructure/auth/tool problem. Mark its
+slot `blocked` too, even if a later retry recovered; the whole comparison
+then stays **not comparable**. A genuine model failure with valid tools
+can be recorded as `failed` with `correct: false` and its actual costs.
+Keep original provider receipts locally; never put credentials, raw logs,
+customer IDs or receipt contents into this JSON.
+
+**Compatibility:** Existing `agent-brief-owner-trial-observations.v1`
+files still accept the original `modelObserved`, `attemptCount`,
+`billedCostUsd` (all attempts combined) and `billingSource` fields per
+slot. They are explicitly labeled legacy declared totals; provider usage
+stays unknown. Do not change only the schema label to migrate: expand the
+actual attempts from retained evidence, or keep the original v1 file.
+
+All attempt coverage, source labels and values remain **owner declarations**.
+The scorer cannot discover omitted calls or authenticate provider receipts.
 
 **No model is called by any of these commands.** The operator is
 responsible for actually running the trials and independent checks.
@@ -92,7 +134,8 @@ node index.cjs trial score \
 It checks that each recorded slot belongs to the current pair,
 verifies every slot's prompt SHA-256, rejects mismatched model declarations
 and duplicate/missing slots, and refuses inconsistent entries. Output
-contains only **aggregate** statistics, not task source text, prompt
+contains only **aggregate** statistics (including per-arm attempt counts and
+provider usage with explicit unknowns), not task source text, prompt
 content, model logs or private slot identifiers.
 
 If any task has not run, or a correctness judgment is unknown, success

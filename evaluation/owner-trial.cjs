@@ -104,12 +104,11 @@ function createTrial({pair,out,model,repeats=1},firstArm=null){
     warning:'Assign independent clean worktrees and use the same model/tools/checks. Slots alternate Raw/Prepared order. The trial program never calls a model or scores real code.'
   };
   const observations={
-    schema:'agent-brief-owner-trial-observations.v1',
+    schema:'agent-brief-owner-trial-observations.v2',
     pairFingerprint,modelRequested:model,currency:'USD',
     entries:slots.map(slot=>({
       slot:slot.id,terminal:null,correct:null,
-      modelObserved:null,attemptCount:null,
-      billedCostUsd:null,billingSource:'unknown',
+      attempts:null,
       independentCheckLogSha256:null
     }))
   };
@@ -127,7 +126,8 @@ function createTrial({pair,out,model,repeats=1},firstArm=null){
       'Run the listed slots in order. Never re-use modified workspace between slots.',
       'Record ALL model/agent attempts, failures and retries; costs must include all attempts.',
       'This tool does not execute models or validation tests.',
-      'Copy observations.template.json to a private file, fill real outcomes and owner-supplied costs.',
+      'Copy observations.template.json; fill actual outcomes and an ordered list of EVERY attempt.',
+      'For each attempt record model, terminal, actual USD charge/source and native token counts/source.',
       'Do not publish slots, model transcripts, source, receipts or full private manifest.',
       'Use: agent-brief trial score --trial PRIVATE_DIR --observations PRIVATE_JSON',
     ].join('\n')+'\n');
@@ -153,6 +153,68 @@ function validEntry(o){
     &&(o.billedCostUsd===null||(typeof o.billedCostUsd==='number'&&Number.isFinite(o.billedCostUsd)&&o.billedCostUsd>=0))
     &&['unknown','provider_export','invoice_transcription','manual_estimate'].includes(o.billingSource)
     &&(o.independentCheckLogSha256===null||hex(o.independentCheckLogSha256));
+}
+const receiptSources=['provider_export','invoice_transcription'];
+const tokenCount=n=>n===null||(Number.isSafeInteger(n)&&n>=0);
+function normalizeAttempts(o,model){
+  if(!isObj(o)||Object.keys(o).sort().join(',')!==
+    'attempts,correct,independentCheckLogSha256,slot,terminal')
+    throw Error('invalid_observation');
+  const base={slot:o.slot,terminal:o.terminal,correct:o.correct,
+    independentCheckLogSha256:o.independentCheckLogSha256,
+    modelObserved:null,attemptCount:null,billedCostUsd:null,billingSource:'unknown'};
+  if(o.attempts===null){
+    if(o.terminal!==null)throw Error('missing_attempt_records');
+    return base;
+  }
+  if(o.terminal===null||!Array.isArray(o.attempts)||o.attempts.length<1||o.attempts.length>100)
+    throw Error('invalid_attempt_records');
+  let total=0n,complete=true;
+  for(const a of o.attempts){
+    if(!isObj(a)||Object.keys(a).sort().join(',')!==
+      'billedCostUsd,billingSource,cachedInputTokens,inputTokens,modelObserved,outputTokens,terminal,usageSource'
+      ||!['completed','failed','blocked'].includes(a.terminal)
+      ||a.modelObserved!==model
+      ||!['unknown','manual_estimate',...receiptSources].includes(a.billingSource)
+      ||!['unknown','provider_export'].includes(a.usageSource)
+      ||!['inputTokens','outputTokens','cachedInputTokens'].every(k=>tokenCount(a[k]))
+      ||(a.usageSource==='unknown'&&[a.inputTokens,a.outputTokens,a.cachedInputTokens].some(n=>n!==null))
+      ||(a.cachedInputTokens!==null&&(a.inputTokens===null||a.cachedInputTokens>a.inputTokens)))
+      throw Error('invalid_attempt_records');
+    if(a.billedCostUsd===null)complete=false;
+    else{
+      total+=moneyUnits(a.billedCostUsd);
+      if(a.billingSource==='unknown')throw Error('missing_billing_source');
+    }
+  }
+  const blocked=o.attempts.some(a=>a.terminal==='blocked');
+  if(o.attempts.at(-1).terminal!==o.terminal&&!(blocked&&o.terminal==='blocked'))
+    throw Error('attempt_terminal_mismatch');
+  // A recovered infrastructure block still breaks the fixed trial conditions.
+  if(blocked&&o.terminal!=='blocked')
+    throw Error('blocked_attempt_requires_blocked_slot');
+  base.modelObserved=model;base.attemptCount=o.attempts.length;
+  if(complete){
+    base.billedCostUsd=fromMoneyUnits(total);
+    // Reject totals that cannot round-trip through the public numeric format.
+    if(moneyUnits(base.billedCostUsd)!==total)throw Error('unsupported_charge_precision');
+    base.billingSource=o.attempts.some(a=>a.billingSource==='manual_estimate')
+      ?'manual_estimate':o.attempts.some(a=>a.billingSource==='invoice_transcription')
+        ?'invoice_transcription':'provider_export';
+  }
+  return base;
+}
+function summarizeUsage(entries){
+  const keys=['inputTokens','outputTokens','cachedInputTokens'];
+  const totals=Object.fromEntries(keys.map(k=>[k,null]));
+  if(entries.some(e=>!Array.isArray(e.attempts)))return totals;
+  const attempts=entries.flatMap(e=>e.attempts);
+  for(const key of keys){
+    if(attempts.some(a=>a.usageSource!=='provider_export'||a[key]===null))continue;
+    const sum=attempts.reduce((n,a)=>n+BigInt(a[key]),0n);
+    if(sum<=BigInt(Number.MAX_SAFE_INTEGER))totals[key]=Number(sum);
+  }
+  return totals;
 }
 function scoreTrial({trial,observations}){
   const dir=safeDirectory(trial);
@@ -189,13 +251,15 @@ function scoreTrial({trial,observations}){
     if(!previous||!current||current[0]!==previous[1]||current[1]!==previous[0])
       throw Error('trial_order_integrity_failure');
   }
-  if(!isObj(obs)||obs.schema!=='agent-brief-owner-trial-observations.v1'
+  if(!isObj(obs)||!['agent-brief-owner-trial-observations.v1','agent-brief-owner-trial-observations.v2'].includes(obs.schema)
     ||obs.pairFingerprint!==manifest.pairFingerprint
     ||obs.modelRequested!==manifest.modelRequested||obs.currency!=='USD'
     ||!Array.isArray(obs.entries)||obs.entries.length!==manifest.slots.length)
     throw Error('observations_trial_mismatch');
   const record=new Map();
-  for(const e of obs.entries){
+  const detailed=obs.schema==='agent-brief-owner-trial-observations.v2';
+  for(const entry of obs.entries){
+    const e=detailed?normalizeAttempts(entry,manifest.modelRequested):entry;
     if(!validEntry(e)||!idSet.has(e.slot)||record.has(e.slot))
       throw Error('invalid_observation');
     if(e.terminal===null){
@@ -230,7 +294,7 @@ function scoreTrial({trial,observations}){
   }).length:null;
   const billingEligible=allCompleted&&!blockedInfrastructure&&manifest.slots.every(s=>{
     const o=record.get(s.id);
-    return o.billedCostUsd!==null&&['provider_export','invoice_transcription'].includes(o.billingSource);
+    return o.billedCostUsd!==null&&receiptSources.includes(o.billingSource);
   });
   const totals={raw:null,prepared:null};
   if(billingEligible)for(const arm of ['raw','prepared'])
@@ -267,6 +331,21 @@ function scoreTrial({trial,observations}){
       rawUsdPerSuccess:perSuccess('raw'),preparedUsdPerSuccess:perSuccess('prepared'),
       lowerUsdPerSuccess:lowerCost,providerInvoiceAuthenticated:false
     },
+    attempts:{
+      status:detailed?'owner_declared_per_attempt':'legacy_owner_declared_totals',
+      rawCount:allCompleted?arms.raw.reduce((n,e)=>n+e.attemptCount,0):null,
+      preparedCount:allCompleted?arms.prepared.reduce((n,e)=>n+e.attemptCount,0):null,
+      coverageIndependentlyVerified:false
+    },
+    providerUsage:{
+      status:detailed?'owner_declared_unverified':'unknown_legacy_totals',
+      raw:summarizeUsage(manifest.slots.filter(s=>s.arm==='raw')
+        .map(s=>obs.entries.find(e=>e.slot===s.id))),
+      prepared:summarizeUsage(manifest.slots.filter(s=>s.arm==='prepared')
+        .map(s=>obs.entries.find(e=>e.slot===s.id))),
+      inputIncludesCachedTokens:true,
+      authenticated:false
+    },
     trial:{orderAlternated:manifest.repeats>1,
       orderBalanced:manifest.repeats>1&&manifest.repeats%2===0,
       modelDeclaredIdentical:true,
@@ -301,7 +380,7 @@ const HELP=[
   'Agent Brief Lab · manual paired task trial (no AI calls or file edits)',
   'agent-brief trial init --pair PRIVATE_PAIR_DIR --out NEW_TEMP_DIR --model PINNED_MODEL [--repeats 1..3]',
   'agent-brief trial score --trial PRIVATE_TRIAL_DIR --observations PRIVATE_OWNER_JSON',
-  'Fill template entries only with observed terminal, correct, exact model and total attempt bill.',
+  'Fill v2 template entries with observed outcomes and ALL attempt records (model, charge, native usage).',
   'Owner-provided values are NEVER authenticated by this tool; no real-world savings claims.',
 ].join('\n');
 function runCli(argv=process.argv.slice(2),io={out:console.log,err:console.error}){
@@ -318,6 +397,8 @@ function runCli(argv=process.argv.slice(2),io={out:console.log,err:console.error
       'invalid_pair_content','pair_content_mismatch','invalid_trial_manifest',
       'trial_prompt_integrity_failure','unpaired_trial_manifest','trial_order_integrity_failure',
       'observations_trial_mismatch','invalid_observation',
+      'missing_attempt_records','invalid_attempt_records','attempt_terminal_mismatch',
+      'blocked_attempt_requires_blocked_slot',
       'incomplete_observation_inconsistent','mismatched_or_unproven_model_outcome',
       'missing_billing_source','invalid_charge_amount','unsupported_charge_precision']);
     io.err('Owner trial refused: '+(allowed.has(e.message)?e.message:'invalid_or_unsafe_evidence'));

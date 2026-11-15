@@ -34,7 +34,10 @@ function observations(dir){
 }
 function fill(dir,{rawPass=true,preparedPass=true,rawCost=.10,preparedCost=.07,attempts=1,source='provider_export'}={}){
   const {template,manifest}=observations(dir);
+  // Retain the original aggregate format as a backwards-compatibility fixture.
+  template.schema='agent-brief-owner-trial-observations.v1';
   for(const item of template.entries){
+    delete item.attempts;
     const job=manifest.slots.find(s=>s.id===item.slot);
     item.terminal='completed';
     item.correct=job.arm==='raw'?rawPass:preparedPass;
@@ -47,6 +50,24 @@ function fill(dir,{rawPass=true,preparedPass=true,rawCost=.10,preparedCost=.07,a
   fs.writeFileSync(name,JSON.stringify(template),{mode:0o600});
   return {name,template,manifest};
 }
+function fillAttempts(dir){
+  const {name,template,manifest}=fill(dir);
+  template.schema='agent-brief-owner-trial-observations.v2';
+  template.entries=template.entries.map(e=>({
+    slot:e.slot,terminal:e.terminal,correct:e.correct,independentCheckLogSha256:null,
+    attempts:[{
+      terminal:'failed',modelObserved:'test-model-v1',billedCostUsd:.02,
+      billingSource:'provider_export',usageSource:'provider_export',
+      inputTokens:100,outputTokens:10,cachedInputTokens:20
+    },{
+      terminal:e.terminal,modelObserved:e.modelObserved,billedCostUsd:e.billedCostUsd,
+      billingSource:e.billingSource,usageSource:'provider_export',
+      inputTokens:200,outputTokens:30,cachedInputTokens:50
+    }]
+  }));
+  fs.writeFileSync(name,JSON.stringify(template));
+  return {name,template,manifest};
+}
 test('fresh init creates ordered alternate assignments and private prompt files',()=>fixture(({repo,pair,trial,created})=>{
   assert.equal(created.status,'ready_for_manual_trial');
   assert.equal(created.modelCalls,0);
@@ -57,7 +78,8 @@ test('fresh init creates ordered alternate assignments and private prompt files'
   const {template,manifest}=observations(trial);
   assert.deepEqual(manifest.slots.map(s=>s.arm),['raw','prepared','prepared','raw']);
   assert.deepEqual(manifest.slots.map(s=>s.repeat),[0,0,1,1]);
-  assert.ok(template.entries.every(x=>x.terminal===null&&x.correct===null&&x.billedCostUsd===null));
+  assert.equal(template.schema,'agent-brief-owner-trial-observations.v2');
+  assert.ok(template.entries.every(x=>x.terminal===null&&x.correct===null&&x.attempts===null));
   const src=fs.readFileSync(path.join(pair,'raw.txt'),'utf8');
   assert.equal(fs.readFileSync(path.join(trial,'slot-01.txt'),'utf8'),src);
   assert.equal(fs.statSync(trial).mode&0o777,0o700);
@@ -182,8 +204,10 @@ test('small billed amounts use exact integer-unit accumulation',()=>fixture(({tr
   const {name}=fill(trial,{rawCost:0.000000000001,preparedCost:0.0000000000005});
   assert.throws(()=>scoreTrial({trial,observations:name}),/unsupported_charge_precision/);
   const {template}=observations(trial);
+  template.schema='agent-brief-owner-trial-observations.v1';
   const {manifest}=observations(trial);
   for(const e of template.entries){
+    delete e.attempts;
     const s=manifest.slots.find(x=>x.id===e.slot);
     e.terminal='completed';e.correct=true;e.modelObserved='test-model-v1';
     e.attemptCount=1;e.billingSource='provider_export';
@@ -243,4 +267,132 @@ test('CLI init/score does not echo source text or private task labels',()=>fixtu
   const invalid=spawnSync(process.execPath,[cli,'trial','score','--trial',trial,'--observations',name,'--oops'],
     {encoding:'utf8',timeout:5000});
   assert.equal(invalid.status,1);
+}));
+test('per-attempt ledger includes failed retry charges and native usage, with cache a subset',()=>fixture(({trial})=>{
+  const {name}=fillAttempts(trial);
+  const s=scoreTrial({trial,observations:name});
+  assert.equal(s.costs.rawTotalUsd,.24);
+  assert.equal(s.costs.preparedTotalUsd,.18);
+  assert.equal(s.costs.rawUsdPerSuccess,.12);
+  assert.equal(s.attempts.rawCount,4);
+  assert.equal(s.attempts.preparedCount,4);
+  assert.deepEqual(s.providerUsage.raw,{inputTokens:600,outputTokens:80,cachedInputTokens:140});
+  assert.equal(s.providerUsage.inputIncludesCachedTokens,true);
+  assert.equal(s.providerUsage.authenticated,false);
+  assert.equal(s.verifiedRealWorldSavings,false);
+}));
+test('missing failed-attempt charge withholds all comparative cost claims',()=>fixture(({trial})=>{
+  const {name,template}=fillAttempts(trial);
+  template.entries[0].attempts[0].billedCostUsd=null;
+  template.entries[0].attempts[0].billingSource='unknown';
+  fs.writeFileSync(name,JSON.stringify(template));
+  const s=scoreTrial({trial,observations:name});
+  assert.equal(s.costs.rawTotalUsd,null);
+  assert.equal(s.costs.lowerUsdPerSuccess,null);
+  assert.equal(s.ownerReportedCandidate,false);
+  assert.equal(s.providerUsage.raw.inputTokens,600);
+}));
+test('manual retry estimate never qualifies as a receipt total',()=>fixture(({trial})=>{
+  const {name,template}=fillAttempts(trial);
+  template.entries[0].attempts[0].billingSource='manual_estimate';
+  fs.writeFileSync(name,JSON.stringify(template));
+  const s=scoreTrial({trial,observations:name});
+  assert.equal(s.costs.rawTotalUsd,null);
+  assert.equal(s.ownerReportedCandidate,false);
+}));
+test('missing usage fields stay independently unknown and do not invent billing',()=>fixture(({trial})=>{
+  const {name,template}=fillAttempts(trial);
+  template.entries[0].attempts[0].outputTokens=null;
+  fs.writeFileSync(name,JSON.stringify(template));
+  let s=scoreTrial({trial,observations:name});
+  assert.equal(s.providerUsage.raw.inputTokens,600);
+  assert.equal(s.providerUsage.raw.outputTokens,null);
+  assert.equal(s.costs.rawTotalUsd,.24);
+  Object.assign(template.entries[0].attempts[0],{
+    usageSource:'unknown',inputTokens:null,outputTokens:null,cachedInputTokens:null
+  });
+  fs.writeFileSync(name,JSON.stringify(template));
+  s=scoreTrial({trial,observations:name});
+  assert.deepEqual(s.providerUsage.raw,{inputTokens:null,outputTokens:null,cachedInputTokens:null});
+  assert.equal(s.providerUsage.prepared.inputTokens,600);
+}));
+test('attempt validation rejects mixed models, impossible cache counts and omitted retry details',()=>fixture(({trial})=>{
+  const {name,template}=fillAttempts(trial);
+  const mutations=[
+    e=>{e.attempts[0].modelObserved='other-model';},
+    e=>{e.attempts[0].cachedInputTokens=101;},
+    e=>{e.attempts[0].inputTokens=-1;},
+    e=>{e.attempts[0].outputTokens=.5;},
+    e=>{delete e.attempts[0].usageSource;},
+    e=>{e.attempts[0].usageSource='unknown';},
+    e=>{e.attempts[0].billingSource='unknown';},
+    e=>{e.attempts[0].billedCostUsd=-.1;},
+    e=>{e.attempts[0].privateLog='CLIENT_SECRET';},
+    e=>{e.attempts.at(-1).terminal='failed';},
+    e=>{e.attempts[0].terminal='blocked';},
+    e=>{e.attempts=[];},
+    e=>{e.attempts=null;},
+    e=>{e.terminal=null;},
+    e=>{e.attempts=Array.from({length:101},()=>e.attempts[0]);}
+  ];
+  for(const mutate of mutations){
+    const bad=structuredClone(template);mutate(bad.entries[0]);
+    fs.writeFileSync(name,JSON.stringify(bad));
+    assert.throws(()=>scoreTrial({trial,observations:name}));
+  }
+}));
+test('all-failed slot keeps every retry charge in cost per success',()=>fixture(({trial})=>{
+  const {name,template}=fillAttempts(trial);
+  const e=template.entries[1];e.terminal='failed';e.correct=false;
+  e.attempts.at(-1).terminal='failed';
+  fs.writeFileSync(name,JSON.stringify(template));
+  const s=scoreTrial({trial,observations:name});
+  assert.equal(s.costs.preparedTotalUsd,.18);
+  assert.equal(s.costs.preparedUsdPerSuccess,.18);
+  assert.equal(s.ownerReportedCandidate,false);
+}));
+test('legacy totals expose no native token counts or independent retry coverage',()=>fixture(({trial})=>{
+  const {name}=fill(trial,{attempts:3});
+  const s=scoreTrial({trial,observations:name});
+  assert.equal(s.attempts.status,'legacy_owner_declared_totals');
+  assert.equal(s.attempts.rawCount,6);
+  assert.equal(s.providerUsage.status,'unknown_legacy_totals');
+  assert.deepEqual(s.providerUsage.raw,{inputTokens:null,outputTokens:null,cachedInputTokens:null});
+}));
+test('recovered infrastructure block remains noncomparable with every attempt retained',()=>fixture(({trial})=>{
+  const {name,template}=fillAttempts(trial);
+  const e=template.entries[0];
+  e.attempts[0].terminal='blocked';e.terminal='blocked';e.correct=null;
+  fs.writeFileSync(name,JSON.stringify(template));
+  const s=scoreTrial({trial,observations:name});
+  assert.equal(s.trialStatus,'blocked_infrastructure');
+  assert.equal(s.costs.rawTotalUsd,null);
+  assert.equal(s.quality.rawSuccessRate,null);
+  assert.equal(s.attempts.rawCount,4);
+  assert.equal(s.ownerReportedCandidate,false);
+}));
+test('per-attempt charges preserve small exact amounts and reject unsupported precision',()=>fixture(({trial})=>{
+  const {name,template}=fillAttempts(trial);
+  for(const e of template.entries)for(const a of e.attempts)a.billedCostUsd=1e-12;
+  fs.writeFileSync(name,JSON.stringify(template));
+  assert.equal(scoreTrial({trial,observations:name}).costs.rawTotalUsd,4e-12);
+  template.entries[0].attempts[0].billedCostUsd=5e-13;
+  fs.writeFileSync(name,JSON.stringify(template));
+  assert.throws(()=>scoreTrial({trial,observations:name}),/unsupported_charge_precision/);
+}));
+test('native token aggregate over safe integer range stays unknown',()=>fixture(({trial})=>{
+  const {name,template}=fillAttempts(trial);
+  template.entries[0].attempts[0].inputTokens=Number.MAX_SAFE_INTEGER;
+  fs.writeFileSync(name,JSON.stringify(template));
+  const s=scoreTrial({trial,observations:name});
+  assert.equal(s.providerUsage.raw.inputTokens,null);
+  assert.equal(s.providerUsage.raw.outputTokens,80);
+}));
+test('per-attempt CLI summary contains no slot labels, model ID or private receipt data',()=>fixture(({trial})=>{
+  const {name}=fillAttempts(trial);
+  const r=spawnSync(process.execPath,[cli,'trial','score','--trial',trial,'--observations',name],
+    {encoding:'utf8',timeout:10000});
+  assert.equal(r.status,0,r.stderr);
+  assert.equal(JSON.parse(r.stdout).attempts.rawCount,4);
+  assert.doesNotMatch(r.stdout,/CLIENT_SECRET|slot-01|test-model-v1|\/tmp\//);
 }));

@@ -24,8 +24,11 @@ node index.cjs trial score --trial "$ROOT/trial" \
 
 The generated `observations.template.json` starts with **unknown results
 and unknown costs**. The ledger verifies prompt hashes and matched slots,
-counts failures/retries in owner-entered charges, and reports **USD per
-successful task** only with complete owner-declared provider receipts.
+records every failed attempt/retry with its model, native token usage and
+charge, and derives attempt counts and totals automatically. Missing charges
+stay unknown; mixed models are rejected; cached input is never double-counted.
+It reports **USD per successful task** only with complete owner-declared
+provider receipts. Old aggregate-only records remain readable as legacy evidence.
 Even the most favorable summary remains **unverified owner evidence**,
 not a claim that the provider bill was authenticated. It never calls
 an AI, runs an arbitrary test command, publishes private code, or
