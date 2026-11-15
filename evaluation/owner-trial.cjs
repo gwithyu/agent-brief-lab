@@ -5,7 +5,6 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {createHash,randomInt}=require('node:crypto');
 const {isDeepStrictEqual}=require('node:util');
 const {moneyUnits,fromMoneyUnits}=require('./cost-quality.cjs');
-const {readHandoff}=require('../paired-handoff.cjs');
 
 const hash=s=>createHash('sha256').update(s,'utf8').digest('hex');
 const hex=s=>typeof s==='string'&&/^[0-9a-f]{64}$/.test(s);
@@ -92,7 +91,7 @@ function createTrial({pair,out,model,repeats=1},firstArm=null){
   }
   const manifest={
     schema:'agent-brief-owner-trial.v1',
-    pairFingerprint,rawSha256:input.report.rawSha256,
+    pairFingerprint,intentDigest:input.report.intentDigest,rawSha256:input.report.rawSha256,
     preparedSha256:input.report.preparedSha256,
     inputReductionTokens:input.report.localTextTokensSaved,
     inputTokensMeasured:input.report.rawLocalTextTokens!==null,
@@ -161,6 +160,10 @@ function scoreTrial({trial,observations}){
   if(!isObj(manifest)||manifest.schema!=='agent-brief-owner-trial.v1'
     ||!validModel(manifest.modelRequested)||!hex(manifest.pairFingerprint)
     ||!hex(manifest.rawSha256)||!hex(manifest.preparedSha256)
+    ||!hex(manifest.intentDigest)
+    ||manifest.pairFingerprint!==hash([
+      manifest.rawSha256,manifest.preparedSha256,manifest.intentDigest
+    ].join(':'))
     ||!Number.isInteger(manifest.repeats)||manifest.repeats<1||manifest.repeats>3
     ||!Array.isArray(manifest.slots)||manifest.slots.length!==manifest.repeats*2)
     throw Error('invalid_trial_manifest');
@@ -180,6 +183,11 @@ function scoreTrial({trial,observations}){
   }
   if([...orders.values()].some(a=>a.length!==2||new Set(a).size!==2))
     throw Error('unpaired_trial_manifest');
+  for(let rep=1;rep<manifest.repeats;rep++){
+    const previous=orders.get(rep-1),current=orders.get(rep);
+    if(!previous||!current||current[0]!==previous[1]||current[1]!==previous[0])
+      throw Error('trial_order_integrity_failure');
+  }
   if(!isObj(obs)||obs.schema!=='agent-brief-owner-trial-observations.v1'
     ||obs.pairFingerprint!==manifest.pairFingerprint
     ||obs.modelRequested!==manifest.modelRequested||obs.currency!=='USD'
@@ -254,7 +262,9 @@ function scoreTrial({trial,observations}){
       rawUsdPerSuccess:perSuccess('raw'),preparedUsdPerSuccess:perSuccess('prepared'),
       lowerUsdPerSuccess:lowerCost,providerInvoiceAuthenticated:false
     },
-    trial:{orderBalanced:manifest.repeats>1,modelDeclaredIdentical:true,
+    trial:{orderAlternated:manifest.repeats>1,
+      orderBalanced:manifest.repeats>1&&manifest.repeats%2===0,
+      modelDeclaredIdentical:true,
       modelIdentityIndependentlyVerified:false,
       completeProviderUsageReceiptsAuthenticated:false,
       localTokenReductionKnown:manifest.inputTokensMeasured,
@@ -300,7 +310,7 @@ function runCli(argv=process.argv.slice(2),io={out:console.log,err:console.error
       'trial_must_be_in_system_temp','trial_output_must_be_new',
       'invalid_trial_output_location','invalid_pair_report','pair_hash_mismatch',
       'invalid_pair_content','pair_content_mismatch','invalid_trial_manifest',
-      'trial_prompt_integrity_failure','unpaired_trial_manifest',
+      'trial_prompt_integrity_failure','unpaired_trial_manifest','trial_order_integrity_failure',
       'observations_trial_mismatch','invalid_observation',
       'incomplete_observation_inconsistent','mismatched_or_unproven_model_outcome',
       'missing_billing_source','invalid_charge_amount','unsupported_charge_precision']);
