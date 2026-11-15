@@ -6,6 +6,40 @@ Local experiments for preparing smaller coding-agent inputs while keeping explic
 
 This is an experimental CLI/library, **not a proven agent-cost optimizer or a natural-language understanding system**. It does not intercept ChatGPT or automatically change any agent's context. Live agent A/B testing is blocked in the release environment; see [EVALUATION.md](EVALUATION.md).
 
+## NEW: two equivalent prompts to actually test local Token savings
+
+An existing native `handoff` bundle can now be converted to a matched
+**Raw / Prepared** pair for testing with your current coding agent:
+
+```sh
+node index.cjs pair \
+  --handoff "/private/temp/handoff" \
+  --out "/private/temp/new-pair"
+```
+
+The output holds two private, directly readable `raw.txt` and
+`prepared.txt` prompts, plus `pair-report.json`. Both contain the
+**same user task, exactly the same original source and constraints**;
+the only eligible optimization is shorter structural JSON formatting.
+It checks decoded JSON equality before writing. There are no custom
+dictionary references or required agent plugins.
+
+An example of the full command's **local text counts** in our repository:
+**380 raw → 303 prepared tokens** (77 fewer, **20.3%** of that small prompt).
+This is a formatting-only experiment, **not** proof of billed usage
+or equal model success. Source bytes were not modified. If the compact
+candidate does not lower **both** local tokens and UTF-8 bytes, it
+falls back to original raw. Long/repetition-heavy data skip potentially
+expensive tokenization, report `null` counts and fall back safely.
+
+No model call, file edit, API usage, external source transmission or
+billing measurement occurs in `pair`. Review the private files before
+manually giving either to an AI. For fair comparisons use separate
+identical Git snapshots, the same model and checks, then compare true
+success rates and externally verified charges.
+
+**[Native Raw/Prepared experiment guide](docs/PAIRED_HANDOFF.md)**.
+
 ## Real tasks: give your existing AI a scoped, unmodified source handoff
 
 The new experimental `handoff` command prepares a **plain-JSON,
