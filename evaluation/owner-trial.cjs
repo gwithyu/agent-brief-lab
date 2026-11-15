@@ -50,7 +50,8 @@ function validatePair(pairDir){
   const report=readJson(path.join(dir,'pair-report.json'));
   if(!isObj(report)||report.schema!=='agent-brief-native-pair.v1'
     ||report.contentIdentityVerified!==true||report.modelCalls!==0
-    ||!hex(report.rawSha256)||!hex(report.preparedSha256))
+    ||!hex(report.rawSha256)||!hex(report.preparedSha256)
+    ||!hex(report.intentDigest))
     throw Error('invalid_pair_report');
   const raw=readFile(path.join(dir,'raw.txt'));
   const prepared=readFile(path.join(dir,'prepared.txt'));
