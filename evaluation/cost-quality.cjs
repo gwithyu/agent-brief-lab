@@ -228,4 +228,4 @@ if(require.main===module){
   }
   catch(e){console.error('Efficiency evaluation refused: '+e.message);process.exitCode=1;}
 }
-module.exports={analyzeEfficiency,buildChargeTemplate,runCli};
+module.exports={analyzeEfficiency,buildChargeTemplate,moneyUnits,fromMoneyUnits,runCli};
