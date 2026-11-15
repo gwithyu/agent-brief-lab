@@ -4,7 +4,7 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawnSync}=require('node:child_process');
 const {buildHandoff}=require('../handoff.cjs');
 const {makePair}=require('../paired-handoff.cjs');
-const {createTrial,scoreTrial,runCli}=require('../evaluation/owner-trial.cjs');
+const {createTrial,scoreTrial,importCodexTrial,runCli}=require('../evaluation/owner-trial.cjs');
 const cli=path.resolve(__dirname,'../index.cjs');
 function fixture(fn,{repeats=2}={}){
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'brief-owner-trial-'));
@@ -67,6 +67,24 @@ function fillAttempts(dir){
   }));
   fs.writeFileSync(name,JSON.stringify(template));
   return {name,template,manifest};
+}
+function codexImportFixture(root,trial){
+  const {manifest}=observations(trial);
+  const spec={schema:'agent-brief-codex-trial-import.v1',pairFingerprint:manifest.pairFingerprint,
+    entries:manifest.slots.map((s,i)=>{
+      const eventsFile=`trace-${i}.jsonl`;
+      fs.writeFileSync(path.join(root,eventsFile),[
+        {type:'thread.started',thread_id:`private-thread-${i}`},{type:'turn.started'},
+        {type:'item.completed',item:{id:'msg',type:'agent_message',text:'CLIENT_SECRET'}},
+        {type:'turn.completed',usage:{input_tokens:100+i,cached_input_tokens:20,output_tokens:10}}
+      ].map(x=>JSON.stringify(x)).join('\n')+'\n');
+      return {slot:s.id,promptSha256:s.promptSha256,attempts:[{
+        eventsFile,exitCode:0,modelObserved:manifest.modelRequested,freshSession:true
+      }]};
+    })};
+  const runs=path.join(root,'import-map.json'),out=path.join(root,'imported');
+  fs.writeFileSync(runs,JSON.stringify(spec));
+  return {runs,out,spec};
 }
 test('fresh init creates ordered alternate assignments and private prompt files',()=>fixture(({repo,pair,trial,created})=>{
   assert.equal(created.status,'ready_for_manual_trial');
@@ -395,4 +413,78 @@ test('per-attempt CLI summary contains no slot labels, model ID or private recei
   assert.equal(r.status,0,r.stderr);
   assert.equal(JSON.parse(r.stdout).attempts.rawCount,4);
   assert.doesNotMatch(r.stdout,/CLIENT_SECRET|slot-01|test-model-v1|\/tmp\//);
+}));
+test('offline Codex import emits private ungraded observations, unknown bills and trace fingerprints',()=>fixture(({root,trial})=>{
+  const {runs,out}=codexImportFixture(root,trial);
+  const r=importCodexTrial({trial,runs,out});
+  assert.equal(r.modelCalls,0);assert.equal(r.attempts,4);
+  assert.equal(r.trialStatus,'incomplete_quality_grades');
+  const obs=JSON.parse(fs.readFileSync(r.observationsFile));
+  assert.ok(obs.entries.every(e=>e.correct===null&&e.attempts[0].billedCostUsd===null));
+  const score=scoreTrial({trial,observations:r.observationsFile});
+  assert.equal(score.costs.rawTotalUsd,null);assert.equal(score.ownerReportedCandidate,false);
+  assert.deepEqual(score.providerUsage.raw,{inputTokens:203,outputTokens:20,cachedInputTokens:40});
+  assert.equal(fs.statSync(out).mode&0o777,0o700);
+  for(const file of fs.readdirSync(out))assert.equal(fs.statSync(path.join(out,file)).mode&0o777,0o600);
+  const evidence=fs.readFileSync(path.join(out,'import-evidence-private.json'),'utf8');
+  assert.match(evidence,/owner_declared_not_observed_in_trace/);
+  assert.doesNotMatch(evidence,/CLIENT_SECRET/);
+}));
+test('import rejects mismatched prompt bindings, models, session declarations and reused logs',()=>fixture(({root,trial})=>{
+  const {runs,out,spec}=codexImportFixture(root,trial);
+  for(const mutate of [
+    s=>{s.pairFingerprint='0'.repeat(64);},
+    s=>{s.entries[0].promptSha256='0'.repeat(64);},
+    s=>{s.entries[0].attempts[0].modelObserved='other-model';},
+    s=>{s.entries[0].attempts[0].freshSession=false;},
+    s=>{s.entries[1].attempts[0].eventsFile=s.entries[0].attempts[0].eventsFile;},
+    s=>{s.entries[1].slot=s.entries[0].slot;},
+    s=>{s.entries.pop();}
+  ]){
+    const bad=structuredClone(spec);mutate(bad);fs.writeFileSync(runs,JSON.stringify(bad));
+    assert.throws(()=>importCodexTrial({trial,runs,out}));assert.equal(fs.existsSync(out),false);
+  }
+}));
+test('same Codex thread with different trace content is still rejected across slots',()=>fixture(({root,trial})=>{
+  const {runs,out}=codexImportFixture(root,trial);
+  const file=path.join(root,'trace-1.jsonl');
+  fs.writeFileSync(file,fs.readFileSync(file,'utf8').replace('private-thread-1','private-thread-0'));
+  assert.throws(()=>importCodexTrial({trial,runs,out}),/reused_codex_trace/);
+}));
+test('import confines trace paths to run-map directory and refuses symlink escapes',()=>fixture(({root,trial})=>{
+  const {runs,out,spec}=codexImportFixture(root,trial);
+  const dir=path.join(root,'nested');fs.mkdirSync(dir);
+  const nestedRuns=path.join(dir,'map.json');
+  spec.entries[0].attempts[0].eventsFile='../trace-0.jsonl';
+  fs.writeFileSync(nestedRuns,JSON.stringify(spec));
+  assert.throws(()=>importCodexTrial({trial,runs:nestedRuns,out}),/unsafe_codex_trace_path/);
+  fs.symlinkSync(root,path.join(dir,'escape'));
+  spec.entries[0].attempts[0].eventsFile='escape/trace-0.jsonl';
+  fs.writeFileSync(nestedRuns,JSON.stringify(spec));
+  assert.throws(()=>importCodexTrial({trial,runs:nestedRuns,out}),/unsafe_codex_trace_path/);
+}));
+test('failed Codex CLI attempt is retained and invalidates comparison after recovery',()=>fixture(({root,trial})=>{
+  const {runs,out,spec}=codexImportFixture(root,trial);
+  fs.writeFileSync(path.join(root,'failed.jsonl'),[
+    {type:'thread.started',thread_id:'failed-thread'},{type:'turn.started'},
+    {type:'turn.failed',error:{message:'network problem'}}
+  ].map(e=>JSON.stringify(e)).join('\n'));
+  spec.entries[0].attempts.unshift({eventsFile:'failed.jsonl',exitCode:1,
+    modelObserved:'test-model-v1',freshSession:true});
+  fs.writeFileSync(runs,JSON.stringify(spec));
+  const r=importCodexTrial({trial,runs,out});
+  assert.equal(r.attempts,5);assert.equal(r.trialStatus,'blocked_infrastructure');
+  const score=scoreTrial({trial,observations:r.observationsFile});
+  assert.equal(score.providerUsage.raw.inputTokens,null);assert.equal(score.costs.rawTotalUsd,null);
+}));
+test('import CLI emits only aggregate status and safe refusal codes, preserves existing output',()=>fixture(({root,trial})=>{
+  const {runs,out}=codexImportFixture(root,trial);
+  const args=['trial','import-codex','--trial',trial,'--runs',runs,'--out',out];
+  const r=spawnSync(process.execPath,[cli,...args],{encoding:'utf8',timeout:10000});
+  assert.equal(r.status,0,r.stderr);assert.equal(JSON.parse(r.stdout).attempts,4);
+  assert.doesNotMatch(r.stdout,/CLIENT_SECRET|private-thread|test-model-v1|slot-01/);
+  const saved=fs.readFileSync(path.join(out,'observations.json'),'utf8');
+  const again=spawnSync(process.execPath,[cli,...args],{encoding:'utf8',timeout:10000});
+  assert.equal(again.status,1);assert.match(again.stderr,/trial_output_must_be_new/);
+  assert.equal(fs.readFileSync(path.join(out,'observations.json'),'utf8'),saved);
 }));

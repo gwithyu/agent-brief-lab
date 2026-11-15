@@ -165,7 +165,89 @@ values authenticate a provider invoice or actual task quality. Only
 one distinct task is tested, so no production savings, typical success
 rate or general effectiveness is established.
 
-## 5. What counts as the next real milestone?
+## 5. Import existing Codex JSONL traces locally
+
+If you already ran the independent slots using `codex exec --json`, the
+**offline** importer can copy native usage into v2 observations. It does
+not launch Codex, run tools from the logs, or grade the assistant's answer.
+It reads the documented `thread.started`, `turn.started`, and
+`turn.completed.usage` events from the
+[official Codex event types](https://github.com/openai/codex/blob/main/sdk/typescript/src/events.ts).
+
+Keep the run map and logs together in a private temporary directory. Create
+`runs.json` from the **current private trial manifest**. This example has two
+slots; include every slot exactly once, and every attempt in execution order:
+
+```json
+{
+  "schema": "agent-brief-codex-trial-import.v1",
+  "pairFingerprint": "COPY_FROM_MANIFEST",
+  "entries": [
+    {
+      "slot": "slot-01",
+      "promptSha256": "COPY_THIS_SLOTS_HASH",
+      "attempts": [
+        {
+          "eventsFile": "slot-01-attempt-1.jsonl",
+          "exitCode": 0,
+          "modelObserved": "EXACT_MODEL_ID",
+          "freshSession": true
+        }
+      ]
+    },
+    {
+      "slot": "slot-02",
+      "promptSha256": "COPY_THIS_SLOTS_HASH",
+      "attempts": [
+        {
+          "eventsFile": "slot-02-attempt-1.jsonl",
+          "exitCode": 0,
+          "modelObserved": "EXACT_MODEL_ID",
+          "freshSession": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+```sh
+node index.cjs trial import-codex \
+  --trial "$ROOT/trial" --runs "$ROOT/logs/runs.json" \
+  --out "$ROOT/imported"
+node index.cjs trial score \
+  --trial "$ROOT/trial" --observations "$ROOT/imported/observations.json"
+```
+
+The new private output directory contains `observations.json` and
+`import-evidence-private.json`, with retained trace SHA-256 fingerprints.
+Native input/output/cache counts are copied from each trace, not calculated
+from prompt size. Missing usage stays null. Every imported charge and
+correctness grade **starts null**, even if the answer says it succeeded.
+After reviewing independent checks and receipts, fill those fields in a
+private working copy and score it normally.
+
+The importer validates the original trial prompt hashes and the run map's
+slot/hash bindings, and rejects duplicate trace content or thread IDs,
+concatenated/multi-turn traces, impossible token counts, malformed events,
+and paths outside the run map's directory (including symlink escapes).
+It accepts at most 1 MiB per log, 32 MiB combined, and 100 attempts per slot.
+Successful completion with a nonzero process exit is rejected. Failed or
+incomplete nonzero-exit traces retain unknown usage and mark the whole
+comparison infrastructure-blocked. A pre-start failure without a usable
+thread/turn trace needs a manual blocked observation instead.
+
+**Limits:** The JSONL event stream has no authenticated model, prompt or
+fresh-session identity. Those bindings in the run map are **your declarations**,
+not facts discovered by the importer. A single resumed trace may look like a
+new session: only declare `freshSession: true` for a genuinely new run, never
+`resume`, because prior session usage could contaminate the comparison.
+Keep attempts in separate fresh sessions, including retries. This small
+importer cannot reconstruct cumulative multi-turn billing or detect a call
+that was omitted from the run map. Local trace hashes authenticate neither
+the provider nor the truth of a log.
+
+## 6. What counts as the next real milestone?
 
 A completed, independently graded A/B task with actual model outputs
 and retained provider native receipts, then a **pre-registered,

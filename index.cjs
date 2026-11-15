@@ -163,7 +163,7 @@ Commands:
   handoff --repo ROOT --task TEXT --file FILE --out NEW_DIR [--constraint TEXT] [--check TEXT]
                                                Private native-JSON handoff to an existing agent
   pair --handoff PRIVATE_DIR --out NEW_DIR       Export equivalent raw/compact prompts
-  trial init|score ...                            Manually evaluate paired AI runs and costs
+  trial init|import-codex|score ...               Import local traces and evaluate paired AI runs
   measure <source> [encoding]                 Measure a conservative rewrite candidate
   compact <source> [encoding]                 Print a smaller candidate without overwriting source
   brief <intent.json>                         Print the complete explicit intent brief

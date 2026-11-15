@@ -34,7 +34,12 @@ not a claim that the provider bill was authenticated. It never calls
 an AI, runs an arbitrary test command, publishes private code, or
 establishes production reliability.
 
-**[Owner-operated real task A/B walkthrough](docs/OWNER_TRIAL.md)**.
+Existing Codex `exec --json` logs can now be imported offline with
+`trial import-codex --trial PRIVATE_TRIAL --runs PRIVATE_MAP --out NEW_TEMP_DIR`.
+This copies native usage and retains private trace hashes; bills and correctness
+start unknown. Model/prompt/fresh-session bindings remain owner declarations.
+
+**[Owner-operated real task A/B walkthrough and log import](docs/OWNER_TRIAL.md)**.
 The frozen 30-case synthetic model harness remains separate from these
 manually operated single-task trials.
 

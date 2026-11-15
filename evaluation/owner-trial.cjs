@@ -364,6 +364,70 @@ function scoreTrial({trial,observations}){
     warning:'This is ONE distinct task (repeated 1–3 times). Task outcomes, model identity, independent checks, retry coverage and provider charges are owner-declared, not independently authenticated. No meaningful statistical/generalization or verified dollar savings claim.'
   };
 }
+function importCodexTrial({trial,runs,out}){
+  const dir=safeDirectory(trial);
+  // Reuse the scorer's prompt, slot, order and manifest validation before importing.
+  scoreTrial({trial:dir,observations:path.join(dir,'observations.template.json')});
+  const manifest=readJson(path.join(dir,'manifest-private.json')),spec=readJson(runs);
+  if(!isObj(spec)||Object.keys(spec).sort().join(',')!=='entries,pairFingerprint,schema'
+    ||spec.schema!=='agent-brief-codex-trial-import.v1'
+    ||spec.pairFingerprint!==manifest.pairFingerprint||!Array.isArray(spec.entries)
+    ||spec.entries.length!==manifest.slots.length)throw Error('invalid_codex_import');
+  const root=fs.realpathSync(path.dirname(path.resolve(runs)));
+  const records=new Map(),threads=new Set(),traces=new Set(),evidence=[];
+  let bytes=0;
+  for(const entry of spec.entries){
+    const slot=manifest.slots.find(s=>s.id===entry?.slot);
+    if(!isObj(entry)||Object.keys(entry).sort().join(',')!=='attempts,promptSha256,slot'
+      ||!slot||records.has(slot.id)||entry.promptSha256!==slot.promptSha256
+      ||!Array.isArray(entry.attempts)||entry.attempts.length<1||entry.attempts.length>100)
+      throw Error('invalid_codex_import');
+    const attempts=[];
+    for(const a of entry.attempts){
+      if(!isObj(a)||Object.keys(a).sort().join(',')!=='eventsFile,exitCode,freshSession,modelObserved'
+        ||a.freshSession!==true||a.modelObserved!==manifest.modelRequested
+        ||typeof a.eventsFile!=='string'||!a.eventsFile||a.eventsFile.includes('\0')
+        ||path.isAbsolute(a.eventsFile))throw Error('invalid_codex_import');
+      const file=path.resolve(root,a.eventsFile);
+      if(!within(root,file)||!within(root,fs.realpathSync(file)))throw Error('unsafe_codex_trace_path');
+      const text=readFile(file);bytes+=Buffer.byteLength(text);
+      if(bytes>32*MAX_FILE)throw Error('codex_import_too_large');
+      const traceSha256=hash(text);
+      const parsed=require('./codex-usage.cjs').parseCodexUsage(text,a.exitCode);
+      if(traces.has(traceSha256)||threads.has(parsed.threadId))throw Error('reused_codex_trace');
+      traces.add(traceSha256);threads.add(parsed.threadId);
+      const {threadId,...usage}=parsed;
+      attempts.push({...usage,modelObserved:a.modelObserved,billedCostUsd:null,billingSource:'unknown'});
+      evidence.push({slot:slot.id,attempt:attempts.length,traceSha256,threadId,
+        promptSha256:slot.promptSha256,exitCode:a.exitCode});
+    }
+    records.set(slot.id,{slot:slot.id,
+      terminal:attempts.some(a=>a.terminal==='blocked')?'blocked':attempts.at(-1).terminal,
+      correct:null,attempts,independentCheckLogSha256:null});
+  }
+  const observations={schema:'agent-brief-owner-trial-observations.v2',
+    pairFingerprint:manifest.pairFingerprint,modelRequested:manifest.modelRequested,currency:'USD',
+    entries:manifest.slots.map(s=>records.get(s.id))};
+  const directory=destination(out,dir);
+  fs.mkdirSync(directory,{mode:0o700});
+  try{
+    const file=path.join(directory,'observations.json');
+    fs.writeFileSync(file,JSON.stringify(observations,null,2)+'\n',{flag:'wx',mode:0o600});
+    const summary=scoreTrial({trial:dir,observations:file});
+    fs.writeFileSync(path.join(directory,'import-evidence-private.json'),JSON.stringify({
+      schema:'agent-brief-codex-import-evidence.v1',evidence,
+      promptBinding:'owner_declared_hash_not_observed_in_trace',
+      modelIdentity:'owner_declared_not_observed_in_trace',
+      freshSessions:'owner_declared_not_proven_by_thread_started',
+      providerAuthenticated:false
+    },null,2)+'\n',{flag:'wx',mode:0o600});
+    return {status:'imported_ungraded_codex_traces',slots:observations.entries.length,
+      attempts:evidence.length,observationsFile:file,modelCalls:0,
+      providerBillUsd:null,verifiedRealWorldSavings:false,
+      trialStatus:summary.trialStatus,
+      note:'Usage copied from local logs, not authenticated. Prompt/model/fresh-session bindings are owner declarations. Correctness and all charges remain unknown.'};
+  }catch(e){fs.rmSync(directory,{recursive:true,force:true});throw e;}
+}
 function parseArgs(args){
   if(args.length===1&&['--help','-h'].includes(args[0]))return {mode:'help'};
   if(args[0]==='init'&&(args.length===7||args.length===9)
@@ -374,12 +438,15 @@ function parseArgs(args){
   }
   if(args.length===5&&args[0]==='score'&&args[1]==='--trial'&&args[3]==='--observations')
     return {mode:'score',args:{trial:args[2],observations:args[4]}};
+  if(args.length===7&&args[0]==='import-codex'&&args[1]==='--trial'&&args[3]==='--runs'&&args[5]==='--out')
+    return {mode:'import',args:{trial:args[2],runs:args[4],out:args[6]}};
   throw Error('invalid_trial_arguments');
 }
 const HELP=[
-  'Agent Brief Lab · manual paired task trial (no AI calls or file edits)',
+  'Agent Brief Lab · manual paired task trial (no AI calls or source edits)',
   'agent-brief trial init --pair PRIVATE_PAIR_DIR --out NEW_TEMP_DIR --model PINNED_MODEL [--repeats 1..3]',
   'agent-brief trial score --trial PRIVATE_TRIAL_DIR --observations PRIVATE_OWNER_JSON',
+  'agent-brief trial import-codex --trial PRIVATE_TRIAL_DIR --runs PRIVATE_RUN_MAP --out NEW_TEMP_DIR',
   'Fill v2 template entries with observed outcomes and ALL attempt records (model, charge, native usage).',
   'Owner-provided values are NEVER authenticated by this tool; no real-world savings claims.',
 ].join('\n');
@@ -387,7 +454,8 @@ function runCli(argv=process.argv.slice(2),io={out:console.log,err:console.error
   try{
     const p=parseArgs(argv);
     if(p.mode==='help'){io.out(HELP);return 0;}
-    io.out(JSON.stringify(p.mode==='init'?createTrial(p.args):scoreTrial(p.args),null,2));
+    io.out(JSON.stringify(p.mode==='init'?createTrial(p.args)
+      :p.mode==='import'?importCodexTrial(p.args):scoreTrial(p.args),null,2));
     return 0;
   }catch(e){
     const allowed=new Set(['invalid_trial_options','invalid_trial_arguments',
@@ -401,9 +469,12 @@ function runCli(argv=process.argv.slice(2),io={out:console.log,err:console.error
       'blocked_attempt_requires_blocked_slot',
       'incomplete_observation_inconsistent','mismatched_or_unproven_model_outcome',
       'missing_billing_source','invalid_charge_amount','unsupported_charge_precision']);
+    for(const code of ['invalid_codex_trace','ambiguous_codex_trace','inconsistent_codex_exit',
+      'invalid_codex_usage','incomplete_codex_trace','invalid_codex_import',
+      'unsafe_codex_trace_path','codex_import_too_large','reused_codex_trace'])allowed.add(code);
     io.err('Owner trial refused: '+(allowed.has(e.message)?e.message:'invalid_or_unsafe_evidence'));
     return 1;
   }
 }
 if(require.main===module)process.exitCode=runCli();
-module.exports={createTrial,scoreTrial,parseArgs,runCli};
+module.exports={createTrial,scoreTrial,importCodexTrial,parseArgs,runCli};

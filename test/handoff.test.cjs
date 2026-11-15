@@ -120,9 +120,16 @@ test('large repetitive but bounded input cannot trigger expensive tokenizer work
   assert.ok(out.handoffBytes>=long.length);
   assert.equal(fs.statSync(dir).mode&0o777,0o700);
 }));
-test('existing output, path outside temporary directory, and no output overwrite',()=>fixture(({options,dir,repo})=>{
-  const wrong=path.resolve(repo,'../outside')+'/example-handoff-bundle';
-  assert.throws(()=>buildHandoff({...options,out:'/var/tmp/agentbrief-non-temp-handoff'}));
+test('existing output, path outside temporary directory, and no output overwrite',()=>fixture(({options,parent})=>{
+  // /var/tmp can alias /tmp; give the child its own unambiguous temp boundary.
+  const temp=path.join(parent,'isolated-temp');fs.mkdirSync(temp);
+  const outside=path.join(parent,'outside');
+  const denied=spawnSync(process.execPath,['-e',
+    'try{require(process.argv[1]).buildHandoff(JSON.parse(process.argv[2]));}catch(e){console.error(e.message);process.exitCode=1;}',
+    require.resolve('../handoff.cjs'),JSON.stringify({...options,out:outside})],
+    {encoding:'utf8',timeout:10000,env:{...process.env,TMPDIR:temp,TMP:temp,TEMP:temp}});
+  assert.equal(denied.status,1);assert.match(denied.stderr,/output_must_be_under_system_temp/);
+  assert.equal(fs.existsSync(outside),false);
   const result=buildHandoff(options);
   assert.equal(fs.existsSync(result.handoffFile),true);
   assert.throws(()=>buildHandoff(options),/output_must_be_new/);
