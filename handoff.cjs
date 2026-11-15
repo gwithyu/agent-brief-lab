@@ -4,7 +4,7 @@
 // executable code. Output may contain *private* source: keep it local.
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {captureBaseline}=require('./execution.cjs');
-const {validateIntent,intentDigest,tokens}=require('./index.cjs');
+const {validateIntent,intentDigest}=require('./index.cjs');
 
 const safeText=(x,max)=>typeof x==='string'&&x.trim()&&x.length<=max
   &&!x.includes('\0')&&Buffer.from(x,'utf8').toString('utf8')===x;
@@ -82,7 +82,10 @@ function buildHandoff(opts){
     'JSON DOCUMENT:',
   ].join('\n');
   const prompt=prelude+'\n'+JSON.stringify(doc,null,2)+'\n';
-  const tokenCount=tokens(prompt);
+  // Never tokenize arbitrary long user code in this transport-only command:
+  // large repetitive strings can make tokenizer work superlinear. No savings
+  // are claimed, so byte size is the honest, bounded metric here.
+  const handoffBytes=Buffer.byteLength(prompt);
   // Write private artifacts only after all validations and local measurements.
   fs.mkdirSync(dir,{mode:0o700});
   const write=(name,value)=>{
@@ -101,7 +104,8 @@ function buildHandoff(opts){
     sourceWrites:0,
     selectedFiles:originals.length,
     sourceBytes:originals.reduce((n,x)=>n+Buffer.byteLength(x.source),0),
-    handoffLocalTextTokens:tokenCount,
+    handoffBytes,
+    handoffLocalTextTokens:null,
     localTokensSaved:null,
     providerUsage:null,billedSavingsUsd:null,
     intentDigest:intentDigest(intent),
@@ -111,7 +115,8 @@ function buildHandoff(opts){
   return {state:report.state,outputDirectory:dir,
     handoffFile:path.join(dir,'handoff.txt'),planTemplate:path.join(dir,'plan-template.json'),
     intentFile:path.join(dir,'intent.json'),baselineFile:path.join(dir,'baseline.json'),
-    selectedFiles:report.selectedFiles,handoffLocalTextTokens:tokenCount,
+    selectedFiles:report.selectedFiles,handoffBytes,
+    handoffLocalTextTokens:null,
     sourceWrites:0,modelCalls:0,billedSavingsUsd:null};
 }
 const HELP=[
