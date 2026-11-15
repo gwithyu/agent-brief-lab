@@ -128,6 +128,35 @@ test('existing output, path outside temporary directory, and no output overwrite
   assert.throws(()=>buildHandoff(options),/output_must_be_new/);
   assert.equal(fs.readFileSync(result.handoffFile,'utf8').includes(options.task),true);
 }));
+test('end-to-end handoff then actual Git edit verifies authorized scope and rejects protected edits',()=>fixture(({options,repo,dir,source})=>{
+  buildHandoff(options);
+  const intent=JSON.parse(fs.readFileSync(path.join(dir,'intent.json')));
+  const base=JSON.parse(fs.readFileSync(path.join(dir,'baseline.json')));
+  const plan=JSON.parse(fs.readFileSync(path.join(dir,'plan-template.json')));
+  plan.acknowledgedConstraints=intent.constraints.map(c=>c.id);
+  plan.checks=intent.acceptance.map(c=>c.id);
+  const planFile=path.join(dir,'plan.json');
+  fs.writeFileSync(planFile,JSON.stringify(plan));
+  const revised=source.replace('if(v)return true;else return false;','return !!v;');
+  assert.notEqual(revised,source);
+  fs.writeFileSync(path.join(repo,'src/logic.js'),revised);
+  const successful=spawnSync(process.execPath,[cli,'verify',
+    path.join(dir,'intent.json'),planFile,path.join(dir,'baseline.json'),repo],
+    {encoding:'utf8',timeout:15000});
+  assert.equal(successful.status,0,successful.stderr);
+  const verdict=JSON.parse(successful.stdout);
+  assert.equal(verdict.ok,true);
+  assert.deepEqual(verdict.changed,[{path:'src/logic.js',kind:'modified'}]);
+  assert.match(verdict.acceptance,/Not run/,'declared checks are NOT observed test execution');
+  fs.writeFileSync(path.join(repo,'private.txt'),'MALICIOUS_OUT_OF_SCOPE_EDIT');
+  const failed=spawnSync(process.execPath,[cli,'verify',
+    path.join(dir,'intent.json'),planFile,path.join(dir,'baseline.json'),repo],
+    {encoding:'utf8',timeout:15000});
+  assert.equal(failed.status,1);
+  const violation=JSON.parse(failed.stdout);
+  assert.equal(violation.ok,false);
+  assert.ok(violation.failures.some(s=>s.includes('private.txt')));
+}));
 test('safe CLI errors never print confidential request text or path',()=>fixture(({options})=>{
   const out=[],errs=[];
   const r=runCli(['--repo',options.repo,'--task','PRIVATE_CUSTOMER_TASK','--file','src/missing.js',
