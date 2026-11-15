@@ -107,6 +107,28 @@ Run the agreed checks separately (or use the existing reviewed `review`
 command) and record their real exit statuses. Do not stage/commit changes
 before the baseline comparison unless you plan to capture a new baseline.
 
+## Optional: export a native Raw / Prepared Token comparison
+
+If you want **input compression evidence**, use a separate, strictly
+lossless formatting experiment after creating the private handoff:
+
+```sh
+node index.cjs pair --handoff "$ROOT/task" --out "$ROOT/pair"
+```
+
+The new `raw.txt` and `prepared.txt` have identical JSON values,
+unchanged source code and matching instructions. `pair-report.json`
+records only local tokenizer savings and SHA-256 values (native provider
+bills and correctness are still unknown). If compacting JSON does not
+measurably lower both local tokens and bytes, it outputs the exact
+original text as a fallback. Very long/repetitive code is not tokenized
+and the savings metrics remain `null`.
+
+Read [PAIRED_HANDOFF.md](PAIRED_HANDOFF.md) before manually sharing
+these two variants with an AI or starting a paid A/B trial. Use two
+identical disposable Git checkouts and independent checks; this command
+does not itself run a model.
+
 ## What this does *not* claim
 
 - **Not a compression benchmark:** native handoff includes full originals;
