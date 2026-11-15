@@ -6,6 +6,35 @@ Local experiments for preparing smaller coding-agent inputs while keeping explic
 
 This is an experimental CLI/library, **not a proven agent-cost optimizer or a natural-language understanding system**. It does not intercept ChatGPT or automatically change any agent's context. Live agent A/B testing is blocked in the release environment; see [EVALUATION.md](EVALUATION.md).
 
+## NEW: log actual Raw / Prepared model outcomes without inventing savings
+
+After generating a private native `handoff` and `pair`, the new manual
+A/B ledger freezes model labels, alternates prompt order, and gives you
+private slots for **independent actual AI coding runs**:
+
+```sh
+node index.cjs trial init --pair "$ROOT/pair" \
+  --out "$ROOT/trial" --model "EXACT_MODEL_ID" --repeats 2
+
+# Run each slot independently in your own disposable coding environment.
+# Fill actual correctness and provider charges in a copy of the template:
+node index.cjs trial score --trial "$ROOT/trial" \
+  --observations "$ROOT/observations.json"
+```
+
+The generated `observations.template.json` starts with **unknown results
+and unknown costs**. The ledger verifies prompt hashes and matched slots,
+counts failures/retries in owner-entered charges, and reports **USD per
+successful task** only with complete owner-declared provider receipts.
+Even the most favorable summary remains **unverified owner evidence**,
+not a claim that the provider bill was authenticated. It never calls
+an AI, runs an arbitrary test command, publishes private code, or
+establishes production reliability.
+
+**[Owner-operated real task A/B walkthrough](docs/OWNER_TRIAL.md)**.
+The frozen 30-case synthetic model harness remains separate from these
+manually operated single-task trials.
+
 ## NEW: two equivalent prompts to actually test local Token savings
 
 An existing native `handoff` bundle can now be converted to a matched
