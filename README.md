@@ -80,6 +80,24 @@ success rates and externally verified charges.
 
 **[Native Raw/Prepared experiment guide](docs/PAIRED_HANDOFF.md)**.
 
+## Locate relevant code before requesting full source
+
+From the experimental source checkout:
+
+```sh
+node index.cjs outline --source /absolute/path/to/module.ts
+```
+
+This gives your existing coding assistant a directory of function/class/method
+names and original line ranges, plus a source fingerprint. It prints no source
+bodies or module strings, executes no source and edits no file. Read the original
+implementation, imports and dependencies after locating the relevant code.
+It is a locator, not a complete task context or an automatic context interceptor.
+Truncation, unlisted statements and unavailable analysis are reported explicitly.
+
+**[Code outline guide](docs/OUTLINE.md)**. Output contains real project identifiers;
+no model success or bill-saving claim follows from a shorter directory.
+
 ## Real tasks: give your existing AI a scoped, unmodified source handoff
 
 The new experimental `handoff` command prepares a **plain-JSON,

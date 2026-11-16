@@ -151,7 +151,7 @@ function brief(intent) {
     + `\n\nUnresolved questions:\n${intent.questions.length ? intent.questions.map(x => '- '+x).join('\n') : 'None recorded'}\n`;
 }
 
-module.exports = {tokens, simplify, validateIntent, intentDigest, checkPlan, brief, filePath};
+module.exports = {tokens, simplify, validateIntent, intentDigest, checkPlan, brief, filePath, sourceFile};
 
 if (require.main === module) {
   const args=process.argv.slice(2);
@@ -160,6 +160,7 @@ if (require.main === module) {
 
 Commands:
   try [--history FILE | --source FILE] [--json]   Preview compression locally (no model calls)
+  outline --source FILE [--json]               Locate declarations without printing source bodies
   handoff --repo ROOT --task TEXT --file FILE --out NEW_DIR [--constraint TEXT] [--check TEXT]
                                                Private native-JSON handoff to an existing agent
   pair --handoff PRIVATE_DIR --out NEW_DIR       Export equivalent raw/compact prompts
@@ -194,7 +195,9 @@ Exit status: 0 success; 1 invalid/rejected/check failure; 2 incorrect CLI usage.
 `;
   if(args.length===1 && ['--help','-h'].includes(args[0])) process.stdout.write(help);
   else if(args.length===1 && ['--version','-V'].includes(args[0])) console.log(require('./package.json').version);
-  else if(args[0]==='trial') {
+  else if(args[0]==='outline') {
+    process.exitCode=require('./outline.cjs').runCli(args.slice(1));
+  } else if(args[0]==='trial') {
     process.exitCode=require('./evaluation/owner-trial.cjs').runCli(args.slice(1));
   } else if(args[0]==='pair') {
     process.exitCode=require('./paired-handoff.cjs').runCli(args.slice(1));

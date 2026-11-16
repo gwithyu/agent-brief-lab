@@ -124,6 +124,14 @@ test('reject symlinks, directories, oversized files, NUL and invalid UTF-8',()=>
     assert.throws(()=>readFile(utf));
   });
 });
+test('BOM-prefixed history still parses through the existing preview entry',()=>temp(dir=>{
+  const name=path.join(dir,'bom-history.json');
+  const bytes=Buffer.concat([Buffer.from([0xef,0xbb,0xbf]),Buffer.from('[]')]);fs.writeFileSync(name,bytes);
+  const r=call(['--history',name,'--json']);assert.equal(r.status,0,r.stderr);
+  const d=JSON.parse(r.stdout);
+  assert.equal(d.measurementStatus,'complete');assert.equal(d.exactRestore,true);assert.equal(d.tokensSaved,0);
+  assert.deepEqual(fs.readFileSync(name),bytes);
+}));
 test('reject unsupported argument combinations and never invoke local agent',()=>{
   for(const a of [
     ['--source'],['--history'],['--source','--history'],['--json','--json'],

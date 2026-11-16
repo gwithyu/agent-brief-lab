@@ -18,6 +18,15 @@ symlinks may remain unchanged: only their link metadata is observed, not target
 contents. Editable source must still be a regular file. Source in
 the returned input may already be a conservative rewrite **candidate**.
 
+## Optional source lookup
+
+Use `node index.cjs outline --source /absolute/path/to/module.ts` to locate
+top-level declarations and class callables before reading a large file.
+Read the relevant original implementation, imports and dependencies through
+your normal authorized tools; the outline is not the implementation or an
+edit-scope grant. Regenerate it after the source SHA-256 changes. Preserve
+the complete original sources in native Raw/Prepared task comparisons.
+
 ## Instructions an agent can follow
 
 Use these instructions explicitly, or adapt them into your project's existing

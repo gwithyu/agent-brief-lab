@@ -21,12 +21,12 @@ function parseArgs(args){
     ||!rest[1]||rest[1].startsWith('--'))throw Error('invalid_arguments');
   return {mode:rest[0].slice(2),file:rest[1],json};
 }
-function readFile(file){
+function readFile(file,{preserveBom=false}={}){
   const s=fs.lstatSync(file);
   if(!s.isFile()||s.isSymbolicLink()||s.size<1||s.size>MAX_BYTES)throw Error('invalid_file');
   const b=fs.readFileSync(file);
   if(b.length>MAX_BYTES||b.includes(0))throw Error('invalid_file');
-  return new TextDecoder('utf-8',{fatal:true}).decode(b);
+  return new TextDecoder('utf-8',{fatal:true,ignoreBOM:preserveBom}).decode(b);
 }
 function historyResult(messages,kind){
   if(!Array.isArray(messages)||messages.length>4000)throw Error('invalid_history');
