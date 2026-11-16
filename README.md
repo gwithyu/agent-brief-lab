@@ -165,7 +165,7 @@ tested source revision instead of silently changing the code you execute:
 
 ```sh
 npm exec --yes --ignore-scripts \
-  --package="https://github.com/gwithyu/agent-brief-lab/archive/dbb2366570c7be1204f56d90e970c4ee7d9d0d30.tar.gz" \
+  --package="https://github.com/gwithyu/agent-brief-lab/archive/c8aa268cbab9ea0eeba7d5b010b26c9bae26a1d7.tar.gz" \
   -- agent-brief try
 ```
 
