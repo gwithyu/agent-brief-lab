@@ -10,7 +10,7 @@ Install and launch only a **pinned, publicly reviewable GitHub source archive**:
 
 ```sh
 npm exec --yes --ignore-scripts \
-  --package="https://github.com/gwithyu/agent-brief-lab/archive/c8aa268cbab9ea0eeba7d5b010b26c9bae26a1d7.tar.gz" \
+  --package="https://github.com/gwithyu/agent-brief-lab/archive/97e91d69a6fb9f51a0aaaeb3a564dc54aa679f0d.tar.gz" \
   -- agent-brief try
 ```
 
