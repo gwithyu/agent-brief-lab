@@ -2,6 +2,7 @@
 // Explicit, byte-faithful source data after an outline lookup. Never executes it.
 const path=require('node:path'),{createHash}=require('node:crypto');
 const {readFile}=require('./evaluation/try-it.cjs');
+const {outline}=require('./outline.cjs');
 const MAX_LINES=200,MAX_SLICE_BYTES=64*1024;
 function readSource({file,startLine,endLine,expectedSha256}){
   if(typeof file!=='string'||!file||file.includes('\0')
@@ -23,9 +24,30 @@ function readSource({file,startLine,endLine,expectedSha256}){
     sourceSha256,sourceBytes:Buffer.byteLength(source),lineCount:starts.length,
     startLine,endLine,text,sliceBytes,completeContext:false,modelCalls:0,fileWrites:0};
 }
+function readSymbol({file,symbol,container=null,expectedSha256=null}){
+  const map=outline(file,{expectedSha256,selection:{name:symbol,container}});
+  if(map.status!=='ready')throw Error('symbol_lookup_unavailable');
+  if(map.matchedSymbols===0)throw Error('symbol_not_found');
+  if(map.matchedSymbols!==1)throw Error('ambiguous_symbol');
+  const selectedSymbol=map.symbols[0];
+  // Re-read against the observed fingerprint; a change during lookup refuses.
+  return {...readSource({file,startLine:selectedSymbol.startLine,endLine:selectedSymbol.endLine,
+    expectedSha256:map.sourceSha256}),selectedSymbol};
+}
 function parseArgs(args){
   if(args.length===1&&['--help','-h'].includes(args[0]))return {help:true};
   const rest=[...args],i=rest.indexOf('--json'),json=i>=0;if(json)rest.splice(i,1);
+  if(rest.length>=4&&rest[0]==='--source'&&rest[1]&&!rest[1].startsWith('--')&&rest[2]==='--symbol'){
+    if(!rest[3]||rest[3].startsWith('--')||rest.length%2!==0)throw Error('invalid_arguments');
+    const options={};
+    for(let i=4;i<rest.length;i+=2){
+      if(!['--container','--sha256'].includes(rest[i])||Object.hasOwn(options,rest[i])
+        ||!rest[i+1]||rest[i+1].startsWith('--'))throw Error('invalid_arguments');
+      options[rest[i]]=rest[i+1];
+    }
+    return {file:rest[1],symbol:rest[3],container:options['--container']??null,
+      expectedSha256:options['--sha256']??null,json};
+  }
   if(rest.length!==6||rest[0]!=='--source'||!rest[1]||rest[1].startsWith('--')
     ||rest[2]!=='--lines'||!/^[1-9]\d{0,6}:[1-9]\d{0,6}$/.test(rest[3])
     ||rest[4]!=='--sha256'||!/^[a-f0-9]{64}$/.test(rest[5]))throw Error('invalid_arguments');
@@ -34,6 +56,9 @@ function parseArgs(args){
 }
 const HELP=[
   'agent-brief read --source FILE --lines START:END --sha256 OUTLINE_SHA256 [--json]',
+  'agent-brief read --source FILE --symbol NAME [--container OWNER] [--sha256 HASH] [--json]',
+  'Symbol mode locates one exact supported declaration in a fresh bounded scan; duplicate matches refuse.',
+  'It returns complete physical lines; other statements on those same lines may be included.',
   'Print the explicitly selected original source lines only if the file fingerprint matches.',
   'One-based inclusive lines; at most 200 lines / 64 KiB, from a regular UTF-8 file up to 1 MiB.',
   'This command prints source data. It does not execute it, edit files or prove complete task context.'
@@ -46,11 +71,13 @@ function display(v){
 function runCli(args=process.argv.slice(2),io={out:console.log,err:console.error}){
   try{
     const o=parseArgs(args);if(o.help){io.out(HELP);return 0;}
-    const value=readSource(o);io.out(o.json?JSON.stringify(value,null,2):display(value));return 0;
+    const value=o.symbol===undefined?readSource(o):readSymbol(o);
+    io.out(o.json?JSON.stringify(value,null,2):display(value));return 0;
   }catch(e){
-    const safe=['invalid_arguments','invalid_file','invalid_line_range','source_changed','read_budget_exceeded'];
+    const safe=['invalid_arguments','invalid_file','invalid_line_range','source_changed','read_budget_exceeded',
+      'unsupported_source','invalid_source','symbol_lookup_unavailable','symbol_not_found','ambiguous_symbol'];
     io.err('Source read refused: '+(safe.includes(e.message)?e.message:'invalid_input'));return 1;
   }
 }
 if(require.main===module)process.exitCode=runCli();
-module.exports={readSource,parseArgs,display,runCli};
+module.exports={readSource,readSymbol,parseArgs,display,runCli};

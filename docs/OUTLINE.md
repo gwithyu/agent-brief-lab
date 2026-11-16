@@ -12,6 +12,40 @@ It never executes the source or follows imports. Use your existing editor or
 coding agent's normal file-read tool to read the relevant original code,
 imports and dependencies before making a decision or edit.
 
+## Read a uniquely named declaration directly
+
+For a fresh lookup, you can skip copying a line range or fingerprint:
+
+```sh
+node index.cjs read --source /absolute/path/to/module.ts --symbol run --json
+node index.cjs read --source /absolute/path/to/module.ts --symbol run --container api --json
+```
+
+Names and optional containers are exact and case-sensitive, not prefixes or
+regular expressions. The bounded locator scans the entire **supported** set
+before applying its response limit, so a unique declaration after the first
+500 entries is still found. No match refuses with `symbol_not_found`;
+multiple matches refuse with `ambiguous_symbol` instead of choosing the first.
+An exact class/object/container name can disambiguate methods. Overloads or
+repeated assignments within the same container may still require explicit
+line mode. An unavailable scan stays `symbol_lookup_unavailable`, not a
+claim that the name does not exist.
+
+The tool automatically uses the observed fingerprint for the original-source
+read, rechecking the file after analysis. If you are acting on an **earlier**
+outline or source observation, also pass `--sha256` with that actual hash;
+otherwise this mode deliberately observes the current file. A change during
+lookup or a mismatch with the optional pinned hash refuses before code output.
+The JSON result includes `selectedSymbol` alongside the observed hash/range.
+
+This still returns complete **physical lines** through the existing reader.
+If several statements share those lines, the neighboring text is included;
+it is not a column-level extractor. The 200-line / 64-KiB read budget still
+applies, with no silent truncation. Source data is printed explicitly, and
+`completeContext` remains false. Alias references, wrapped callbacks and
+other unsupported syntax are not resolved; use the outline/line reader and
+normal authorized reads when more context is needed.
+
 ## Continue a large directory
 
 Each response contains at most **500 locations**. If `nextOffset` is a number,

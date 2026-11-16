@@ -125,6 +125,15 @@ test('outline continuation reaches later declarations without duplicates or skip
   assert.equal(new Set([...first.symbols,...last.symbols].map(s=>s.name)).size,520);
   assert.equal(last.sourceSha256,first.sourceSha256);assert.equal(last.completeContext,false);
 });
+test('exact selection scans the full supported set before applying response limits',()=>{
+  const source='const privateValue = "PRIVATE_VALUE";\n'
+    +Array.from({length:520},(_,i)=>`function f${i}(){}`).join('\n')+'\nfunction needle() {}\n';
+  const r=analyze(source,'selected.js',{selection:{name:'needle',container:null}});
+  assert.equal(r.totalSymbols,521);assert.equal(r.matchedSymbols,1);assert.equal(r.symbols.length,1);
+  assert.equal(r.symbols[0].name,'needle');assert.equal(r.unlistedTopLevelStatements,1);
+  assert.equal(r.truncated,false);assert.equal(r.nextOffset,null);assert.equal(r.completeContext,false);
+  assert.doesNotMatch(JSON.stringify(r),/PRIVATE_VALUE|"f0"|"f519"/);
+});
 test('outline page boundaries preserve whole-file counters and refuse nonexistent continuation offsets',()=>{
   const source='const unlisted = 1;\n'+Array.from({length:500},(_,i)=>`function f${i}(){}`).join('\n');
   const r=analyze(source,'boundary.js');

@@ -164,6 +164,8 @@ Commands:
                                                Locate declarations without printing source bodies
   read --source FILE --lines START:END --sha256 HASH [--json]
                                                Read original lines after matching the source fingerprint
+  read --source FILE --symbol NAME [--container OWNER] [--sha256 HASH] [--json]
+                                               Read one unambiguous outlined declaration by name
   handoff --repo ROOT --task TEXT --file FILE --out NEW_DIR [--constraint TEXT] [--check TEXT]
                                                Private native-JSON handoff to an existing agent
   pair --handoff PRIVATE_DIR --out NEW_DIR       Export equivalent raw/compact prompts

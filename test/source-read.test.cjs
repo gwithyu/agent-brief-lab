@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{createHash}=require('node:crypto');
 const {spawnSync}=require('node:child_process');
-const {readSource,parseArgs}=require('../source-read.cjs');
+const {readSource,readSymbol,parseArgs}=require('../source-read.cjs');
 const {outline}=require('../outline.cjs');
 const cli=path.resolve(__dirname,'../index.cjs'),hash=s=>createHash('sha256').update(s).digest('hex');
 function fixture(fn){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'brief-source-read-'));
@@ -86,3 +86,73 @@ test('argument parser requires an explicit hash, canonical range and bounded com
     assert.throws(()=>parseArgs(args),/invalid_arguments/);
   const help=call(['--help']);assert.equal(help.status,0);assert.match(help.stdout,/200 lines \/ 64 KiB/);
 });
+test('symbol read automatically binds one exact Unicode declaration and preserves original BOM/CRLF',()=>fixture(dir=>{
+  const file=path.join(dir,'unicode.js'),source='\ufefffunction 计算(v) {\r\n  return v + 1;\r\n}';
+  fs.writeFileSync(file,source);const r=readSymbol({file,symbol:'计算'});
+  assert.equal(r.text,source);assert.equal(r.sourceSha256,hash(source));
+  assert.deepEqual(r.selectedSymbol,{kind:'function',name:'计算',container:null,startLine:1,endLine:3});
+  assert.equal(r.completeContext,false);assert.equal(r.fileWrites,0);assert.equal(r.modelCalls,0);
+  assert.equal(fs.readFileSync(file,'utf8'),source);
+}));
+test('symbol CLI finds a unique declaration beyond the first directory page in one lookup',()=>fixture(dir=>{
+  const file=path.join(dir,'tail.js');
+  const source=Array.from({length:520},(_,i)=>`function f${i}() {return ${i};}`).join('\n');fs.writeFileSync(file,source);
+  const r=call(['--source',file,'--symbol','f519','--json']);assert.equal(r.status,0,r.stderr);
+  const data=JSON.parse(r.stdout);
+  assert.equal(data.text,'function f519() {return 519;}');assert.equal(data.selectedSymbol.startLine,520);
+  assert.doesNotMatch(r.stdout,/function f0\(|function f518\(/);
+}));
+test('symbol reads preserve complete physical lines rather than clipping same-line neighbors',()=>fixture(dir=>{
+  const file=path.join(dir,'same-line.js'),source='function one(){return 1;} function two(){return 2;}\n';
+  fs.writeFileSync(file,source);const r=readSymbol({file,symbol:'one'});
+  assert.equal(r.text,source);assert.equal(r.selectedSymbol.name,'one');assert.equal(r.completeContext,false);
+}));
+test('duplicate names across the full file refuse, and an exact container selects the intended method',()=>fixture(dir=>{
+  const file=path.join(dir,'duplicate.js');
+  const source='function run() {return "PRIVATE_TOP";}\n'
+    +Array.from({length:510},(_,i)=>`function f${i}(){}`).join('\n')
+    +'\nconst api = {\n  run() { return "selected"; }\n};\n';fs.writeFileSync(file,source);
+  const r=call(['--source',file,'--symbol','run','--json']);
+  assert.equal(r.status,1);assert.equal(r.stdout,'');assert.match(r.stderr,/ambiguous_symbol/);
+  assert.doesNotMatch(r.stderr,/PRIVATE_|\/tmp\//);
+  const selected=call(['--source',file,'--symbol','run','--container','api','--json']);
+  assert.equal(selected.status,0,selected.stderr);assert.equal(JSON.parse(selected.stdout).text,'  run() { return "selected"; }\n');
+  assert.equal(JSON.parse(selected.stdout).selectedSymbol.container,'api');
+}));
+test('symbol lookup never substitutes a prefix, aliased reference or unsupported nested declaration',()=>fixture(dir=>{
+  const file=path.join(dir,'missing.js');
+  fs.writeFileSync(file,'function outer() {function hidden(){}}\nconst api={ref: external};\n');
+  for(const symbol of ['out','hidden','ref','PRIVATE_UNKNOWN']){
+    const r=call(['--source',file,'--symbol',symbol,'--json']);
+    assert.equal(r.status,1);assert.equal(r.stdout,'');assert.match(r.stderr,/symbol_not_found/);
+    assert.doesNotMatch(r.stderr,/PRIVATE_|\/tmp\//);
+  }
+}));
+test('optional pinned symbol reads reject stale source, while a fresh request observes current bytes',()=>fixture(dir=>{
+  const file=path.join(dir,'changed.js'),old='function entry() {return 1;}\n',current='function entry() {return 2;}\n';
+  fs.writeFileSync(file,old);const pinned=hash(old);fs.writeFileSync(file,current);
+  const r=call(['--source',file,'--symbol','entry','--sha256',pinned,'--json']);
+  assert.equal(r.status,1);assert.equal(r.stdout,'');assert.match(r.stderr,/source_changed/);
+  const fresh=readSymbol({file,symbol:'entry'});assert.equal(fresh.text,current);assert.equal(fresh.sourceSha256,hash(current));
+  assert.equal(fs.readFileSync(file,'utf8'),current);
+}));
+test('symbol mode retains the exact line and byte budgets without partial source output',()=>fixture(dir=>{
+  const file=path.join(dir,'large.js');
+  fs.writeFileSync(file,'function large() {\n'+'  // filler\n'.repeat(201)+'}\n');
+  const r=call(['--source',file,'--symbol','large','--json']);
+  assert.equal(r.status,1);assert.equal(r.stdout,'');assert.match(r.stderr,/read_budget_exceeded/);
+  fs.writeFileSync(file,'function large() {return "'+'x'.repeat(70000)+'";}');
+  assert.throws(()=>readSymbol({file,symbol:'large'}),/read_budget_exceeded/);
+}));
+test('symbol options reject malformed, duplicate or mixed selectors and preserve line-mode hash requirements',()=>fixture(dir=>{
+  const file=path.join(dir,'valid.js');fs.writeFileSync(file,'function entry() {}');
+  for(const args of [['--source',file,'--symbol'],['--source',file,'--symbol','entry','--lines','1:1'],
+    ['--source',file,'--symbol','entry','--container','api','--container','other'],
+    ['--source',file,'--symbol','entry','--sha256','a'.repeat(64),'--sha256','b'.repeat(64)],
+    ['--source',file,'--lines','1:1']])assert.throws(()=>parseArgs(args),/invalid_arguments/);
+  for(const options of [{symbol:''},{symbol:'x'.repeat(129)},{symbol:'entry',container:''},
+    {symbol:'entry',container:'x'.repeat(129)},{symbol:'entry',expectedSha256:'bad'}])
+    assert.throws(()=>readSymbol({file,...options}),/invalid_arguments/);
+  const p=parseArgs(['--source',file,'--symbol','entry','--sha256','a'.repeat(64),'--container','api','--json']);
+  assert.equal(p.symbol,'entry');assert.equal(p.container,'api');assert.equal(p.expectedSha256,'a'.repeat(64));
+}));

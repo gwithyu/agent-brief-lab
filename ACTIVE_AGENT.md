@@ -27,6 +27,11 @@ If relevant locations may follow the current page, continue using its
 `nextOffset` and source hash: `outline --source FILE --offset N --sha256 HASH`.
 Use the same tool revision and stop on a source mismatch; whole-file counters
 are repeated on each page, not counts to sum.
+For a fresh, uniquely named declaration, `read --source FILE --symbol NAME`
+locates it and rechecks the fingerprint automatically. Use `--container OWNER`
+when needed, and pin an earlier observation with `--sha256 HASH`. Do not guess
+through ambiguous-name errors; select the actual range using the directory.
+The result is complete physical lines, which can include same-line neighbors.
 Read the relevant original implementation, imports and dependencies through
 your normal authorized tools, or use `read --source FILE --lines START:END
 --sha256 HASH` with the outline's actual fingerprint. This prints explicitly

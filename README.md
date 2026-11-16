@@ -102,6 +102,11 @@ After selecting a range, `read --source FILE --lines START:END --sha256 HASH`
 returns those original lines only if the file still matches the directory's
 fingerprint. This explicit command prints source data, refuses stale ranges
 and limits each read to 200 lines / 64 KiB; it never edits or executes the file.
+For a fresh unique declaration, `read --source FILE --symbol NAME` performs
+the bounded lookup and fingerprint-checked read together. Duplicate names
+refuse; `--container OWNER` can narrow methods, and optional `--sha256 HASH`
+pins an earlier observation. Results contain full physical lines and may
+include same-line neighbors; dependencies are still the caller's next read.
 
 **[Code outline and fingerprint-checked read guide](docs/OUTLINE.md)**. Outline output contains real project identifiers;
 no model success or bill-saving claim follows from a shorter directory.
