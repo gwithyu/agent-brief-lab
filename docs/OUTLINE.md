@@ -54,12 +54,20 @@ not an edit permission or evidence of task success or lower total cost.
 | --- | --- |
 | Top-level functions and direct arrow/function-expression bindings | Function name and range |
 | Classes | Class, constructor, methods, getters/setters and direct callable fields |
+| Top-level object-literal bindings and direct `module.exports = { ... }` | Direct methods, getters/setters and function-valued properties, with their container |
+| Direct CommonJS function assignments | `exports.name`, `module.exports.name` and callable `module.exports` assignment ranges |
 | TypeScript declarations | Interface, type alias, enum and namespace declaration |
 | ES imports and static CommonJS `require` | Range only; module strings are omitted |
 
 Nested function bodies and namespace members are not separately traversed.
-Dynamic imports, wrapped callbacks and ordinary variable declarations may be
-unlisted. The report counts top-level statements with no listed location;
+Nested object APIs, shorthand/aliased function references, computed export
+assignments, dynamic imports, wrapped callbacks and ordinary variable
+declarations may be unlisted. Only direct object literals and dot-form export
+assignments are covered; this syntax lookup does not resolve aliases,
+shadowed `module`/`exports` bindings or which assignment wins at runtime.
+Callable `module.exports` assignments are listed at the `module.exports`
+binding, rather than inventing a property from an internal function name.
+The report counts top-level statements with no listed location;
 it does not claim that every part of a partly listed statement is represented.
 Computed/literal member names and identifiers longer than 128 UTF-16 units
 are returned as null. Anonymous declarations also use null. Overloads can

@@ -43,6 +43,67 @@ test('static CommonJS require locations are visible without exposing module name
   ]);
   assert.equal(r.unlistedTopLevelStatements,1);assert.doesNotMatch(JSON.stringify(r),/PRIVATE_|dynamicName/);
 });
+test('top-level object APIs locate direct callables without printing values or scanning nested objects',()=>{
+  const source=['const api = {','  run(v) { return "PRIVATE_BODY"; },','  reset: () => true,',
+    '  legacy: function () { return false; },','  get value() { return 1; },','  set value(v) {},',
+    '  ["PRIVATE_KEY"]() {},','  valueOnly: "PRIVATE_VALUE",','  nested: { hidden() {} },',
+    '  reference: existing,','  wrapped: decorate(() => true)', '};'].join('\n');
+  const r=analyze(source,'object.js');
+  assert.deepEqual(r.symbols.map(s=>[s.kind,s.name,s.container,s.startLine,s.endLine]),[
+    ['method','run','api',2,2],['method','reset','api',3,3],['method','legacy','api',4,4],
+    ['getter','value','api',5,5],['setter','value','api',6,6],['method',null,'api',7,7]
+  ]);
+  assert.equal(r.unlistedTopLevelStatements,0);assert.equal(r.completeContext,false);
+  assert.doesNotMatch(JSON.stringify(r),/PRIVATE_|hidden|existing|decorate/);
+});
+test('CommonJS object exports and direct function assignments retain their original binding ranges',()=>{
+  const source=['module.exports = {','  run(v) { return v; },','  reset: () => false','};',
+    'exports.named = function internal(v) {','  return v;','};',
+    'module.exports.other = (v) => v;',
+    'module.exports = function defaultEntry() {return 1;};',
+    'module.exports = () => 2;'].join('\n');
+  const r=analyze(source,'exports.cjs');
+  assert.deepEqual(r.symbols.map(s=>[s.kind,s.name,s.container,s.startLine,s.endLine]),[
+    ['method','run','module.exports',2,2],['method','reset','module.exports',3,3],
+    ['function','named','exports',5,7],['function','other','module.exports',8,8],
+    ['function','exports','module',9,9],['function','exports','module',10,10]
+  ]);
+  assert.equal(r.completeContext,false);
+});
+test('object shorthand references, wrappers, nested objects and computed export assignments remain unlisted',()=>{
+  const source=['const referenced = {run: existing};','const wrapped = decorate({run() {}});',
+    'const nested = {inner: {hidden() {}}};','other.run = function () {};',
+    'module.exports += function () {};','exports["PRIVATE_KEY"] = () => true;',
+    'exports.wrapped = decorate(() => true);'].join('\n');
+  const r=analyze(source,'unresolved.cjs');
+  assert.equal(r.totalSymbols,0);assert.equal(r.unlistedTopLevelStatements,7);
+  assert.equal(r.completeContext,false);assert.doesNotMatch(JSON.stringify(r),/PRIVATE_KEY/);
+});
+test('object method truncation and omitted long containers preserve metadata size limits',()=>{
+  const source='const '+'x'.repeat(200)+' = {\n'+
+    Array.from({length:520},(_,i)=>`m${i}() {return ${i};}`).join(',\n')+'\n};';
+  const r=analyze(source,'many-object.js');
+  assert.equal(r.totalSymbols,520);assert.equal(r.symbols.length,500);assert.equal(r.truncated,true);
+  assert.ok(r.symbols.every(s=>s.container===null));assert.equal(r.symbols.at(-1).name,'m499');
+  assert.doesNotMatch(JSON.stringify(r),/xxxxx/);
+});
+test('exported object method lookup feeds the fingerprint reader without executing the module',()=>fixture(dir=>{
+  const marker=path.join(dir,'must-not-execute'),file=path.join(dir,'exported.cjs');
+  const source=[`require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'PRIVATE_EFFECT');`,
+    'module.exports = {','  run(value) {','    return "PRIVATE_BODY" + value;','  },',
+    '  other() { return 2; }','};',''].join('\n');
+  fs.writeFileSync(file,source);
+  const r=spawnSync(process.execPath,[cli,'outline','--source',file,'--json'],{encoding:'utf8',timeout:10000});
+  assert.equal(r.status,0,r.stderr);const map=JSON.parse(r.stdout);
+  const method=map.symbols.find(s=>s.name==='run'&&s.container==='module.exports');assert.ok(method);
+  assert.doesNotMatch(r.stdout,/PRIVATE_|must-not-execute/);
+  const read=spawnSync(process.execPath,[cli,'read','--source',file,'--lines',`${method.startLine}:${method.endLine}`,
+    '--sha256',map.sourceSha256,'--json'],{encoding:'utf8',timeout:10000});
+  assert.equal(read.status,0,read.stderr);
+  assert.equal(JSON.parse(read.stdout).text,'  run(value) {\n    return "PRIVATE_BODY" + value;\n  },\n');
+  assert.doesNotMatch(read.stdout,/PRIVATE_EFFECT|must-not-execute|other\(\)/);
+  assert.equal(fs.existsSync(marker),false);assert.equal(fs.readFileSync(file,'utf8'),source);
+}));
 test('anonymous defaults, Unicode, CRLF and overloads retain distinct source locations',()=>{
   const source='export default function () {\r\n return 1;\r\n}\r\nfunction 数据(x:string):string;\r\nfunction 数据(x:any){return x;}\r\n';
   const r=analyze(source,'unicode.ts');

@@ -21,7 +21,8 @@ the returned input may already be a conservative rewrite **candidate**.
 ## Optional source lookup
 
 Use `node index.cjs outline --source /absolute/path/to/module.ts` to locate
-top-level declarations and class callables before reading a large file.
+top-level declarations, class/object callables and direct CommonJS function
+assignments before reading a large file.
 Read the relevant original implementation, imports and dependencies through
 your normal authorized tools, or use `read --source FILE --lines START:END
 --sha256 HASH` with the outline's actual fingerprint. This prints explicitly

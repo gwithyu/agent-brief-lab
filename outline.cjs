@@ -11,6 +11,9 @@ const identifier=node=>node&&(ts.isIdentifier(node)||ts.isPrivateIdentifier(node
 const supported=name=>typeof name==='string'&&/\.(?:[cm]?[jt]s|[jt]sx)$/.test(name)&&!/\.d\.[cm]?ts$/.test(name);
 const requireCall=node=>node&&ts.isCallExpression(node)&&ts.isIdentifier(node.expression)
   &&node.expression.text==='require'&&node.arguments.length===1&&ts.isStringLiteral(node.arguments[0]);
+const callable=node=>node&&(ts.isArrowFunction(node)||ts.isFunctionExpression(node));
+const moduleExports=node=>ts.isPropertyAccessExpression(node)&&ts.isIdentifier(node.expression)
+  &&node.expression.text==='module'&&node.name.text==='exports';
 function analyze(source,name){
   if(typeof source!=='string'||Buffer.byteLength(source)>MAX_BYTES)throw Error('invalid_file');
   if(!supported(name))throw Error('unsupported_source');
@@ -25,28 +28,43 @@ function analyze(source,name){
       startLine:parsed.getLineAndCharacterOfPosition(start).line+1,
       endLine:parsed.getLineAndCharacterOfPosition(end).line+1});
   };
+  const addMembers=(members,container)=>{
+    for(const member of members){
+      if(ts.isConstructorDeclaration(member))add(member,'constructor','constructor',container);
+      else if(ts.isMethodDeclaration(member))add(member,'method',identifier(member.name),container);
+      else if(ts.isGetAccessorDeclaration(member))add(member,'getter',identifier(member.name),container);
+      else if(ts.isSetAccessorDeclaration(member))add(member,'setter',identifier(member.name),container);
+      else if((ts.isPropertyDeclaration(member)||ts.isPropertyAssignment(member))&&callable(member.initializer))
+        add(member,'method',identifier(member.name),container);
+    }
+  };
   for(const node of parsed.statements){
     const before=totalSymbols,name=identifier(node.name);
     if(ts.isImportDeclaration(node)||ts.isImportEqualsDeclaration(node))add(node,'import',null);
     else if(ts.isFunctionDeclaration(node))add(node,'function',name);
     else if(ts.isClassDeclaration(node)){
       add(node,'class',name);
-      for(const member of node.members){
-        if(ts.isConstructorDeclaration(member))add(member,'constructor','constructor',name);
-        else if(ts.isMethodDeclaration(member))add(member,'method',identifier(member.name),name);
-        else if(ts.isGetAccessorDeclaration(member))add(member,'getter',identifier(member.name),name);
-        else if(ts.isSetAccessorDeclaration(member))add(member,'setter',identifier(member.name),name);
-        else if(ts.isPropertyDeclaration(member)&&member.initializer
-          &&(ts.isArrowFunction(member.initializer)||ts.isFunctionExpression(member.initializer)))
-          add(member,'method',identifier(member.name),name);
-      }
+      addMembers(node.members,name);
     }else if(ts.isVariableStatement(node)){
       for(const declaration of node.declarationList.declarations){
-        if(declaration.initializer&&(ts.isArrowFunction(declaration.initializer)||ts.isFunctionExpression(declaration.initializer)))
-          add(declaration,'function',identifier(declaration.name));
+        if(callable(declaration.initializer))add(declaration,'function',identifier(declaration.name));
+        else if(declaration.initializer&&ts.isObjectLiteralExpression(declaration.initializer))
+          addMembers(declaration.initializer.properties,identifier(declaration.name));
         else if(requireCall(declaration.initializer))add(declaration,'import',null);
       }
     }else if(ts.isExpressionStatement(node)&&requireCall(node.expression))add(node,'import',null);
+    else if(ts.isExpressionStatement(node)&&ts.isBinaryExpression(node.expression)
+      &&node.expression.operatorToken.kind===ts.SyntaxKind.EqualsToken){
+      const {left,right}=node.expression;
+      if(moduleExports(left)){
+        if(ts.isObjectLiteralExpression(right))addMembers(right.properties,'module.exports');
+        else if(callable(right))add(node.expression,'function','exports','module');
+      }else if(ts.isPropertyAccessExpression(left)&&callable(right)){
+        const owner=left.expression;
+        if(ts.isIdentifier(owner)&&owner.text==='exports')add(node.expression,'function',identifier(left.name),'exports');
+        else if(moduleExports(owner))add(node.expression,'function',identifier(left.name),'module.exports');
+      }
+    }
     else if(ts.isInterfaceDeclaration(node))add(node,'interface',name);
     else if(ts.isTypeAliasDeclaration(node))add(node,'type',name);
     else if(ts.isEnumDeclaration(node))add(node,'enum',name);
@@ -92,7 +110,7 @@ function parseArgs(args){
   if(rest.length!==2||rest[0]!=='--source'||!rest[1]||rest[1].startsWith('--'))throw Error('invalid_arguments');
   return {file:rest[1],json};
 }
-const HELP='agent-brief outline --source FILE [--json]\nRead one JS/TS file and locate top-level declarations/class callables. Names and line ranges only; no source bodies, edits or model calls. Read original context before editing.';
+const HELP='agent-brief outline --source FILE [--json]\nRead one JS/TS file and locate declarations, class/object callables and direct CommonJS function assignments. Names and line ranges only; no source bodies, edits or model calls. Read original context before editing.';
 function display(v){
   const lines=['Agent Brief Lab — source outline: '+JSON.stringify(v.fileName),'Source SHA-256: '+v.sourceSha256];
   if(v.status==='unavailable')return lines.concat('Outline unavailable within resource limits. No source context was verified.').join('\n');

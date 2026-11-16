@@ -89,7 +89,8 @@ node index.cjs outline --source /absolute/path/to/module.ts
 ```
 
 This gives your existing coding assistant a directory of function/class/method
-names and original line ranges, plus a source fingerprint. It prints no source
+names and original line ranges, including direct object APIs and CommonJS
+function assignments, plus a source fingerprint. It prints no source
 bodies or module strings, executes no source and edits no file. Read the original
 implementation, imports and dependencies after locating the relevant code.
 It is a locator, not a complete task context or an automatic context interceptor.
