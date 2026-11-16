@@ -95,6 +95,8 @@ bodies or module strings, executes no source and edits no file. Read the origina
 implementation, imports and dependencies after locating the relevant code.
 It is a locator, not a complete task context or an automatic context interceptor.
 Truncation, unlisted statements and unavailable analysis are reported explicitly.
+Directories above 500 entries can continue with the returned `nextOffset` and
+the same source fingerprint; changed files are refused before page output.
 
 After selecting a range, `read --source FILE --lines START:END --sha256 HASH`
 returns those original lines only if the file still matches the directory's

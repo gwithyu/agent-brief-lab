@@ -160,7 +160,8 @@ if (require.main === module) {
 
 Commands:
   try [--history FILE | --source FILE] [--json]   Preview compression locally (no model calls)
-  outline --source FILE [--json]               Locate declarations without printing source bodies
+  outline --source FILE [--offset N --sha256 HASH] [--json]
+                                               Locate declarations without printing source bodies
   read --source FILE --lines START:END --sha256 HASH [--json]
                                                Read original lines after matching the source fingerprint
   handoff --repo ROOT --task TEXT --file FILE --out NEW_DIR [--constraint TEXT] [--check TEXT]

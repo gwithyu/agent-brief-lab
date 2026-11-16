@@ -23,6 +23,10 @@ the returned input may already be a conservative rewrite **candidate**.
 Use `node index.cjs outline --source /absolute/path/to/module.ts` to locate
 top-level declarations, class/object callables and direct CommonJS function
 assignments before reading a large file.
+If relevant locations may follow the current page, continue using its
+`nextOffset` and source hash: `outline --source FILE --offset N --sha256 HASH`.
+Use the same tool revision and stop on a source mismatch; whole-file counters
+are repeated on each page, not counts to sum.
 Read the relevant original implementation, imports and dependencies through
 your normal authorized tools, or use `read --source FILE --lines START:END
 --sha256 HASH` with the outline's actual fingerprint. This prints explicitly

@@ -12,6 +12,32 @@ It never executes the source or follows imports. Use your existing editor or
 coding agent's normal file-read tool to read the relevant original code,
 imports and dependencies before making a decision or edit.
 
+## Continue a large directory
+
+Each response contains at most **500 locations**. If `nextOffset` is a number,
+use that value and the same response's `sourceSha256` to continue:
+
+```sh
+node index.cjs outline --source /absolute/path/to/module.ts \
+  --offset 500 --sha256 COPY_SOURCE_SHA256_HERE --json
+```
+
+Replace both placeholders with the actual values from the preceding response.
+The offset counts **directory entries**, not source lines. Follow `nextOffset`
+rather than calculating offsets from line numbers, because class/method ranges
+can overlap and declarations can share a line. `nextOffset: null` on a ready
+result means no later supported locations remain. `truncated` reports whether
+more locations follow **this page**; `totalSymbols` and
+`unlistedTopLevelStatements` describe the whole file, not just this page.
+
+Continued requests require the original fingerprint. Changed source is refused
+with `source_changed` before any new identifiers are printed, and a nonexistent
+offset is refused with `invalid_outline_offset` instead of a misleading empty
+directory. Retain the same pinned tool revision while combining pages: entry
+order depends on the source and the locator implementation. Every page uses
+the existing bounded analysis; it does not execute source, resolve additional
+dependencies or make the context complete. Request later pages only when needed.
+
 ## Read selected original lines with the same fingerprint
 
 After choosing a range from the directory, copy its actual 64-character
@@ -73,8 +99,9 @@ Computed/literal member names and identifiers longer than 128 UTF-16 units
 are returned as null. Anonymous declarations also use null. Overloads can
 share a name: use their line ranges rather than assuming names are unique.
 
-At most **500 locations** are emitted. `totalSymbols` counts all supported
-locations found and `truncated` explicitly reports omitted locations.
+At most **500 locations per page** are emitted. `totalSymbols` counts all
+supported locations found, `offset` identifies the current starting entry,
+and `nextOffset` / `truncated` explicitly report whether more entries follow.
 `completeContext` is **always false**: the outline contains no function
 bodies, argument types, module strings, literal values or behavioral proof.
 It cannot replace a complete task handoff or authorize narrower edits.

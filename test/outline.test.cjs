@@ -115,6 +115,68 @@ test('large symbol sets explicitly truncate without claiming a complete context'
   assert.equal(r.totalSymbols,520);assert.equal(r.symbols.length,500);assert.equal(r.truncated,true);
   assert.equal(r.completeContext,false);assert.equal(r.symbols.at(-1).name,'fn499');
 });
+test('outline continuation reaches later declarations without duplicates or skipped rows',()=>{
+  const source=Array.from({length:520},(_,i)=>`function fn${i}() { return ${i}; }`).join('\n');
+  const first=analyze(source,'paged.js'),last=analyze(source,'paged.js',{offset:500});
+  assert.equal(first.offset,0);assert.equal(first.nextOffset,500);assert.equal(first.truncated,true);
+  assert.equal(last.offset,500);assert.equal(last.nextOffset,null);assert.equal(last.truncated,false);
+  assert.equal(last.symbols.length,20);assert.equal(last.symbols[0].name,'fn500');
+  assert.equal(last.symbols.at(-1).name,'fn519');assert.equal(last.totalSymbols,520);
+  assert.equal(new Set([...first.symbols,...last.symbols].map(s=>s.name)).size,520);
+  assert.equal(last.sourceSha256,first.sourceSha256);assert.equal(last.completeContext,false);
+});
+test('outline page boundaries preserve whole-file counters and refuse nonexistent continuation offsets',()=>{
+  const source='const unlisted = 1;\n'+Array.from({length:500},(_,i)=>`function f${i}(){}`).join('\n');
+  const r=analyze(source,'boundary.js');
+  assert.equal(r.symbols.length,500);assert.equal(r.nextOffset,null);assert.equal(r.truncated,false);
+  assert.equal(r.unlistedTopLevelStatements,1);
+  const tail=analyze(source,'boundary.js',{offset:499});
+  assert.equal(tail.symbols.length,1);assert.equal(tail.unlistedTopLevelStatements,1);
+  assert.equal(tail.totalSymbols,500);assert.equal(tail.nextOffset,null);
+  for(const offset of [500,501])assert.throws(()=>analyze(source,'boundary.js',{offset}),/invalid_outline_offset/);
+  const empty=analyze('// no declarations\n','empty.js');
+  assert.equal(empty.totalSymbols,0);assert.equal(empty.nextOffset,null);
+  assert.throws(()=>analyze('// no declarations\n','empty.js',{offset:1}),/invalid_outline_offset/);
+});
+test('continuation options require canonical offsets and an actual source fingerprint',()=>fixture(dir=>{
+  const file=path.join(dir,'source.js');fs.writeFileSync(file,'function entry() {}');
+  assert.throws(()=>outline(file,{offset:1}),/invalid_arguments/);
+  for(const offset of [-1,.5,NaN,Infinity,'1'])assert.throws(()=>outline(file,{offset}),/invalid_arguments/);
+  for(const offset of ['-1','01','1.5','1e2','Infinity','99999999'])
+    assert.throws(()=>parseArgs(['--source',file,'--offset',offset,'--sha256','a'.repeat(64)]),/invalid_arguments/);
+  for(const args of [['--source',file,'--offset','1'],['--source',file,'--sha256','a'.repeat(64)],
+    ['--source',file,'--offset','1','--sha256','bad'],
+    ['--source',file,'--offset','1','--sha256','a'.repeat(64),'--json','--json']])
+    assert.throws(()=>parseArgs(args),/invalid_arguments/);
+  const p=parseArgs(['--source',file,'--offset','0','--sha256','a'.repeat(64),'--json']);
+  assert.equal(p.offset,0);assert.equal(p.expectedSha256,'a'.repeat(64));
+}));
+test('changed source refuses a continuation before printing new identifiers',()=>fixture(dir=>{
+  const file=path.join(dir,'PRIVATE_PATH.js');
+  const source=Array.from({length:501},(_,i)=>`function f${i}(){}`).join('\n');fs.writeFileSync(file,source);
+  const first=outline(file);assert.equal(first.nextOffset,500);
+  fs.writeFileSync(file,source+'\nfunction PRIVATE_NEW() {}');
+  const r=spawnSync(process.execPath,[cli,'outline','--source',file,'--offset','500','--sha256',first.sourceSha256,'--json'],
+    {encoding:'utf8',timeout:10000});
+  assert.equal(r.status,1);assert.equal(r.stdout,'');assert.match(r.stderr,/source_changed/);
+  assert.doesNotMatch(r.stderr,/PRIVATE_|\/tmp\//);
+}));
+test('later object-method page feeds a matching source read without executing the file',()=>fixture(dir=>{
+  const file=path.join(dir,'paged.cjs'),marker=path.join(dir,'must-not-execute');
+  const source=`require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'PRIVATE_EFFECT');\nconst api = {\n`
+    +Array.from({length:520},(_,i)=>`  m${i}() {return ${i};}`).join(',\n')+'\n};\n';fs.writeFileSync(file,source);
+  const first=outline(file),last=outline(file,{offset:first.nextOffset,expectedSha256:first.sourceSha256});
+  assert.equal(last.status,'ready');assert.equal(last.nextOffset,null);assert.equal(last.symbols.length,20);
+  assert.equal(last.symbols[0].name,'m500');assert.equal(last.symbols.at(-1).name,'m519');
+  assert.equal(last.unlistedTopLevelStatements,first.unlistedTopLevelStatements);
+  const target=last.symbols.at(-1);
+  const r=spawnSync(process.execPath,[cli,'read','--source',file,'--lines',`${target.startLine}:${target.endLine}`,
+    '--sha256',last.sourceSha256,'--json'],{encoding:'utf8',timeout:10000});
+  assert.equal(r.status,0,r.stderr);assert.equal(JSON.parse(r.stdout).text,'  m519() {return 519;}\n');
+  assert.equal(fs.existsSync(marker),false);assert.equal(fs.readFileSync(file,'utf8'),source);
+  const human=spawnSync(process.execPath,[cli,'outline','--source',file],{encoding:'utf8',timeout:10000});
+  assert.equal(human.status,0,human.stderr);assert.match(human.stdout,/Continue with --offset 500 --sha256 [a-f0-9]{64}/);
+}));
 test('long identifiers are omitted instead of turning metadata into a huge source payload',()=>{
   const r=analyze('function '+'x'.repeat(500)+'() {return "PRIVATE_BODY";}','long.js');
   assert.equal(r.symbols[0].name,null);assert.doesNotMatch(JSON.stringify(r),/xxxx|PRIVATE_BODY/);
