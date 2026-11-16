@@ -95,7 +95,12 @@ implementation, imports and dependencies after locating the relevant code.
 It is a locator, not a complete task context or an automatic context interceptor.
 Truncation, unlisted statements and unavailable analysis are reported explicitly.
 
-**[Code outline guide](docs/OUTLINE.md)**. Output contains real project identifiers;
+After selecting a range, `read --source FILE --lines START:END --sha256 HASH`
+returns those original lines only if the file still matches the directory's
+fingerprint. This explicit command prints source data, refuses stale ranges
+and limits each read to 200 lines / 64 KiB; it never edits or executes the file.
+
+**[Code outline and fingerprint-checked read guide](docs/OUTLINE.md)**. Outline output contains real project identifiers;
 no model success or bill-saving claim follows from a shorter directory.
 
 ## Real tasks: give your existing AI a scoped, unmodified source handoff

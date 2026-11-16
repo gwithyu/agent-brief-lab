@@ -23,9 +23,13 @@ the returned input may already be a conservative rewrite **candidate**.
 Use `node index.cjs outline --source /absolute/path/to/module.ts` to locate
 top-level declarations and class callables before reading a large file.
 Read the relevant original implementation, imports and dependencies through
-your normal authorized tools; the outline is not the implementation or an
-edit-scope grant. Regenerate it after the source SHA-256 changes. Preserve
-the complete original sources in native Raw/Prepared task comparisons.
+your normal authorized tools, or use `read --source FILE --lines START:END
+--sha256 HASH` with the outline's actual fingerprint. This prints explicitly
+selected original source data (up to 200 lines / 64 KiB), and refuses changed
+files before printing code. Regenerate the outline after a mismatch.
+Neither the directory nor a successful read grants edit scope or proves full
+context. Preserve the complete original sources in native Raw/Prepared task
+comparisons.
 
 ## Instructions an agent can follow
 

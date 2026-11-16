@@ -161,6 +161,8 @@ if (require.main === module) {
 Commands:
   try [--history FILE | --source FILE] [--json]   Preview compression locally (no model calls)
   outline --source FILE [--json]               Locate declarations without printing source bodies
+  read --source FILE --lines START:END --sha256 HASH [--json]
+                                               Read original lines after matching the source fingerprint
   handoff --repo ROOT --task TEXT --file FILE --out NEW_DIR [--constraint TEXT] [--check TEXT]
                                                Private native-JSON handoff to an existing agent
   pair --handoff PRIVATE_DIR --out NEW_DIR       Export equivalent raw/compact prompts
@@ -195,7 +197,9 @@ Exit status: 0 success; 1 invalid/rejected/check failure; 2 incorrect CLI usage.
 `;
   if(args.length===1 && ['--help','-h'].includes(args[0])) process.stdout.write(help);
   else if(args.length===1 && ['--version','-V'].includes(args[0])) console.log(require('./package.json').version);
-  else if(args[0]==='outline') {
+  else if(args[0]==='read') {
+    process.exitCode=require('./source-read.cjs').runCli(args.slice(1));
+  } else if(args[0]==='outline') {
     process.exitCode=require('./outline.cjs').runCli(args.slice(1));
   } else if(args[0]==='trial') {
     process.exitCode=require('./evaluation/owner-trial.cjs').runCli(args.slice(1));
