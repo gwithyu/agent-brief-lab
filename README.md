@@ -107,6 +107,10 @@ the bounded lookup and fingerprint-checked read together. Duplicate names
 refuse; `--container OWNER` can narrow methods, and optional `--sha256 HASH`
 pins an earlier observation. Results contain full physical lines and may
 include same-line neighbors; dependencies are still the caller's next read.
+Ranges retain parser-attached JSDoc, including statement-level documentation
+for function bindings and direct CommonJS assignments. A documented multi-binding
+statement can include earlier bindings; that whole range counts toward the
+read budget. Other comments and surrounding scope still need deliberate reads.
 
 **[Code outline and fingerprint-checked read guide](docs/OUTLINE.md)**. Outline output contains real project identifiers;
 no model success or bill-saving claim follows from a shorter directory.

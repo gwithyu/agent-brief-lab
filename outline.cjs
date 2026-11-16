@@ -24,12 +24,14 @@ function analyze(source,name,{offset=0,selection=null}={}){
   let parsed;
   try{parsed=sourceFile(source,name)}catch{throw Error('invalid_source');}
   const symbols=[];let totalSymbols=0,matchedSymbols=0,unlistedTopLevelStatements=0;
-  const add=(node,kind,name,container=null)=>{
+  const add=(node,kind,name,container=null,documentationNode=node)=>{
     totalSymbols++;
     if(selection&&(name!==selection.name||selection.container!==null&&container!==selection.container))return;
     matchedSymbols++;
     if(matchedSymbols<=offset||symbols.length===MAX_SYMBOLS)return;
-    const start=node.getStart(parsed),end=Math.max(start,node.end-1);
+    // Variable/assignment docs belong to the containing statement in the AST.
+    // Keep one contiguous range, including any earlier bindings in that statement.
+    const start=(documentationNode.jsDoc?.length?documentationNode:node).getStart(parsed,true),end=Math.max(start,node.end-1);
     symbols.push({kind,name,container,
       startLine:parsed.getLineAndCharacterOfPosition(start).line+1,
       endLine:parsed.getLineAndCharacterOfPosition(end).line+1});
@@ -53,10 +55,10 @@ function analyze(source,name,{offset=0,selection=null}={}){
       addMembers(node.members,name);
     }else if(ts.isVariableStatement(node)){
       for(const declaration of node.declarationList.declarations){
-        if(callable(declaration.initializer))add(declaration,'function',identifier(declaration.name));
+        if(callable(declaration.initializer))add(declaration,'function',identifier(declaration.name),null,node);
         else if(declaration.initializer&&ts.isObjectLiteralExpression(declaration.initializer))
           addMembers(declaration.initializer.properties,identifier(declaration.name));
-        else if(requireCall(declaration.initializer))add(declaration,'import',null);
+        else if(requireCall(declaration.initializer))add(declaration,'import',null,null,node);
       }
     }else if(ts.isExpressionStatement(node)&&requireCall(node.expression))add(node,'import',null);
     else if(ts.isExpressionStatement(node)&&ts.isBinaryExpression(node.expression)
@@ -64,11 +66,11 @@ function analyze(source,name,{offset=0,selection=null}={}){
       const {left,right}=node.expression;
       if(moduleExports(left)){
         if(ts.isObjectLiteralExpression(right))addMembers(right.properties,'module.exports');
-        else if(callable(right))add(node.expression,'function','exports','module');
+        else if(callable(right))add(node.expression,'function','exports','module',node);
       }else if(ts.isPropertyAccessExpression(left)&&callable(right)){
         const owner=left.expression;
-        if(ts.isIdentifier(owner)&&owner.text==='exports')add(node.expression,'function',identifier(left.name),'exports');
-        else if(moduleExports(owner))add(node.expression,'function',identifier(left.name),'module.exports');
+        if(ts.isIdentifier(owner)&&owner.text==='exports')add(node.expression,'function',identifier(left.name),'exports',node);
+        else if(moduleExports(owner))add(node.expression,'function',identifier(left.name),'module.exports',node);
       }
     }
     else if(ts.isInterfaceDeclaration(node))add(node,'interface',name);

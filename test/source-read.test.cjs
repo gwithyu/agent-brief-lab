@@ -107,6 +107,62 @@ test('symbol reads preserve complete physical lines rather than clipping same-li
   fs.writeFileSync(file,source);const r=readSymbol({file,symbol:'one'});
   assert.equal(r.text,source);assert.equal(r.selectedSymbol.name,'one');assert.equal(r.completeContext,false);
 }));
+test('named reads retain attached JSDoc for declarations, variable bindings, members and CommonJS assignments',()=>fixture(dir=>{
+  const file=path.join(dir,'documented.ts');
+  const cases=[
+    ['entry',null,'/** @param value Must be positive. */\r\nexport function entry(value:number) {return value;}\r\n'],
+    ['arrow',null,'/** Returns milliseconds, not seconds. */\r\nexport const arrow=(value:number)=>value;\r\n'],
+    ['run','api','  /** Caller must hold the lock. */\r\n  run() {},\r\n'],
+    ['field','Client','  /** Call only after connect. */\r\n  field=()=>1;\r\n'],
+    ['named','exports','/** Never retry this operation. */\r\nexports.named=()=>1;\r\n'],
+    ['other','module.exports','/** Input is already encoded. */\r\nmodule.exports.other=()=>2;\r\n'],
+    ['exports','module','/** Owns the returned handle. */\r\nmodule.exports=()=>3;\r\n']
+  ];
+  const source='\ufeffconst unrelated="PRIVATE_CONTEXT";\r\n'+cases[0][2]+cases[1][2]
+    +'const api={\r\n'+cases[2][2]+'};\r\nclass Client {\r\n'+cases[3][2]+'}\r\n'
+    +cases.slice(4).map(c=>c[2]).join('');
+  fs.writeFileSync(file,source);const map=outline(file);
+  assert.equal(map.sourceSha256,hash(source));
+  assert.doesNotMatch(JSON.stringify(map),/Must be positive|Caller must|PRIVATE_CONTEXT/);
+  for(const [symbol,container,expected] of cases){
+    const r=readSymbol({file,symbol,container});assert.equal(r.text,expected,symbol);
+    const location=map.symbols.find(s=>s.name===symbol&&s.container===container);
+    assert.deepEqual(r.selectedSymbol,location);assert.equal(r.startLine,location.startLine);
+    assert.equal(r.sourceSha256,hash(source));assert.equal(r.completeContext,false);
+  }
+  assert.equal(fs.readFileSync(file,'utf8'),source);
+}));
+test('statement JSDoc for a later variable binding retains the original prefix rather than stitching fragments',()=>fixture(dir=>{
+  const file=path.join(dir,'multiple.js');
+  const documented='/** Both inputs must be normalized. */\nconst first=()=>1,\n  second=()=>2;\n';
+  const source='const unrelated=0;\n'+documented;fs.writeFileSync(file,source);
+  const r=readSymbol({file,symbol:'second'});
+  assert.equal(r.text,documented);assert.equal(r.startLine,2);assert.equal(r.endLine,4);
+  assert.equal(r.selectedSymbol.name,'second');assert.equal(r.completeContext,false);
+}));
+test('ordinary leading comments and documentation attached to an earlier statement are not pulled in',()=>fixture(dir=>{
+  const file=path.join(dir,'unattached.js');
+  fs.writeFileSync(file,'/** PRIVATE_EARLIER */\nconst unrelated=1;\n// PRIVATE_COMMENT\nfunction entry() {}\n');
+  const r=readSymbol({file,symbol:'entry'});
+  assert.equal(r.text,'function entry() {}\n');assert.doesNotMatch(r.text,/PRIVATE_/);
+}));
+test('documentation counts toward both read budgets and an oversize documented symbol emits no partial source',()=>fixture(dir=>{
+  const file=path.join(dir,'budget.js');
+  for(const docs of ['/**\n'+' * required context\n'.repeat(198)+' */\n','/** '+'x'.repeat(65536)+' */\n']){
+    fs.writeFileSync(file,docs+'function entry() {}\n');
+    const r=call(['--source',file,'--symbol','entry','--json']);
+    assert.equal(r.status,1);assert.equal(r.stdout,'');assert.match(r.stderr,/read_budget_exceeded/);
+  }
+}));
+test('documentation-only edits invalidate a pinned symbol read, while explicit line mode keeps its requested range',()=>fixture(dir=>{
+  const file=path.join(dir,'changed-docs.js'),code='function entry() {}\n';
+  const old='/** Input must be positive. */\n'+code,current='/** Input must be negative. */\n'+code;
+  fs.writeFileSync(file,current);
+  const r=call(['--source',file,'--symbol','entry','--sha256',hash(old),'--json']);
+  assert.equal(r.status,1);assert.equal(r.stdout,'');assert.match(r.stderr,/source_changed/);
+  assert.equal(readSource({file,startLine:2,endLine:2,expectedSha256:hash(current)}).text,code);
+  assert.equal(readSymbol({file,symbol:'entry'}).text,current);
+}));
 test('duplicate names across the full file refuse, and an exact container selects the intended method',()=>fixture(dir=>{
   const file=path.join(dir,'duplicate.js');
   const source='function run() {return "PRIVATE_TOP";}\n'

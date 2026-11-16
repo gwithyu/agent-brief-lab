@@ -38,6 +38,17 @@ otherwise this mode deliberately observes the current file. A change during
 lookup or a mismatch with the optional pinned hash refuses before code output.
 The JSON result includes `selectedSymbol` alongside the observed hash/range.
 
+Directory ranges start at parser-attached **JSDoc** (`/** ... */`) when present,
+so named reads retain those comments verbatim with the implementation. For
+function-valued variables and direct CommonJS assignments, this also includes
+JSDoc attached to their containing statement. A documented statement with
+multiple bindings may include earlier bindings before the requested one: the
+range stays contiguous, without stitching or rewriting source. These comments
+and any included prefix count toward the same read budget; an oversized range
+refuses rather than dropping documentation. Outline responses still print no
+comment text. Ordinary leading comments and surrounding scope are not promised;
+parser attachment alone does not prove that all usage constraints were found.
+
 This still returns complete **physical lines** through the existing reader.
 If several statements share those lines, the neighboring text is included;
 it is not a column-level extractor. The 200-line / 64-KiB read budget still

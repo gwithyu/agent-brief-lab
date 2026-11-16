@@ -32,6 +32,9 @@ locates it and rechecks the fingerprint automatically. Use `--container OWNER`
 when needed, and pin an earlier observation with `--sha256 HASH`. Do not guess
 through ambiguous-name errors; select the actual range using the directory.
 The result is complete physical lines, which can include same-line neighbors.
+Ranges include parser-attached JSDoc. Documented multi-binding statements may
+include earlier bindings; this context counts toward the same read budget.
+Inspect other comments and surrounding scope separately when relevant.
 Read the relevant original implementation, imports and dependencies through
 your normal authorized tools, or use `read --source FILE --lines START:END
 --sha256 HASH` with the outline's actual fingerprint. This prints explicitly

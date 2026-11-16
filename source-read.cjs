@@ -58,6 +58,7 @@ const HELP=[
   'agent-brief read --source FILE --lines START:END --sha256 OUTLINE_SHA256 [--json]',
   'agent-brief read --source FILE --symbol NAME [--container OWNER] [--sha256 HASH] [--json]',
   'Symbol mode locates one exact supported declaration in a fresh bounded scan; duplicate matches refuse.',
+  'Ranges include parser-attached JSDoc; documented multi-binding statements may include earlier bindings.',
   'It returns complete physical lines; other statements on those same lines may be included.',
   'Print the explicitly selected original source lines only if the file fingerprint matches.',
   'One-based inclusive lines; at most 200 lines / 64 KiB, from a regular UTF-8 file up to 1 MiB.',
