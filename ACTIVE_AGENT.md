@@ -35,6 +35,10 @@ The result is complete physical lines, which can include same-line neighbors.
 Ranges include parser-attached JSDoc. Documented multi-binding statements may
 include earlier bindings; this context counts toward the same read budget.
 Inspect other comments and surrounding scope separately when relevant.
+If a named read exceeds its budget, use the `readHint` coordinates/hash on
+stderr for smaller explicit line reads; `--json` makes that refusal JSON.
+Each chunk must fit both limits. A line over 64 KiB needs another authorized
+reader. Never treat a refused read or its hint as source already read.
 Read the relevant original implementation, imports and dependencies through
 your normal authorized tools, or use `read --source FILE --lines START:END
 --sha256 HASH` with the outline's actual fingerprint. This prints explicitly

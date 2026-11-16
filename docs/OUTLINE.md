@@ -57,6 +57,27 @@ applies, with no silent truncation. Source data is printed explicitly, and
 other unsupported syntax are not resolved; use the outline/line reader and
 normal authorized reads when more context is needed.
 
+## Resume after an oversized named read
+
+A named declaration over the 200-line / 64-KiB budget still exits **1**, with
+empty stdout and no partial source. It now supplies the locator's observed
+`sourceSha256`, inclusive `startLine`/`endLine`, `maxLines` and `maxSliceBytes`
+in `readHint` on **stderr**. With `--json`, that stderr is one JSON object:
+schema `agent-brief-source-read-refusal.v1`, status `refused`, error
+`read_budget_exceeded`, `readHint`, `completeContext: false`, `modelCalls: 0`
+and `fileWrites: 0`. Library callers receive the same `readHint` property on
+the thrown error. Other refusal cases retain their existing error format;
+missing, ambiguous and stale lookups supply no resume hint.
+
+Use the observed coordinates/hash with the existing `--lines START:END
+--sha256 HASH` command, choosing smaller contiguous ranges within the located
+declaration. Each read rechecks the full source fingerprint; a hint is an
+observation, not a new source verification or edit lock. Stop and locate again
+if the source changes. A range of 200 lines is not guaranteed to fit the byte
+budget: reduce it further if needed. A single physical line above 64 KiB
+cannot be read through this line-preserving interface; use another authorized
+reader. No automatic paging, truncation or complete-context claim is added.
+
 ## Continue a large directory
 
 Each response contains at most **500 locations**. If `nextOffset` is a number,

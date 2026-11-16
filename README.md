@@ -111,6 +111,10 @@ Ranges retain parser-attached JSDoc, including statement-level documentation
 for function bindings and direct CommonJS assignments. A documented multi-binding
 statement can include earlier bindings; that whole range counts toward the
 read budget. Other comments and surrounding scope still need deliberate reads.
+An oversized named read keeps stdout empty and exits 1, but now supplies the
+observed range/hash as `readHint` on stderr (one JSON refusal with `--json`).
+Use it for smaller fingerprint-checked line reads; each chunk still has both
+limits, and a single line over 64 KiB needs another authorized reader.
 
 **[Code outline and fingerprint-checked read guide](docs/OUTLINE.md)**. Outline output contains real project identifiers;
 no model success or bill-saving claim follows from a shorter directory.

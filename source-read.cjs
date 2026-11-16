@@ -31,8 +31,14 @@ function readSymbol({file,symbol,container=null,expectedSha256=null}){
   if(map.matchedSymbols!==1)throw Error('ambiguous_symbol');
   const selectedSymbol=map.symbols[0];
   // Re-read against the observed fingerprint; a change during lookup refuses.
-  return {...readSource({file,startLine:selectedSymbol.startLine,endLine:selectedSymbol.endLine,
-    expectedSha256:map.sourceSha256}),selectedSymbol};
+  try{
+    return {...readSource({file,startLine:selectedSymbol.startLine,endLine:selectedSymbol.endLine,
+      expectedSha256:map.sourceSha256}),selectedSymbol};
+  }catch(e){
+    if(e.message==='read_budget_exceeded')e.readHint={sourceSha256:map.sourceSha256,
+      startLine:selectedSymbol.startLine,endLine:selectedSymbol.endLine,maxLines:MAX_LINES,maxSliceBytes:MAX_SLICE_BYTES};
+    throw e;
+  }
 }
 function parseArgs(args){
   if(args.length===1&&['--help','-h'].includes(args[0]))return {help:true};
@@ -62,6 +68,7 @@ const HELP=[
   'It returns complete physical lines; other statements on those same lines may be included.',
   'Print the explicitly selected original source lines only if the file fingerprint matches.',
   'One-based inclusive lines; at most 200 lines / 64 KiB, from a regular UTF-8 file up to 1 MiB.',
+  'Oversize named reads refuse with an observed range/hash hint on stderr (JSON when --json); stdout stays empty.',
   'This command prints source data. It does not execute it, edit files or prove complete task context.'
 ].join('\n');
 function display(v){
@@ -70,11 +77,21 @@ function display(v){
     +'Read surrounding scope and dependencies before editing.\n\n'+v.text;
 }
 function runCli(args=process.argv.slice(2),io={out:console.log,err:console.error}){
+  let json=false;
   try{
-    const o=parseArgs(args);if(o.help){io.out(HELP);return 0;}
+    const o=parseArgs(args);json=o.json===true;if(o.help){io.out(HELP);return 0;}
     const value=o.symbol===undefined?readSource(o):readSymbol(o);
     io.out(o.json?JSON.stringify(value,null,2):display(value));return 0;
   }catch(e){
+    if(e.message==='read_budget_exceeded'&&e.readHint){
+      const refusal={schema:'agent-brief-source-read-refusal.v1',status:'refused',error:e.message,
+        readHint:e.readHint,completeContext:false,modelCalls:0,fileWrites:0};
+      io.err(json?JSON.stringify(refusal):'Source read refused: read_budget_exceeded\n'
+        +'Observed range (no source text): '+JSON.stringify(e.readHint)+'\n'
+        +'Read smaller explicit line ranges using this SHA-256; the byte limit still applies.\n'
+        +'A single line over 64 KiB needs another authorized reader.');
+      return 1;
+    }
     const safe=['invalid_arguments','invalid_file','invalid_line_range','source_changed','read_budget_exceeded',
       'unsupported_source','invalid_source','symbol_lookup_unavailable','symbol_not_found','ambiguous_symbol'];
     io.err('Source read refused: '+(safe.includes(e.message)?e.message:'invalid_input'));return 1;

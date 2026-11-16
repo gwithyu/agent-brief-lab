@@ -200,6 +200,49 @@ test('symbol mode retains the exact line and byte budgets without partial source
   fs.writeFileSync(file,'function large() {return "'+'x'.repeat(70000)+'";}');
   assert.throws(()=>readSymbol({file,symbol:'large'}),/read_budget_exceeded/);
 }));
+test('oversize named CLI reads return body-free observed coordinates that resume through existing line reads',()=>fixture(dir=>{
+  const file=path.join(dir,'PRIVATE_FILE.cjs'),marker=path.join(dir,'PRIVATE_MARKER');
+  const selected='/** PRIVATE_REQUIRED_NOTE */\r\nfunction large() {\r\n'
+    +'  // PRIVATE_BODY\r\n'.repeat(220)+'}\r\n';
+  const source='\ufeff'+`require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'executed');\r\n`+selected;
+  fs.writeFileSync(file,source);const before=fs.readdirSync(dir);
+  const r=call(['--source',file,'--symbol','large','--json']);
+  assert.equal(r.status,1);assert.equal(r.stdout,'');assert.doesNotMatch(r.stderr,/PRIVATE_|\/tmp\//);
+  const refused=JSON.parse(r.stderr),hint=refused.readHint;
+  assert.equal(refused.schema,'agent-brief-source-read-refusal.v1');assert.equal(refused.status,'refused');
+  assert.equal(refused.error,'read_budget_exceeded');assert.equal(refused.completeContext,false);
+  assert.equal(refused.modelCalls,0);assert.equal(refused.fileWrites,0);
+  assert.deepEqual(hint,{sourceSha256:hash(source),startLine:2,endLine:224,maxLines:200,maxSliceBytes:65536});
+  let reconstructed='';
+  for(let startLine=hint.startLine;startLine<=hint.endLine;startLine+=hint.maxLines){
+    const endLine=Math.min(startLine+hint.maxLines-1,hint.endLine);
+    reconstructed+=readSource({file,startLine,endLine,expectedSha256:hint.sourceSha256}).text;
+  }
+  assert.equal(reconstructed,selected);assert.equal(fs.existsSync(marker),false);
+  assert.equal(fs.readFileSync(file,'utf8'),source);assert.deepEqual(fs.readdirSync(dir),before);
+  fs.writeFileSync(file,source.replace('PRIVATE_REQUIRED_NOTE','changed'));
+  assert.throws(()=>readSource({file,startLine:hint.startLine,endLine:3,expectedSha256:hint.sourceSha256}),/source_changed/);
+}));
+test('byte-budget hints are available to library and human callers without suggesting a guaranteed readable chunk',()=>fixture(dir=>{
+  const file=path.join(dir,'large.js'),source='function large() {return "'+'x'.repeat(70000)+'";}';
+  fs.writeFileSync(file,source);let refusal;
+  try{readSymbol({file,symbol:'large'})}catch(e){refusal=e}
+  assert.equal(refusal.message,'read_budget_exceeded');
+  assert.deepEqual(refusal.readHint,{sourceSha256:hash(source),startLine:1,endLine:1,maxLines:200,maxSliceBytes:65536});
+  const r=call(['--source',file,'--symbol','large']);assert.equal(r.status,1);assert.equal(r.stdout,'');
+  assert.match(r.stderr,/Observed range/);assert.ok(r.stderr.includes(hash(source)));assert.doesNotMatch(r.stderr,/xxx|function large/);
+  assert.match(r.stderr,/single line/i);
+  assert.throws(()=>readSource({file,startLine:1,endLine:1,expectedSha256:refusal.readHint.sourceSha256}),/read_budget_exceeded/);
+}));
+test('unresolved or stale symbol lookups do not expose a resumable range',()=>fixture(dir=>{
+  const file=path.join(dir,'lookups.js');fs.writeFileSync(file,'function run() {}\nfunction run() {}\n');
+  for(const [symbol,expectedSha256,error] of [['run',null,'ambiguous_symbol'],['missing',null,'symbol_not_found'],
+    ['run','0'.repeat(64),'source_changed']]){
+    const args=['--source',file,'--symbol',symbol,'--json'];if(expectedSha256)args.push('--sha256',expectedSha256);
+    const r=call(args);assert.equal(r.status,1);assert.equal(r.stdout,'');assert.match(r.stderr,new RegExp(error));
+    assert.doesNotMatch(r.stderr,/readHint|startLine|sourceSha256/);
+  }
+}));
 test('symbol options reject malformed, duplicate or mixed selectors and preserve line-mode hash requirements',()=>fixture(dir=>{
   const file=path.join(dir,'valid.js');fs.writeFileSync(file,'function entry() {}');
   for(const args of [['--source',file,'--symbol'],['--source',file,'--symbol','entry','--lines','1:1'],
