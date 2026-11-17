@@ -1,4 +1,4 @@
-# First-run preview (experimental PR)
+# First run: counting preview or original-code reads
 
 This is for a developer who has **never used Agent Brief Lab**. It is not
 an installation of a ChatGPT plugin, automatic context interception, or a
@@ -51,7 +51,66 @@ There are **zero paid model calls and zero file edits**.
 This branch is an unmerged Draft PR. The public `main` branch has an
 older alpha; do not confuse it with this experiment.
 
-## Step 2: optionally measure your own local data
+## Read code with your existing coding assistant
+
+After the source checkout above, stay in the `agent-brief-lab` directory and
+try its own public source first:
+
+```sh
+node index.cjs outline --source source-read.cjs --json
+node index.cjs read --source source-read.cjs --symbol readSymbol --json
+```
+
+The first command returns supported declaration names, line ranges and a
+source fingerprint, without source bodies. The second returns the original
+`readSymbol` declaration in `text`, with `selectedSymbol` and
+`sourceSha256`. A successful read still has `completeContext: false`.
+These are local code reads: no model is launched and no source is executed
+or changed.
+
+For your actual task:
+
+1. Choose a JS/TS file you authorize your current coding assistant to read.
+   Replace `source-read.cjs` with that file's quoted absolute path.
+2. Use `outline` to find a relevant declaration, then replace `readSymbol`
+   with its exact name. If you already know a unique supported name, you can
+   start with `read --symbol`. Use `--container OWNER` for an exact
+   class/object match when necessary.
+3. Read the imports, callers, surrounding comments and dependencies needed
+   for the task through your normal authorized tools. Do not claim a file
+   or task was fully read just because one declaration was returned.
+
+If the assistant's terminal is in another project, invoke `node /absolute/path/to/agent-brief-lab/index.cjs ...`
+with this checkout's actual absolute path.
+The CLI does not install itself into your assistant or alter its context
+automatically. [Existing-agent workflow](../ACTIVE_AGENT.md) explains the
+separate scoped-edit workflow.
+
+Unlike `try`, **`read` explicitly prints original source** and `outline`
+prints identifiers. Only share output with the coding assistant/providers
+you intended to use; it is not an aggregate-only preview.
+
+| Read outcome | Next step |
+| --- | --- |
+| `ambiguous_symbol` | Specify the actual container, or select a real line range from the outline; do not pick the first duplicate. |
+| `symbol_not_found` | Check the exact name and supported syntax; use normal authorized reads for unsupported declarations. |
+| `read_budget_exceeded` | Named reads exit 1 with empty stdout. With `--json`, parse `readHint` from stderr, then choose smaller explicit line ranges with its source hash. |
+| `source_changed` | Locate the current file again before choosing new ranges. |
+| `symbol_lookup_unavailable` | The locator is unavailable; use another authorized reader. |
+
+To resume an oversized named read, use the actual hint's coordinates and
+hash with `read --source FILE --lines START:END --sha256 HASH --json`.
+Each chunk must fit both 200 lines and 64 KiB. A single line over 64 KiB
+needs another reader. Preserve the same fingerprint across chunks and stop
+on any mismatch; the hint contains no source already read.
+[Full range, paging and error contract](OUTLINE.md).
+
+Reading less selected source may reduce what your assistant receives on
+that step. This walkthrough does not measure a real task's total tokens
+or bill: include all later reads, prompts, retries and outputs in any
+comparison. Preserve full original sources for native paired-input trials.
+
+## Optional: measure your own local data
 
 To evaluate one JavaScript/TypeScript source file for the two supported
 conservative boolean-return patterns, **without changing the source**:
@@ -125,7 +184,7 @@ validity or a valid rewrite candidate. These guards apply to the explicit
 `try --source` / `try --history` CLI paths; direct library calls retain their
 existing behavior.
 
-## Privacy and correctness
+## Privacy and correctness of the counting preview
 
 - Only the one explicitly named file is opened. Input is processed **locally
   in memory**. The preview contains no network calls or provider credentials;
@@ -160,7 +219,7 @@ model transcripts, private prompts, names, paths or credentials.
 
 ## Feedback that would be most useful
 
-Tell us which mode you tried (`synthetic`, `source`, or `history`);
+Tell us which mode you tried (`synthetic`, `source`, `history`, `outline`, or `read`);
 your Node version; whether the first run worked; and whether the report
 was understandable. If you file an issue, **do not paste private prompts,
 project code, API credentials or original message histories**. Aggregate

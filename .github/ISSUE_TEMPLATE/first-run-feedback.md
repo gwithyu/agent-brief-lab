@@ -1,6 +1,6 @@
 ---
 name: First-run feedback (privacy-safe)
-about: Share an offline try-it result without uploading code, prompts, secrets or transcripts
+about: Share a local preview or source-read result without private code, prompts or transcripts
 title: "[First run] "
 labels: []
 assignees: []
@@ -12,18 +12,22 @@ assignees: []
 - [ ] Source checkout with `npm run try`
 - [ ] Explicit `--source FILE` measurement (JS/TS only)
 - [ ] Explicit `--history FILE` measurement (normalized text history)
+- [ ] `outline` declaration lookup
+- [ ] `read --symbol` / `read --lines` original-source read
 
 ## Environment
 
 - Operating system:
 - Node.js major version: 20 / 24 / other
 - Did the command complete successfully? yes / no
+- For outline/read: ready / intentionally refused / unavailable / not applicable
 - If not: **sanitized** error code only (please remove names and paths):
 
 ## Optional aggregate numbers
 
 Report only numeric totals, never the actual text. For an unmodified dry-run
-include original and prepared local tokens if available:
+include original and prepared local tokens if available. Outline/read do not
+report token savings; leave those counts blank rather than inventing zeros:
 
 - Before local text tokens:
 - After local text tokens:
@@ -34,7 +38,7 @@ include original and prepared local tokens if available:
 ## Experience
 
 - What was confusing or took unnecessary effort?
-- Would you use a privacy-preserving, no-model-call preview again?
+- Would you use this local preview or source-reader again?
 - Which feature would make it useful in your actual AI coding workflow?
 - Is there one safe-to-share **general category** of task where it failed
   (example: "large repeated test output", not a source snippet)?
