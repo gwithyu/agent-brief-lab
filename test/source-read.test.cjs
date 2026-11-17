@@ -8,6 +8,37 @@ const cli=path.resolve(__dirname,'../index.cjs'),hash=s=>createHash('sha256').up
 function fixture(fn){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'brief-source-read-'));
   try{return fn(dir)}finally{fs.rmSync(dir,{recursive:true,force:true});}}
 function call(args){return spawnSync(process.execPath,[cli,'read',...args],{encoding:'utf8',timeout:10000});}
+test('source-only output preserves exact original bytes in named and line modes without executing source',()=>fixture(dir=>{
+  const file=path.join(dir,'exact.cjs'),marker=path.join(dir,'must-not-execute');
+  const selected='\ufeff/** 保留约束 */\r\nfunction entry() { return "🙂"; }\r\n';
+  const source=selected+`require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'executed');\r\n`;
+  fs.writeFileSync(file,source);
+  const named=call(['--source',file,'--symbol','entry','--source-only']);
+  assert.equal(named.status,0,named.stderr);assert.equal(named.stdout,selected);assert.equal(named.stderr,'');
+  const text='无额外换行🙂';fs.writeFileSync(file,text);
+  const lines=call(['--source',file,'--lines','1:1','--sha256',hash(text),'--source-only']);
+  assert.equal(lines.status,0,lines.stderr);assert.equal(lines.stdout,text);assert.equal(lines.stderr,'');
+  assert.equal(fs.existsSync(marker),false);assert.equal(fs.readFileSync(file,'utf8'),text);
+}));
+test('source-only output retains stale-source, ambiguity and budget refusals with empty stdout',()=>fixture(dir=>{
+  const file=path.join(dir,'guarded.js');
+  fs.writeFileSync(file,'function entry() {}\n');
+  let r=call(['--source',file,'--symbol','entry','--sha256','0'.repeat(64),'--source-only']);
+  assert.equal(r.status,1);assert.equal(r.stdout,'');assert.match(r.stderr,/source_changed/);
+  fs.writeFileSync(file,'function entry() {}\nfunction entry() {}\n');
+  r=call(['--source',file,'--symbol','entry','--source-only']);
+  assert.equal(r.status,1);assert.equal(r.stdout,'');assert.match(r.stderr,/ambiguous_symbol/);
+  fs.writeFileSync(file,'function entry() {\n'+' // PRIVATE_CONTEXT\n'.repeat(210)+'}\n');
+  r=call(['--source',file,'--symbol','entry','--source-only']);
+  assert.equal(r.status,1);assert.equal(r.stdout,'');assert.match(r.stderr,/read_budget_exceeded/);
+  assert.doesNotMatch(r.stderr,/PRIVATE_CONTEXT|function entry/);
+}));
+test('source-only and JSON are mutually exclusive and duplicate output switches refuse',()=>{
+  const base=['--source','x.js','--symbol','entry'];
+  assert.equal(parseArgs([...base,'--source-only']).sourceOnly,true);
+  for(const flags of [['--json','--source-only'],['--source-only','--json'],['--source-only','--source-only']])
+    assert.throws(()=>parseArgs([...base,...flags]),/invalid_arguments/);
+});
 test('actual outline lookup reads exactly the selected function, retaining the original file',()=>fixture(dir=>{
   const file=path.join(dir,'sample.js');
   const source='const PRIVATE_UNSELECTED = 1;\nfunction entry(v) {\n  return v + 1;\n}\nfunction other() {return 2;}\n';

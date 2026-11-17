@@ -162,9 +162,9 @@ Commands:
   try [--history FILE | --source FILE] [--json]   Preview compression locally (no model calls)
   outline --source FILE [--offset N --sha256 HASH] [--json]
                                                Locate declarations without printing source bodies
-  read --source FILE --lines START:END --sha256 HASH [--json]
+  read --source FILE --lines START:END --sha256 HASH [--json | --source-only]
                                                Read original lines after matching the source fingerprint
-  read --source FILE --symbol NAME [--container OWNER] [--sha256 HASH] [--json]
+  read --source FILE --symbol NAME [--container OWNER] [--sha256 HASH] [--json | --source-only]
                                                Read one unambiguous outlined declaration by name
   handoff --repo ROOT --task TEXT --file FILE --out NEW_DIR [--constraint TEXT] [--check TEXT]
                                                Private native-JSON handoff to an existing agent

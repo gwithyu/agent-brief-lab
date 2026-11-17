@@ -68,6 +68,11 @@ source fingerprint, without source bodies. The second returns the original
 These are local code reads: no model is launched and no source is executed
 or changed.
 
+For a caller that needs only the original text, add `--source-only` instead
+of `--json`. It omits headers and metadata without adding a newline; all
+read checks remain. Keep the metadata-producing mode when you need an observed
+fingerprint/range for later reads. Errors still use stderr and a nonzero exit.
+
 For your actual task:
 
 1. Choose a JS/TS file you authorize your current coding assistant to read.

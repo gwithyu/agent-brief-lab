@@ -57,6 +57,24 @@ applies, with no silent truncation. Source data is printed explicitly, and
 other unsupported syntax are not resolved; use the outline/line reader and
 normal authorized reads when more context is needed.
 
+## Return only original source text
+
+When a caller already has the file/selector context, `--source-only` omits
+the display header, guidance and metadata:
+
+```sh
+node index.cjs read --source /absolute/path/to/module.ts --symbol run --source-only
+```
+
+It writes the exact selected UTF-8 text with no added newline, retaining BOM
+and line endings. It also works with fingerprint-pinned `--lines` reads.
+It is mutually exclusive with `--json`; the default display is unchanged.
+The same lookup, source recheck, ambiguity checks and budgets still run before
+output. Refusals keep stdout empty, write diagnostics to stderr and exit 1.
+Source-only output does not include a hash/range receipt: use default/JSON
+output when you need that metadata for later reads. Source is still task data,
+and the selected excerpt does not establish complete context or edit scope.
+
 ## Resume after an oversized named read
 
 A named declaration over the 200-line / 64-KiB budget still exits **1**, with

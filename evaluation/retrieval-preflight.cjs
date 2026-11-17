@@ -19,15 +19,22 @@ function gradeExtraction(result,mode,expected,sha){
     const boundary=text.indexOf('\n\n');if(boundary<0)return failed();
     sourceSha256=/^Source SHA-256: ([a-f0-9]{64})$/m.exec(text.slice(0,boundary))?.[1];
     text=text.slice(boundary+2,-1); // console.log adds one terminator after original text.
-  }else assert.equal(mode,'native');
-  if(mode!=='native'&&sourceSha256!==sha)return failed();
+  }else assert.ok(['native','briefSourceOnly'].includes(mode));
+  if(!['native','briefSourceOnly'].includes(mode)&&sourceSha256!==sha)return failed();
   return {completed:true,containsExpected:text.includes(expected),exactExpected:text===expected,sourceSha256};
 }
-function runPreflight(root){
+function runPreflight(root,helperRoot=null){
   root=path.resolve(root);
   const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
   assert.equal(git('rev-parse','HEAD'),manifest.revision,'Use the pinned source checkout from the guide');
   assert.equal(git('status','--porcelain'),'','Source checkout must be clean');
+  const separateHelper=helperRoot!==null;
+  helperRoot=separateHelper?path.resolve(helperRoot):root;
+  const helperGit=(...args)=>execFileSync('git',args,{cwd:helperRoot,encoding:'utf8'}).trim();
+  const helperRevision=helperGit('rev-parse','HEAD');assert.equal(helperGit('status','--porcelain'),'');
+  const studyManifest=separateHelper?{...manifest,helperRevision,
+    briefSourceOnlyPolicy:'node index.cjs read --source FILE --symbol NAME --source-only'}:manifest;
+  const modes=['native','briefText','briefJson',...(separateHelper?['briefSourceOnly']:[])];
   const records=[];
   for(const task of manifest.tasks){
     const source=fs.readFileSync(path.join(root,task.file),'utf8'),sha=hash(source),parsed=sourceFile(source,task.file);
@@ -40,9 +47,11 @@ function runPreflight(root){
     const commands={native:['sed','-n',`/^function ${task.symbol}(/,/^}/p`,task.file],
       briefText:['node','index.cjs','read','--source',task.file,'--symbol',task.symbol],
       briefJson:['node','index.cjs','read','--source',task.file,'--symbol',task.symbol,'--json']};
+    if(separateHelper)commands.briefSourceOnly=['node','index.cjs','read','--source',task.file,'--symbol',task.symbol,'--source-only'];
     const row={...task,sourceSha256:sha,targetStartLine:first+1,targetEndLine:last+1,targetBytes:Buffer.byteLength(expected)};
     for(const [mode,[command,...args]] of Object.entries(commands)){
-      const r=spawnSync(command==='node'?process.execPath:command,args,{cwd:root,encoding:'utf8',timeout:15000,maxBuffer:1024*1024});
+      const actualArgs=command==='node'&&separateHelper?[path.join(helperRoot,args[0]),...args.slice(1)]:args;
+      const r=spawnSync(command==='node'?process.execPath:command,actualArgs,{cwd:root,encoding:'utf8',timeout:15000,maxBuffer:1024*1024});
       const stdout=r.stdout??'',stderr=r.stderr??'';
       const result={exitCode:r.status,signal:r.signal,stdout,stderr};
       row[mode]={...gradeExtraction({...r,stdout},mode,expected,sha),exitCode:r.status,
@@ -53,13 +62,14 @@ function runPreflight(root){
     records.push(row);
   }
   assert.equal(git('rev-parse','HEAD'),manifest.revision);assert.equal(git('status','--porcelain'),'');
+  assert.equal(helperGit('rev-parse','HEAD'),helperRevision);assert.equal(helperGit('status','--porcelain'),'');
   const total=mode=>records.reduce((sum,row)=>{
     for(const key of ['completed','containsExpected','exactExpected'])sum[key]+=Number(row[mode][key]);
     for(const key of ['stdoutTokens','commandTokens','declaredEnvelopeTokens'])sum[key]+=row[mode][key];
     return sum;
   },{completed:0,containsExpected:0,exactExpected:0,stdoutTokens:0,commandTokens:0,declaredEnvelopeTokens:0});
-  const totals=Object.fromEntries(['native','briefText','briefJson'].map(mode=>[mode,total(mode)]));
-  return {schema:'agent-brief-retrieval-preflight-report.v1',manifest,manifestSha256:hash(JSON.stringify(manifest)),
+  const totals=Object.fromEntries(modes.map(mode=>[mode,total(mode)]));
+  return {schema:'agent-brief-retrieval-preflight-report.v1',manifest:studyManifest,manifestSha256:hash(JSON.stringify(studyManifest)),
     runtime:{node:process.version,platform:process.platform,typescript:ts.version},taskCount:records.length,
     agentRuns:0,modelCalls:0,providerUsage:null,billedCostUsd:null,codingTaskCorrectness:null,
     retrievalComparisonComplete:Object.values(totals).every(v=>v.completed===records.length&&v.containsExpected===records.length),
@@ -69,10 +79,11 @@ function runPreflight(root){
       'sed relies on column-zero declaration formatting; AST original ranges are used only by the grader.',
       'Normalized command/result JSON is a declared local envelope, not provider usage or an actual host tool envelope.',
       'No agent instructions, follow-up reads, tool schemas, model outputs, retries, latency, cache effects or bills measured.',
-      'Brief identity metadata and stronger guarantees are counted but not claimed equivalent to sed.']};
+      'Brief identity metadata and stronger guarantees are counted when emitted but not claimed equivalent to sed.',
+      ...(separateHelper?['The separately pinned helper executable path is normalized to index.cjs in declared command counts; source-only emits no metadata.']:[])]};
 }
 if(require.main===module){
-  if(process.argv.length!==3)throw Error('Usage: node evaluation/retrieval-preflight.cjs PINNED_CHECKOUT');
-  console.log(JSON.stringify(runPreflight(process.argv[2]),null,2));
+  if(![3,4].includes(process.argv.length))throw Error('Usage: node evaluation/retrieval-preflight.cjs PINNED_CHECKOUT [HELPER_CHECKOUT]');
+  console.log(JSON.stringify(runPreflight(process.argv[2],process.argv[3]??null),null,2));
 }
 module.exports={gradeExtraction,runPreflight};

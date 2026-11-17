@@ -43,6 +43,9 @@ function readSymbol({file,symbol,container=null,expectedSha256=null}){
 function parseArgs(args){
   if(args.length===1&&['--help','-h'].includes(args[0]))return {help:true};
   const rest=[...args],i=rest.indexOf('--json'),json=i>=0;if(json)rest.splice(i,1);
+  const sourceIndex=rest.indexOf('--source-only'),sourceOnly=sourceIndex>=0;
+  if(sourceOnly)rest.splice(sourceIndex,1);
+  if(json&&sourceOnly)throw Error('invalid_arguments');
   if(rest.length>=4&&rest[0]==='--source'&&rest[1]&&!rest[1].startsWith('--')&&rest[2]==='--symbol'){
     if(!rest[3]||rest[3].startsWith('--')||rest.length%2!==0)throw Error('invalid_arguments');
     const options={};
@@ -52,23 +55,24 @@ function parseArgs(args){
       options[rest[i]]=rest[i+1];
     }
     return {file:rest[1],symbol:rest[3],container:options['--container']??null,
-      expectedSha256:options['--sha256']??null,json};
+      expectedSha256:options['--sha256']??null,json,sourceOnly};
   }
   if(rest.length!==6||rest[0]!=='--source'||!rest[1]||rest[1].startsWith('--')
     ||rest[2]!=='--lines'||!/^[1-9]\d{0,6}:[1-9]\d{0,6}$/.test(rest[3])
     ||rest[4]!=='--sha256'||!/^[a-f0-9]{64}$/.test(rest[5]))throw Error('invalid_arguments');
   const [startLine,endLine]=rest[3].split(':').map(Number);
-  return {file:rest[1],startLine,endLine,expectedSha256:rest[5],json};
+  return {file:rest[1],startLine,endLine,expectedSha256:rest[5],json,sourceOnly};
 }
 const HELP=[
-  'agent-brief read --source FILE --lines START:END --sha256 OUTLINE_SHA256 [--json]',
-  'agent-brief read --source FILE --symbol NAME [--container OWNER] [--sha256 HASH] [--json]',
+  'agent-brief read --source FILE --lines START:END --sha256 OUTLINE_SHA256 [--json | --source-only]',
+  'agent-brief read --source FILE --symbol NAME [--container OWNER] [--sha256 HASH] [--json | --source-only]',
   'Symbol mode locates one exact supported declaration in a fresh bounded scan; duplicate matches refuse.',
   'Ranges include parser-attached JSDoc; documented multi-binding statements may include earlier bindings.',
   'It returns complete physical lines; other statements on those same lines may be included.',
   'Print the explicitly selected original source lines only if the file fingerprint matches.',
   'One-based inclusive lines; at most 200 lines / 64 KiB, from a regular UTF-8 file up to 1 MiB.',
   'Oversize named reads refuse with an observed range/hash hint on stderr (JSON when --json); stdout stays empty.',
+  'Source-only writes exact selected text without headers, fingerprint or an added newline; all read checks remain.',
   'This command prints source data. It does not execute it, edit files or prove complete task context.'
 ].join('\n');
 function display(v){
@@ -76,12 +80,13 @@ function display(v){
     +JSON.stringify(v.fileName)+` L${v.startLine}-L${v.endLine}\nSource SHA-256: ${v.sourceSha256}\n`
     +'Read surrounding scope and dependencies before editing.\n\n'+v.text;
 }
-function runCli(args=process.argv.slice(2),io={out:console.log,err:console.error}){
+function runCli(args=process.argv.slice(2),io={out:console.log,err:console.error,write:s=>process.stdout.write(s)}){
   let json=false;
   try{
     const o=parseArgs(args);json=o.json===true;if(o.help){io.out(HELP);return 0;}
     const value=o.symbol===undefined?readSource(o):readSymbol(o);
-    io.out(o.json?JSON.stringify(value,null,2):display(value));return 0;
+    if(o.sourceOnly){if(io.write)io.write(value.text);else io.out(value.text);}
+    else io.out(o.json?JSON.stringify(value,null,2):display(value));return 0;
   }catch(e){
     if(e.message==='read_budget_exceeded'&&e.readHint){
       const refusal={schema:'agent-brief-source-read-refusal.v1',status:'refused',error:e.message,
