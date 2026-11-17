@@ -22,10 +22,19 @@ function parseArgs(args){
   return {mode:rest[0].slice(2),file:rest[1],json};
 }
 function readFile(file,{preserveBom=false}={}){
-  const s=fs.lstatSync(file);
+  const s=fs.lstatSync(file,{bigint:true});
   if(!s.isFile()||s.isSymbolicLink()||s.size<1||s.size>MAX_BYTES)throw Error('invalid_file');
-  const b=fs.readFileSync(file);
-  if(b.length>MAX_BYTES||b.includes(0))throw Error('invalid_file');
+  let fd,b;
+  try{fd=fs.openSync(file,fs.constants.O_RDONLY|(fs.constants.O_NOFOLLOW??0)|(fs.constants.O_NONBLOCK??0));}
+  catch{throw Error('invalid_file');}
+  try{
+    const opened=fs.fstatSync(fd,{bigint:true});
+    if(!opened.isFile()||opened.dev!==s.dev||opened.ino!==s.ino||opened.size<1||opened.size>MAX_BYTES)
+      throw Error('invalid_file');
+    // Read the checked descriptor so a later path swap cannot redirect the read.
+    b=fs.readFileSync(fd);
+  }finally{fs.closeSync(fd);}
+  if(b.length<1||b.length>MAX_BYTES||b.includes(0))throw Error('invalid_file');
   return new TextDecoder('utf-8',{fatal:true,ignoreBOM:preserveBom}).decode(b);
 }
 function historyResult(messages,kind){

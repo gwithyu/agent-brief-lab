@@ -180,7 +180,14 @@ lock against concurrent edits. The output contains actual project identifiers
 and a file basename; it is intended for your authorized coding assistant.
 
 Files are limited to **1 MiB**, with strict UTF-8, NUL, regular-file and
-symlink checks. Analysis runs in a local process with a 5-second deadline
+symlink checks. The shared reader used by `try`, `outline` and `read` checks
+the opened file's type, size and device/inode against its initial path check,
+then reads that same descriptor and closes it on success or failure. It uses
+no-follow/nonblocking open flags where available. A replacement observed before
+descriptor validation is refused as `invalid_file`; changing the path afterward
+cannot redirect that open descriptor. This is not a lock against in-place edits
+or parent-directory changes, and fingerprints still describe the bytes read.
+Analysis runs in a local process with a 5-second deadline
 and a 256 MiB V8 old-space limit. These are not an OS-wide memory cap or
 security sandbox. Source travels over process stdin and is not copied to
 disk or placed in arguments. An unavailable analysis returns null symbols

@@ -260,10 +260,11 @@ test('named CLI refuses a source edit between lookup and original read without p
   const file=path.join(dir,'PRIVATE_RACE.cjs');
   const old='function entry() {return "PRIVATE_OLD_BODY";}\n';
   const current='// shifted after lookup\nfunction entry() {return "PRIVATE_NEW_BODY";}\n';
-  fs.writeFileSync(file,old);const originalRead=fs.readFileSync;let reads=0;
+  fs.writeFileSync(file,old);const originalRead=fs.readFileSync,identity=fs.statSync(file);let reads=0;
   t.mock.method(fs,'readFileSync',function(target,...args){
     const bytes=originalRead.call(fs,target,...args);
-    if(target===file&&++reads===1)fs.writeFileSync(file,current);
+    const stat=typeof target==='number'?fs.fstatSync(target):null;
+    if((target===file||stat?.dev===identity.dev&&stat?.ino===identity.ino)&&++reads===1)fs.writeFileSync(file,current);
     return bytes;
   });
   const out=[],err=[];
@@ -277,11 +278,13 @@ test('named CLI refuses a path replaced by a symlink after lookup without readin
   const file=path.join(dir,'PRIVATE_RACE.cjs'),target=path.join(dir,'PRIVATE_TARGET.cjs');
   const protectedSource='function entry() {return "PRIVATE_TARGET_BODY";}\n';
   fs.writeFileSync(file,'function entry() {}\n');fs.writeFileSync(target,protectedSource);
-  const originalRead=fs.readFileSync;let sourceReads=0,targetReads=0;
+  const originalRead=fs.readFileSync,identity=fs.statSync(file),protectedIdentity=fs.statSync(target);
+  let sourceReads=0,targetReads=0;
   t.mock.method(fs,'readFileSync',function(selected,...args){
-    if(selected===target)targetReads++;
+    const stat=typeof selected==='number'?fs.fstatSync(selected):null;
+    if(selected===target||stat?.dev===protectedIdentity.dev&&stat?.ino===protectedIdentity.ino)targetReads++;
     const bytes=originalRead.call(fs,selected,...args);
-    if(selected===file&&++sourceReads===1){fs.unlinkSync(file);fs.symlinkSync(target,file);}
+    if((selected===file||stat?.dev===identity.dev&&stat?.ino===identity.ino)&&++sourceReads===1){fs.unlinkSync(file);fs.symlinkSync(target,file);}
     return bytes;
   });
   const out=[],err=[];

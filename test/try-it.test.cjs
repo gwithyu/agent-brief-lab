@@ -13,6 +13,78 @@ function temp(fn){
 function call(args,cwd=root){
   return spawnSync(process.execPath,[cli,...args],{cwd,encoding:'utf8',timeout:25000,maxBuffer:128*1024});
 }
+test('shared file reader refuses a leaf replaced by a symlink after its path check without reading bytes',(t)=>temp(dir=>{
+  const file=path.join(dir,'source.js'),target=path.join(dir,'target.js');
+  fs.writeFileSync(file,'original source');fs.writeFileSync(target,'PRIVATE_TARGET');
+  const originalStat=fs.lstatSync,originalRead=fs.readFileSync;let swapped=false,reads=0;
+  t.mock.method(fs,'lstatSync',function(selected,...args){
+    const stat=originalStat.call(fs,selected,...args);
+    if(selected===file&&!swapped){swapped=true;fs.unlinkSync(file);fs.symlinkSync(target,file);}
+    return stat;
+  });
+  t.mock.method(fs,'readFileSync',function(...args){reads++;return originalRead.apply(fs,args)});
+  assert.throws(()=>readFile(file),/invalid_file/);assert.equal(swapped,true);assert.equal(reads,0);
+}));
+test('shared file reader refuses a different regular inode before reading and closes its descriptor',(t)=>temp(dir=>{
+  const file=path.join(dir,'source.js'),replacement=path.join(dir,'replacement.js');
+  fs.writeFileSync(file,'original source');fs.writeFileSync(replacement,'replaced source');
+  const originalStat=fs.lstatSync,originalFstat=fs.fstatSync,originalRead=fs.readFileSync;
+  let swapped=false,openedFd,reads=0;
+  t.mock.method(fs,'lstatSync',function(selected,...args){
+    const stat=originalStat.call(fs,selected,...args);
+    if(selected===file&&!swapped){swapped=true;fs.renameSync(file,file+'.old');fs.renameSync(replacement,file);}
+    return stat;
+  });
+  t.mock.method(fs,'fstatSync',function(fd,...args){openedFd=fd;return originalFstat.call(fs,fd,...args)});
+  t.mock.method(fs,'readFileSync',function(...args){reads++;return originalRead.apply(fs,args)});
+  assert.throws(()=>readFile(file),/invalid_file/);assert.equal(swapped,true);assert.equal(reads,0);
+  assert.equal(typeof openedFd,'number');assert.throws(()=>originalFstat.call(fs,openedFd),{code:'EBADF'});
+}));
+test('shared file reader retains the checked open file if its pathname changes afterward and closes on success',(t)=>temp(dir=>{
+  const file=path.join(dir,'source.js'),replacement=path.join(dir,'replacement.js');
+  fs.writeFileSync(file,'original source');fs.writeFileSync(replacement,'replaced source');
+  const originalFstat=fs.fstatSync,originalRead=fs.readFileSync;let swapped=false,openedFd;
+  t.mock.method(fs,'fstatSync',function(fd,...args){
+    const stat=originalFstat.call(fs,fd,...args);openedFd=fd;
+    if(!swapped){swapped=true;fs.renameSync(file,file+'.old');fs.renameSync(replacement,file);}
+    return stat;
+  });
+  assert.equal(readFile(file),'original source');assert.equal(swapped,true);
+  assert.equal(originalRead.call(fs,file,'utf8'),'replaced source');
+  assert.throws(()=>originalFstat.call(fs,openedFd),{code:'EBADF'});
+}));
+test('shared file reader checks opened type and size before consuming any bytes',(t)=>temp(dir=>{
+  const originalStat=fs.lstatSync,originalRead=fs.readFileSync;let reads=0;
+  t.mock.method(fs,'readFileSync',function(...args){reads++;return originalRead.apply(fs,args)});
+  for(const kind of ['empty','large','directory']){
+    const file=path.join(dir,kind);fs.writeFileSync(file,'valid source');let changed=false;
+    const mocked=t.mock.method(fs,'lstatSync',function(selected,...args){
+      const stat=originalStat.call(fs,selected,...args);
+      if(selected===file&&!changed){
+        changed=true;
+        if(kind==='directory'){fs.unlinkSync(file);fs.mkdirSync(file);}
+        else fs.writeFileSync(file,kind==='empty'?'':Buffer.alloc(1024*1024+1,0x61));
+      }
+      return stat;
+    });
+    try{assert.throws(()=>readFile(file),/invalid_file/);assert.equal(changed,true);assert.equal(reads,0);}
+    finally{mocked.mock.restore();}
+  }
+}));
+test('shared file reader compares inode identities without rounding large integers',(t)=>temp(dir=>{
+  const file=path.join(dir,'source.js');fs.writeFileSync(file,'valid source');
+  const originalStat=fs.lstatSync,originalFstat=fs.fstatSync;
+  const first=2n**53n,second=first+1n;assert.equal(Number(first),Number(second));
+  t.mock.method(fs,'lstatSync',function(selected,options){
+    const stat=originalStat.call(fs,selected,options);
+    if(selected===file)stat.ino=options?.bigint?first:Number(first);
+    return stat;
+  });
+  t.mock.method(fs,'fstatSync',function(fd,options){
+    const stat=originalFstat.call(fs,fd,options);stat.ino=options?.bigint?second:Number(second);return stat;
+  });
+  assert.throws(()=>readFile(file),/invalid_file/);
+}));
 test('default command runs offline, shows a real reversible compression and a no-gain control',()=>{
   const d=demo();
   assert.equal(d.kind,'synthetic_demo');
