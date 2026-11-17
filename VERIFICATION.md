@@ -1,4 +1,58 @@
-# Release verification — 0.11.0-alpha.10
+# Experiment verification — 2026-11-17
+
+Tested snapshot: `9fb18072906c1b463dff05c97eea9801fe647a32`.
+Both clean-checkout `scripts/verify-local.sh` runs completed with exit 0:
+Node 20.20.2 **350/350**, Node 24.22.1 **350/350**, with no failures,
+skips or cancellations. Each verifier performed a lockfile install with
+scripts disabled and checked that HEAD and the working tree stayed unchanged.
+No GitHub Actions workflow or live model was used for this verification.
+
+The two previously unrun lookup/read race regressions now pass. A source edit
+after the locator's read is refused as `source_changed`, with empty stdout
+and no resume hint. Replacing the path with a symlink is refused as
+`invalid_file`, without reading the link target. These tests use deterministic
+changes to temporary fixtures; they do not prove protection against every
+filesystem race or establish an edit lock.
+
+## First-run and installed-source checks
+
+The checkout walkthrough and a fresh empty consumer directory each passed
+**8 CLI smoke checks** on Node 24.22.1. The consumer used `npm exec --ignore-scripts`
+with the immutable tested snapshot's GitHub archive. Checks covered the
+published outline/named-read walkthrough, a second public-source lookup,
+body-free oversized-read hints, exact CRLF reconstruction in two line reads
+and refusal of a stale resume hash. Target source was unexecuted and unchanged
+by the tools; the consumer directory stayed unchanged. Fixture changes for the
+stale-hash case were made by the test harness. Four installed runtime files
+(`index.cjs`, `outline.cjs`, `source-read.cjs`, `evaluation/owner-trial.cjs`)
+matched the tested checkout byte-for-byte.
+
+The README and first-run archive links now point to this verified snapshot.
+The following documentation-only update does not change product runtime or
+the tested source fixtures. The experiment remains a Draft PR.
+
+## Local output-size observations (not a model or billing benchmark)
+
+These two deliberately selected public self-source lookups produced identical
+counts from the checkout and installed CLI, using local `o200k_base` tokenization:
+
+| File / selected declaration | Full source text | Named-read stdout | Outline + named-read stdout |
+| --- | ---: | ---: | ---: |
+| `source-read.cjs` / `readSymbol` | 1,652 | 422 | 943 |
+| `evaluation/owner-trial.cjs` / `summarizeUsage` | 6,790 | 360 | 1,541 |
+
+The first column of counts is the complete original file text, without a tool
+response wrapper. The other columns count the actual JSON stdout, including
+its metadata and whitespace; outline-plus-read is the sum of both outputs.
+Tool arguments, agent instructions, later dependency/context reads, retries,
+model outputs, provider accounting and bills are excluded. This is an output
+size observation on two chosen examples, not equivalent task inputs or a
+representative success-rate/total-cost estimate. All reads still report
+`completeContext: false`; `verifiedRealWorldSavings` remains false.
+
+---
+
+# Historical release verification — 0.11.0-alpha.10
 
 Checked 2026-11-13. This is a public-source alpha, not a production-quality or
 real-agent cost/understanding guarantee. No GitHub Actions workflow was required
