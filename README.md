@@ -26,6 +26,12 @@ envelope is still **9,474 versus native 9,399**; this is payload parity, not
 a demonstrated total-token or billing advantage. The original negative result
 is retained. **[Source-only follow-up](docs/RETRIEVAL_COMPARISON.md#source-only-follow-up)**.
 
+A separate [curated syntax check](docs/SYNTAX_CHECK.md) now verifies twelve
+hand-authored source shapes and four expected refusals in all three output
+modes on Node 20 and 24. This checks exact physical-line output and guard
+behavior; it has no native-tool arm and establishes no additional token or
+billing advantage.
+
 ## NEW: log actual Raw / Prepared model outcomes without inventing savings
 
 After generating a private native `handoff` and `pair`, the new manual

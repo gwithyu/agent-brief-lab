@@ -16,6 +16,13 @@ returned metadata overhead without establishing a task-level cost advantage.
 See the original and follow-up data in the same guide; model edits and provider
 bills remain unmeasured.
 
+The separate [curated syntax diagnostics](docs/SYNTAX_CHECK.md) passed twelve
+exact reads and four expected refusals in each output mode on Node 20 and 24.
+These synthetic reader-contract checks have manually specified expected text
+and no native comparison. They do not complete the live-agent evaluation or
+change the retrieval/token findings above; the interrupted preliminary run is
+retained alongside the isolated reruns.
+
 An earlier readiness attempt used the installed, signed-in Codex CLI. No task or model
 completion was obtained: initial startup failed on read-only runtime state; a
 writable isolated runtime reached thread startup but its filesystem sandbox helper

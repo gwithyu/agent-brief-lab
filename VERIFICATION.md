@@ -1,3 +1,34 @@
+# Syntax-contract diagnostics verification — 2026-11-17
+
+Verified evaluation snapshot: `515f18004c467fe143fdf5ddabb9bda4c4b2297c`,
+with tree `bb68af68a507ebf35fbf51270e9bb508a9507c5b`, matching measured
+local revision `3fe49d6905971b27ddb42e8ed34268c9c69d27ee`. Clean-checkout
+Node 20.20.2 and Node 24.22.1 suites each passed **365/365**, with zero
+failures, skips or cancellations. The two additional grader tests reject
+partial/extra/failed reads and invalid refusal or budget receipts.
+
+On each runtime, the actual CLI returned the manually specified exact physical
+lines in **12/12** curated successful cases and correctly refused **4/4** guard
+cases, in default text, JSON and source-only modes (48 expected outcomes per
+runtime). Source/fixture hashes, grades and output hashes match across Node
+versions. Temporary source contents/directory inventory and Git identity/clean
+state were preserved. This exercises supported syntax and known limits, not
+unknown-name discovery or real coding tasks; expected refusals are not retrieval
+successes. No native-tool, token, latency or provider-cost comparison was made.
+
+An earlier exploratory run overlapped `npm ci` and passed only 6/16 outcomes in
+each mode; the other commands exited 1. Its complete observed report is retained
+in the [study data](evaluation/syntax-results.json). Individual stderr was not
+retained, so failure causes are not independently attributable. Isolated reruns
+used the same code, fixtures and expectations, with no case exclusions.
+
+Production reader code, dependencies and the verified installation pin below
+are unchanged. The subsequent results/docs commit changes no harness/runtime
+code. No model call, GitHub Actions run, merge, tag or npm release was performed.
+See [protocol and limitations](docs/SYNTAX_CHECK.md).
+
+---
+
 # Source-only follow-up verification — 2026-11-17
 
 Verified helper snapshot: `4d8abe79fdfa159c523298860b754148066cd20d`, with

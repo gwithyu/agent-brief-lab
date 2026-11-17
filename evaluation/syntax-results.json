@@ -1,0 +1,2072 @@
+{
+  "schema": "agent-brief-syntax-study.v1",
+  "helperSnapshot": "515f18004c467fe143fdf5ddabb9bda4c4b2297c",
+  "testedTree": "bb68af68a507ebf35fbf51270e9bb508a9507c5b",
+  "preliminaryRun": {
+    "classification": "inconclusive: dependency installation overlap",
+    "note": "This exploratory run overlapped npm ci in the same checkout. It passed 6/16 expected outcomes in each mode; the remaining commands exited 1. Raw stderr was not retained, so individual startup failures cannot be independently attributed. No case was removed. The complete observed record is retained here; isolated reruns follow.",
+    "report": {
+      "schema": "agent-brief-syntax-report.v1",
+      "revision": "3fe49d6905971b27ddb42e8ed34268c9c69d27ee",
+      "manifestSha256": "a6e8d43b1a77b4c2e5deebbe9c447b2584171e2ed7e0118d50089cf4446dd12b",
+      "runtime": {
+        "node": "v24.22.1",
+        "platform": "linux"
+      },
+      "caseCount": 16,
+      "expectedReads": 12,
+      "expectedRefusals": 4,
+      "passedByMode": {
+        "briefText": 6,
+        "briefJson": 6,
+        "briefSourceOnly": 6
+      },
+      "allPassed": false,
+      "modelCalls": 0,
+      "providerUsage": null,
+      "billedCostUsd": null,
+      "verifiedRealWorldSavings": false,
+      "records": [
+        {
+          "id": "arrow",
+          "sourceSha256": "70e9e79c8e531b0a20a4c9a2412a6e8d68d7cdb3d71b92a4db07a7ad29ca3588",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "70e9e79c8e531b0a20a4c9a2412a6e8d68d7cdb3d71b92a4db07a7ad29ca3588",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 257,
+            "stdoutSha256": "d12beb403bd4746720a764f84e556590f2eb85a72903c6b9124e61cdfb1e57b2",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "70e9e79c8e531b0a20a4c9a2412a6e8d68d7cdb3d71b92a4db07a7ad29ca3588",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 541,
+            "stdoutSha256": "6962e1404fc34dce8e6358396af3776cc9c132a947a722604c37d572bfef309b",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 51,
+            "stdoutSha256": "991d12cef90b7bdd6c7bb393feae131cf0075256d783e2fdd36a8307864e5dd6",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "expression",
+          "sourceSha256": "65e544b910f92ccf5fe16ea7e867163be873862ddff5d63468f80055d75daf8f",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "65e544b910f92ccf5fe16ea7e867163be873862ddff5d63468f80055d75daf8f",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 276,
+            "stdoutSha256": "dbc5fad6029170172aa51485a82be8f3b8255488ffda40635e1906494788e0a6",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "65e544b910f92ccf5fe16ea7e867163be873862ddff5d63468f80055d75daf8f",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 560,
+            "stdoutSha256": "38c75aaacdc8d1912caac224b9b7eb5ea622894718c14d8e330b74a75e02a3de",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 64,
+            "stdoutSha256": "aed4391efff62c4286278f93affd5d2b44091462a550f701aa041774fb8506a8",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "export-async-generic",
+          "sourceSha256": "8dface4455c744322eed314f89830dabcbd4c6c2569e65de14a10fb3142cbb2e",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "8dface4455c744322eed314f89830dabcbd4c6c2569e65de14a10fb3142cbb2e",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 297,
+            "stdoutSha256": "d1b40b35cfe2af94972897c2235d1e3edffefa08fc3bf36b910e64a4dfeb9387",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "8dface4455c744322eed314f89830dabcbd4c6c2569e65de14a10fb3142cbb2e",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 581,
+            "stdoutSha256": "66dfdb25f02c18de6712c28db2b9d094cb4890c738aa865a5cb3967f86274bf4",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 76,
+            "stdoutSha256": "123771bad06f5867ada2e64acb9761b9e35704e542606540c9bf86864444a9e6",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "class-owner",
+          "sourceSha256": "74f270429288fc491efc89017a452af04efb22a7010f8e3b464aaf2ca8d9ea33",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "74f270429288fc491efc89017a452af04efb22a7010f8e3b464aaf2ca8d9ea33",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 266,
+            "stdoutSha256": "a346ad6497ab99f66de717d9a78dd16bd0a5b52da8f3270a888a3b6e565e5f17",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "74f270429288fc491efc89017a452af04efb22a7010f8e3b464aaf2ca8d9ea33",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 552,
+            "stdoutSha256": "580496126ffa942bfb545d585718934aca03e03dc18e2763ae8174dbfd6d4ed3",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 54,
+            "stdoutSha256": "a8cc0c4a295cd0caf4ffb4c849f522f375a9cd85bfb47c4c2bbf014344306b0f",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "object-method",
+          "sourceSha256": "ea70853d3eb0de86d634fef751e7dac801cc103ad0737ea11f089e3668c6a69d",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "ea70853d3eb0de86d634fef751e7dac801cc103ad0737ea11f089e3668c6a69d",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 257,
+            "stdoutSha256": "f0511da8a2a52899ce58f63d55b543706501c7f35680d8c3ca4eca1c3d411bd6",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "ea70853d3eb0de86d634fef751e7dac801cc103ad0737ea11f089e3668c6a69d",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 540,
+            "stdoutSha256": "95f0219f61258e5b251e21e5d1e9ffff89df08c208b76f45435b0895cea7d008",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 43,
+            "stdoutSha256": "98d7bbeb70e81bcea88e4b81895d7c671b13b483b4e16b69712eedbf0fdfd6a0",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "object-arrow",
+          "sourceSha256": "627289f66ca16d25d67013844f53baa2e7e336e897c4179f5fb52b7648bf3463",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "627289f66ca16d25d67013844f53baa2e7e336e897c4179f5fb52b7648bf3463",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 247,
+            "stdoutSha256": "7970125a3b9d37fb62bb01970317b5c922c7242a5ef35c41bea63f14cf30c566",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "627289f66ca16d25d67013844f53baa2e7e336e897c4179f5fb52b7648bf3463",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 528,
+            "stdoutSha256": "fcd8249a5c741ea1212baca28807300ad2de1a5def955933eac9587e574053b7",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 34,
+            "stdoutSha256": "ee5a9cc2eaf4da7ead4f42239495b67a3837f3535436bc9af80394ce39db016b",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "commonjs-property",
+          "sourceSha256": "4402a4a046336c1a40c6a878d8bdff0eb29f149eaa924f6143cda331638779ec",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1002
+          },
+          "briefJson": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefSourceOnly": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          }
+        },
+        {
+          "id": "commonjs-direct",
+          "sourceSha256": "39c3e4d8f4d5a7e215067a7f69c9d878c5152d68be1dacc4fa544557cde846c8",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefJson": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefSourceOnly": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          }
+        },
+        {
+          "id": "template-braces",
+          "sourceSha256": "b105910777d8dd747fb102046d384162942d78cc42b34bdb0af78627ae732d98",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefJson": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefSourceOnly": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          }
+        },
+        {
+          "id": "bom-jsdoc-crlf",
+          "sourceSha256": "1e12ef19889e9dd56a7a1f1ad0c019e645b32ffbc34428429afa3415a2289be3",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefJson": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefSourceOnly": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          }
+        },
+        {
+          "id": "same-line-neighbors",
+          "sourceSha256": "7f537310b0306c7d3ea85eab5c287f2795e1ba5b6c364c675d17878ccb3d0881",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefJson": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefSourceOnly": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          }
+        },
+        {
+          "id": "unicode",
+          "sourceSha256": "a9e1d511255240d9aa78f9f13cd63fe1cefd33d32bcac0e8d78b8e7c0acb5e94",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefJson": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefSourceOnly": {
+            "passed": false,
+            "expectedRefusal": false,
+            "completed": false,
+            "containsExpected": false,
+            "exactExpected": false,
+            "sourceSha256": null,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          }
+        },
+        {
+          "id": "ambiguous",
+          "sourceSha256": "9ac660c355873a48ff6e87e40641939a51d2908ad802db7e19668c83fd0dacca",
+          "expected": "refused",
+          "briefText": {
+            "passed": false,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefJson": {
+            "passed": false,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefSourceOnly": {
+            "passed": false,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          }
+        },
+        {
+          "id": "unsupported-wrapper",
+          "sourceSha256": "f7e853e4b84c1356c2dda7fc6b4f113b38e7ed6325ff51ad18e131fb2e22b09c",
+          "expected": "refused",
+          "briefText": {
+            "passed": false,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefJson": {
+            "passed": false,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefSourceOnly": {
+            "passed": false,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          }
+        },
+        {
+          "id": "stale-source",
+          "sourceSha256": "6b7c6e568ea18a043d6be316f8bd2a51b34af4ea87afaa8a8719359bb2ae3a59",
+          "expected": "refused",
+          "briefText": {
+            "passed": false,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefJson": {
+            "passed": false,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefSourceOnly": {
+            "passed": false,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          }
+        },
+        {
+          "id": "line-budget",
+          "sourceSha256": "c2adc0027480e81428980d0a77ed7934e81d26e6e472a57c613647668d69fb21",
+          "expected": "refused",
+          "briefText": {
+            "passed": false,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefJson": {
+            "passed": false,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          },
+          "briefSourceOnly": {
+            "passed": false,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 1001
+          }
+        }
+      ],
+      "limits": [
+        "Hand-authored synthetic syntax cases selected to exercise the documented reader contract; not representative user tasks.",
+        "No native-tool arm, unknown-name discovery, edits, retries, provider usage, cost or latency comparison.",
+        "Expected text is manually specified and includes whole physical lines, even same-line neighbors.",
+        "Passing a deliberate unsupported-wrapper refusal is guard behavior, not retrieval success; failures remain records.",
+        "No source code is executed; fixture files and checkout identity are checked after reads."
+      ]
+    }
+  },
+  "runs": [
+    {
+      "schema": "agent-brief-syntax-report.v1",
+      "revision": "3fe49d6905971b27ddb42e8ed34268c9c69d27ee",
+      "manifestSha256": "a6e8d43b1a77b4c2e5deebbe9c447b2584171e2ed7e0118d50089cf4446dd12b",
+      "runtime": {
+        "node": "v24.22.1",
+        "platform": "linux"
+      },
+      "caseCount": 16,
+      "expectedReads": 12,
+      "expectedRefusals": 4,
+      "passedByMode": {
+        "briefText": 16,
+        "briefJson": 16,
+        "briefSourceOnly": 16
+      },
+      "allPassed": true,
+      "modelCalls": 0,
+      "providerUsage": null,
+      "billedCostUsd": null,
+      "verifiedRealWorldSavings": false,
+      "records": [
+        {
+          "id": "arrow",
+          "sourceSha256": "70e9e79c8e531b0a20a4c9a2412a6e8d68d7cdb3d71b92a4db07a7ad29ca3588",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "70e9e79c8e531b0a20a4c9a2412a6e8d68d7cdb3d71b92a4db07a7ad29ca3588",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 257,
+            "stdoutSha256": "d12beb403bd4746720a764f84e556590f2eb85a72903c6b9124e61cdfb1e57b2",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "70e9e79c8e531b0a20a4c9a2412a6e8d68d7cdb3d71b92a4db07a7ad29ca3588",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 541,
+            "stdoutSha256": "6962e1404fc34dce8e6358396af3776cc9c132a947a722604c37d572bfef309b",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 51,
+            "stdoutSha256": "991d12cef90b7bdd6c7bb393feae131cf0075256d783e2fdd36a8307864e5dd6",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "expression",
+          "sourceSha256": "65e544b910f92ccf5fe16ea7e867163be873862ddff5d63468f80055d75daf8f",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "65e544b910f92ccf5fe16ea7e867163be873862ddff5d63468f80055d75daf8f",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 276,
+            "stdoutSha256": "dbc5fad6029170172aa51485a82be8f3b8255488ffda40635e1906494788e0a6",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "65e544b910f92ccf5fe16ea7e867163be873862ddff5d63468f80055d75daf8f",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 560,
+            "stdoutSha256": "38c75aaacdc8d1912caac224b9b7eb5ea622894718c14d8e330b74a75e02a3de",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 64,
+            "stdoutSha256": "aed4391efff62c4286278f93affd5d2b44091462a550f701aa041774fb8506a8",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "export-async-generic",
+          "sourceSha256": "8dface4455c744322eed314f89830dabcbd4c6c2569e65de14a10fb3142cbb2e",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "8dface4455c744322eed314f89830dabcbd4c6c2569e65de14a10fb3142cbb2e",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 297,
+            "stdoutSha256": "d1b40b35cfe2af94972897c2235d1e3edffefa08fc3bf36b910e64a4dfeb9387",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "8dface4455c744322eed314f89830dabcbd4c6c2569e65de14a10fb3142cbb2e",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 581,
+            "stdoutSha256": "66dfdb25f02c18de6712c28db2b9d094cb4890c738aa865a5cb3967f86274bf4",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 76,
+            "stdoutSha256": "123771bad06f5867ada2e64acb9761b9e35704e542606540c9bf86864444a9e6",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "class-owner",
+          "sourceSha256": "74f270429288fc491efc89017a452af04efb22a7010f8e3b464aaf2ca8d9ea33",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "74f270429288fc491efc89017a452af04efb22a7010f8e3b464aaf2ca8d9ea33",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 266,
+            "stdoutSha256": "a346ad6497ab99f66de717d9a78dd16bd0a5b52da8f3270a888a3b6e565e5f17",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "74f270429288fc491efc89017a452af04efb22a7010f8e3b464aaf2ca8d9ea33",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 552,
+            "stdoutSha256": "580496126ffa942bfb545d585718934aca03e03dc18e2763ae8174dbfd6d4ed3",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 54,
+            "stdoutSha256": "a8cc0c4a295cd0caf4ffb4c849f522f375a9cd85bfb47c4c2bbf014344306b0f",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "object-method",
+          "sourceSha256": "ea70853d3eb0de86d634fef751e7dac801cc103ad0737ea11f089e3668c6a69d",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "ea70853d3eb0de86d634fef751e7dac801cc103ad0737ea11f089e3668c6a69d",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 257,
+            "stdoutSha256": "f0511da8a2a52899ce58f63d55b543706501c7f35680d8c3ca4eca1c3d411bd6",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "ea70853d3eb0de86d634fef751e7dac801cc103ad0737ea11f089e3668c6a69d",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 540,
+            "stdoutSha256": "95f0219f61258e5b251e21e5d1e9ffff89df08c208b76f45435b0895cea7d008",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 43,
+            "stdoutSha256": "98d7bbeb70e81bcea88e4b81895d7c671b13b483b4e16b69712eedbf0fdfd6a0",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "object-arrow",
+          "sourceSha256": "627289f66ca16d25d67013844f53baa2e7e336e897c4179f5fb52b7648bf3463",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "627289f66ca16d25d67013844f53baa2e7e336e897c4179f5fb52b7648bf3463",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 247,
+            "stdoutSha256": "7970125a3b9d37fb62bb01970317b5c922c7242a5ef35c41bea63f14cf30c566",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "627289f66ca16d25d67013844f53baa2e7e336e897c4179f5fb52b7648bf3463",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 528,
+            "stdoutSha256": "fcd8249a5c741ea1212baca28807300ad2de1a5def955933eac9587e574053b7",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 34,
+            "stdoutSha256": "ee5a9cc2eaf4da7ead4f42239495b67a3837f3535436bc9af80394ce39db016b",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "commonjs-property",
+          "sourceSha256": "4402a4a046336c1a40c6a878d8bdff0eb29f149eaa924f6143cda331638779ec",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "4402a4a046336c1a40c6a878d8bdff0eb29f149eaa924f6143cda331638779ec",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 275,
+            "stdoutSha256": "98d5383ab6132d4f18e828a5fb353820b3a3c88ebfed81a2a9aadd0e838542e4",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "4402a4a046336c1a40c6a878d8bdff0eb29f149eaa924f6143cda331638779ec",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 564,
+            "stdoutSha256": "d2eb053cf202c519f929b11d89da9a54ad3de127ab099c36d504d3093a747000",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 56,
+            "stdoutSha256": "be2fefc28dea40e86903c37515e32713fe4b9d3434b278124832d826a5d85c01",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "commonjs-direct",
+          "sourceSha256": "39c3e4d8f4d5a7e215067a7f69c9d878c5152d68be1dacc4fa544557cde846c8",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "39c3e4d8f4d5a7e215067a7f69c9d878c5152d68be1dacc4fa544557cde846c8",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 265,
+            "stdoutSha256": "32fa0e06255498ced8cb3f0d189ccc8784d607e9878a78a8fe830096f704e46e",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "39c3e4d8f4d5a7e215067a7f69c9d878c5152d68be1dacc4fa544557cde846c8",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 550,
+            "stdoutSha256": "bca1444667c0da7efbdf54c74ff21b53a1b81d919bfff4b724a2121b0728e388",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 48,
+            "stdoutSha256": "7a51c1043723455875f3c806210d3f85900c45e11ccfed5c1b51bdb669de0b35",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "template-braces",
+          "sourceSha256": "b105910777d8dd747fb102046d384162942d78cc42b34bdb0af78627ae732d98",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "b105910777d8dd747fb102046d384162942d78cc42b34bdb0af78627ae732d98",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 332,
+            "stdoutSha256": "d84c4645bcd63f6e2e3345823e9876758e2c9202f668a1261d68fc93923104e0",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "b105910777d8dd747fb102046d384162942d78cc42b34bdb0af78627ae732d98",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 625,
+            "stdoutSha256": "30905bc8cce4ec700b8a8b0e928357aafb67539d411815599a596ee71b94456d",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 115,
+            "stdoutSha256": "bb106722b27454b6158f1a811506799cfa23114dadc45d27f348e39e2e99b48a",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "bom-jsdoc-crlf",
+          "sourceSha256": "1e12ef19889e9dd56a7a1f1ad0c019e645b32ffbc34428429afa3415a2289be3",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "1e12ef19889e9dd56a7a1f1ad0c019e645b32ffbc34428429afa3415a2289be3",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 312,
+            "stdoutSha256": "848faf631994fe08a44b3426a67bab30a2c371cc2593c4eb08a0e3f70c730578",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "1e12ef19889e9dd56a7a1f1ad0c019e645b32ffbc34428429afa3415a2289be3",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 601,
+            "stdoutSha256": "c979f7c94fb2167a76ba31486ff3d99e2cf8737606b7fbc7e7ef3147ca08396f",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 97,
+            "stdoutSha256": "691a06a274f03bb3dfd422de0a838acf9c2b4dd9e72ecb3ee0fe696014a8ca28",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "same-line-neighbors",
+          "sourceSha256": "7f537310b0306c7d3ea85eab5c287f2795e1ba5b6c364c675d17878ccb3d0881",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "7f537310b0306c7d3ea85eab5c287f2795e1ba5b6c364c675d17878ccb3d0881",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 287,
+            "stdoutSha256": "199340ae945478e633afd77086d6cc32496b22f43b1bbd9ab62ca7f00ba30abe",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "7f537310b0306c7d3ea85eab5c287f2795e1ba5b6c364c675d17878ccb3d0881",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 569,
+            "stdoutSha256": "613429ceb25dbb16bb4e71bdbfc4dec0d3200c8042d8be3b86d46513a92dd375",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 67,
+            "stdoutSha256": "53e4f6f3709f3b4baf718f5b07078b410e651af729e580e9f9f3094d5a5c9a6e",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "unicode",
+          "sourceSha256": "a9e1d511255240d9aa78f9f13cd63fe1cefd33d32bcac0e8d78b8e7c0acb5e94",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "a9e1d511255240d9aa78f9f13cd63fe1cefd33d32bcac0e8d78b8e7c0acb5e94",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 263,
+            "stdoutSha256": "0f54f6ba892d4c366bda56425703284764badb9bbf8fd1b52304297c75ced038",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "a9e1d511255240d9aa78f9f13cd63fe1cefd33d32bcac0e8d78b8e7c0acb5e94",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 544,
+            "stdoutSha256": "1936c6220d58e08c4d85abcfdfb02413a8e060f58cb24cd67f59549186e1048f",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 55,
+            "stdoutSha256": "00cc2dff3d8593ee8238673fb9ecc4cbee68da6f1b895776d619ea85bf5a5c17",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "ambiguous",
+          "sourceSha256": "9ac660c355873a48ff6e87e40641939a51d2908ad802db7e19668c83fd0dacca",
+          "expected": "refused",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 38
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 38
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 38
+          }
+        },
+        {
+          "id": "unsupported-wrapper",
+          "sourceSha256": "f7e853e4b84c1356c2dda7fc6b4f113b38e7ed6325ff51ad18e131fb2e22b09c",
+          "expected": "refused",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 38
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 38
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 38
+          }
+        },
+        {
+          "id": "stale-source",
+          "sourceSha256": "6b7c6e568ea18a043d6be316f8bd2a51b34af4ea87afaa8a8719359bb2ae3a59",
+          "expected": "refused",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 36
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 36
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 36
+          }
+        },
+        {
+          "id": "line-budget",
+          "sourceSha256": "c2adc0027480e81428980d0a77ed7934e81d26e6e472a57c613647668d69fb21",
+          "expected": "refused",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 367
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 312
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 367
+          }
+        }
+      ],
+      "limits": [
+        "Hand-authored synthetic syntax cases selected to exercise the documented reader contract; not representative user tasks.",
+        "No native-tool arm, unknown-name discovery, edits, retries, provider usage, cost or latency comparison.",
+        "Expected text is manually specified and includes whole physical lines, even same-line neighbors.",
+        "Passing a deliberate unsupported-wrapper refusal is guard behavior, not retrieval success; failures remain records.",
+        "No source code is executed; fixture files and checkout identity are checked after reads."
+      ]
+    },
+    {
+      "schema": "agent-brief-syntax-report.v1",
+      "revision": "3fe49d6905971b27ddb42e8ed34268c9c69d27ee",
+      "manifestSha256": "a6e8d43b1a77b4c2e5deebbe9c447b2584171e2ed7e0118d50089cf4446dd12b",
+      "runtime": {
+        "node": "v20.20.2",
+        "platform": "linux"
+      },
+      "caseCount": 16,
+      "expectedReads": 12,
+      "expectedRefusals": 4,
+      "passedByMode": {
+        "briefText": 16,
+        "briefJson": 16,
+        "briefSourceOnly": 16
+      },
+      "allPassed": true,
+      "modelCalls": 0,
+      "providerUsage": null,
+      "billedCostUsd": null,
+      "verifiedRealWorldSavings": false,
+      "records": [
+        {
+          "id": "arrow",
+          "sourceSha256": "70e9e79c8e531b0a20a4c9a2412a6e8d68d7cdb3d71b92a4db07a7ad29ca3588",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "70e9e79c8e531b0a20a4c9a2412a6e8d68d7cdb3d71b92a4db07a7ad29ca3588",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 257,
+            "stdoutSha256": "d12beb403bd4746720a764f84e556590f2eb85a72903c6b9124e61cdfb1e57b2",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "70e9e79c8e531b0a20a4c9a2412a6e8d68d7cdb3d71b92a4db07a7ad29ca3588",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 541,
+            "stdoutSha256": "6962e1404fc34dce8e6358396af3776cc9c132a947a722604c37d572bfef309b",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 51,
+            "stdoutSha256": "991d12cef90b7bdd6c7bb393feae131cf0075256d783e2fdd36a8307864e5dd6",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "expression",
+          "sourceSha256": "65e544b910f92ccf5fe16ea7e867163be873862ddff5d63468f80055d75daf8f",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "65e544b910f92ccf5fe16ea7e867163be873862ddff5d63468f80055d75daf8f",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 276,
+            "stdoutSha256": "dbc5fad6029170172aa51485a82be8f3b8255488ffda40635e1906494788e0a6",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "65e544b910f92ccf5fe16ea7e867163be873862ddff5d63468f80055d75daf8f",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 560,
+            "stdoutSha256": "38c75aaacdc8d1912caac224b9b7eb5ea622894718c14d8e330b74a75e02a3de",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 64,
+            "stdoutSha256": "aed4391efff62c4286278f93affd5d2b44091462a550f701aa041774fb8506a8",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "export-async-generic",
+          "sourceSha256": "8dface4455c744322eed314f89830dabcbd4c6c2569e65de14a10fb3142cbb2e",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "8dface4455c744322eed314f89830dabcbd4c6c2569e65de14a10fb3142cbb2e",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 297,
+            "stdoutSha256": "d1b40b35cfe2af94972897c2235d1e3edffefa08fc3bf36b910e64a4dfeb9387",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "8dface4455c744322eed314f89830dabcbd4c6c2569e65de14a10fb3142cbb2e",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 581,
+            "stdoutSha256": "66dfdb25f02c18de6712c28db2b9d094cb4890c738aa865a5cb3967f86274bf4",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 76,
+            "stdoutSha256": "123771bad06f5867ada2e64acb9761b9e35704e542606540c9bf86864444a9e6",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "class-owner",
+          "sourceSha256": "74f270429288fc491efc89017a452af04efb22a7010f8e3b464aaf2ca8d9ea33",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "74f270429288fc491efc89017a452af04efb22a7010f8e3b464aaf2ca8d9ea33",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 266,
+            "stdoutSha256": "a346ad6497ab99f66de717d9a78dd16bd0a5b52da8f3270a888a3b6e565e5f17",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "74f270429288fc491efc89017a452af04efb22a7010f8e3b464aaf2ca8d9ea33",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 552,
+            "stdoutSha256": "580496126ffa942bfb545d585718934aca03e03dc18e2763ae8174dbfd6d4ed3",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 54,
+            "stdoutSha256": "a8cc0c4a295cd0caf4ffb4c849f522f375a9cd85bfb47c4c2bbf014344306b0f",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "object-method",
+          "sourceSha256": "ea70853d3eb0de86d634fef751e7dac801cc103ad0737ea11f089e3668c6a69d",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "ea70853d3eb0de86d634fef751e7dac801cc103ad0737ea11f089e3668c6a69d",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 257,
+            "stdoutSha256": "f0511da8a2a52899ce58f63d55b543706501c7f35680d8c3ca4eca1c3d411bd6",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "ea70853d3eb0de86d634fef751e7dac801cc103ad0737ea11f089e3668c6a69d",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 540,
+            "stdoutSha256": "95f0219f61258e5b251e21e5d1e9ffff89df08c208b76f45435b0895cea7d008",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 43,
+            "stdoutSha256": "98d7bbeb70e81bcea88e4b81895d7c671b13b483b4e16b69712eedbf0fdfd6a0",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "object-arrow",
+          "sourceSha256": "627289f66ca16d25d67013844f53baa2e7e336e897c4179f5fb52b7648bf3463",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "627289f66ca16d25d67013844f53baa2e7e336e897c4179f5fb52b7648bf3463",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 247,
+            "stdoutSha256": "7970125a3b9d37fb62bb01970317b5c922c7242a5ef35c41bea63f14cf30c566",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "627289f66ca16d25d67013844f53baa2e7e336e897c4179f5fb52b7648bf3463",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 528,
+            "stdoutSha256": "fcd8249a5c741ea1212baca28807300ad2de1a5def955933eac9587e574053b7",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 34,
+            "stdoutSha256": "ee5a9cc2eaf4da7ead4f42239495b67a3837f3535436bc9af80394ce39db016b",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "commonjs-property",
+          "sourceSha256": "4402a4a046336c1a40c6a878d8bdff0eb29f149eaa924f6143cda331638779ec",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "4402a4a046336c1a40c6a878d8bdff0eb29f149eaa924f6143cda331638779ec",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 275,
+            "stdoutSha256": "98d5383ab6132d4f18e828a5fb353820b3a3c88ebfed81a2a9aadd0e838542e4",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "4402a4a046336c1a40c6a878d8bdff0eb29f149eaa924f6143cda331638779ec",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 564,
+            "stdoutSha256": "d2eb053cf202c519f929b11d89da9a54ad3de127ab099c36d504d3093a747000",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 56,
+            "stdoutSha256": "be2fefc28dea40e86903c37515e32713fe4b9d3434b278124832d826a5d85c01",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "commonjs-direct",
+          "sourceSha256": "39c3e4d8f4d5a7e215067a7f69c9d878c5152d68be1dacc4fa544557cde846c8",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "39c3e4d8f4d5a7e215067a7f69c9d878c5152d68be1dacc4fa544557cde846c8",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 265,
+            "stdoutSha256": "32fa0e06255498ced8cb3f0d189ccc8784d607e9878a78a8fe830096f704e46e",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "39c3e4d8f4d5a7e215067a7f69c9d878c5152d68be1dacc4fa544557cde846c8",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 550,
+            "stdoutSha256": "bca1444667c0da7efbdf54c74ff21b53a1b81d919bfff4b724a2121b0728e388",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 48,
+            "stdoutSha256": "7a51c1043723455875f3c806210d3f85900c45e11ccfed5c1b51bdb669de0b35",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "template-braces",
+          "sourceSha256": "b105910777d8dd747fb102046d384162942d78cc42b34bdb0af78627ae732d98",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "b105910777d8dd747fb102046d384162942d78cc42b34bdb0af78627ae732d98",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 332,
+            "stdoutSha256": "d84c4645bcd63f6e2e3345823e9876758e2c9202f668a1261d68fc93923104e0",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "b105910777d8dd747fb102046d384162942d78cc42b34bdb0af78627ae732d98",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 625,
+            "stdoutSha256": "30905bc8cce4ec700b8a8b0e928357aafb67539d411815599a596ee71b94456d",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 115,
+            "stdoutSha256": "bb106722b27454b6158f1a811506799cfa23114dadc45d27f348e39e2e99b48a",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "bom-jsdoc-crlf",
+          "sourceSha256": "1e12ef19889e9dd56a7a1f1ad0c019e645b32ffbc34428429afa3415a2289be3",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "1e12ef19889e9dd56a7a1f1ad0c019e645b32ffbc34428429afa3415a2289be3",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 312,
+            "stdoutSha256": "848faf631994fe08a44b3426a67bab30a2c371cc2593c4eb08a0e3f70c730578",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "1e12ef19889e9dd56a7a1f1ad0c019e645b32ffbc34428429afa3415a2289be3",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 601,
+            "stdoutSha256": "c979f7c94fb2167a76ba31486ff3d99e2cf8737606b7fbc7e7ef3147ca08396f",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 97,
+            "stdoutSha256": "691a06a274f03bb3dfd422de0a838acf9c2b4dd9e72ecb3ee0fe696014a8ca28",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "same-line-neighbors",
+          "sourceSha256": "7f537310b0306c7d3ea85eab5c287f2795e1ba5b6c364c675d17878ccb3d0881",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "7f537310b0306c7d3ea85eab5c287f2795e1ba5b6c364c675d17878ccb3d0881",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 287,
+            "stdoutSha256": "199340ae945478e633afd77086d6cc32496b22f43b1bbd9ab62ca7f00ba30abe",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "7f537310b0306c7d3ea85eab5c287f2795e1ba5b6c364c675d17878ccb3d0881",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 569,
+            "stdoutSha256": "613429ceb25dbb16bb4e71bdbfc4dec0d3200c8042d8be3b86d46513a92dd375",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 67,
+            "stdoutSha256": "53e4f6f3709f3b4baf718f5b07078b410e651af729e580e9f9f3094d5a5c9a6e",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "unicode",
+          "sourceSha256": "a9e1d511255240d9aa78f9f13cd63fe1cefd33d32bcac0e8d78b8e7c0acb5e94",
+          "expected": "exact physical lines",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "a9e1d511255240d9aa78f9f13cd63fe1cefd33d32bcac0e8d78b8e7c0acb5e94",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 263,
+            "stdoutSha256": "0f54f6ba892d4c366bda56425703284764badb9bbf8fd1b52304297c75ced038",
+            "stderrBytes": 0
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": "a9e1d511255240d9aa78f9f13cd63fe1cefd33d32bcac0e8d78b8e7c0acb5e94",
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 544,
+            "stdoutSha256": "1936c6220d58e08c4d85abcfdfb02413a8e060f58cb24cd67f59549186e1048f",
+            "stderrBytes": 0
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": false,
+            "completed": true,
+            "containsExpected": true,
+            "exactExpected": true,
+            "sourceSha256": null,
+            "exitCode": 0,
+            "signal": null,
+            "stdoutBytes": 55,
+            "stdoutSha256": "00cc2dff3d8593ee8238673fb9ecc4cbee68da6f1b895776d619ea85bf5a5c17",
+            "stderrBytes": 0
+          }
+        },
+        {
+          "id": "ambiguous",
+          "sourceSha256": "9ac660c355873a48ff6e87e40641939a51d2908ad802db7e19668c83fd0dacca",
+          "expected": "refused",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 38
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 38
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 38
+          }
+        },
+        {
+          "id": "unsupported-wrapper",
+          "sourceSha256": "f7e853e4b84c1356c2dda7fc6b4f113b38e7ed6325ff51ad18e131fb2e22b09c",
+          "expected": "refused",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 38
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 38
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 38
+          }
+        },
+        {
+          "id": "stale-source",
+          "sourceSha256": "6b7c6e568ea18a043d6be316f8bd2a51b34af4ea87afaa8a8719359bb2ae3a59",
+          "expected": "refused",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 36
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 36
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 36
+          }
+        },
+        {
+          "id": "line-budget",
+          "sourceSha256": "c2adc0027480e81428980d0a77ed7934e81d26e6e472a57c613647668d69fb21",
+          "expected": "refused",
+          "briefText": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 367
+          },
+          "briefJson": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 312
+          },
+          "briefSourceOnly": {
+            "passed": true,
+            "expectedRefusal": true,
+            "exitCode": 1,
+            "signal": null,
+            "stdoutBytes": 0,
+            "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrBytes": 367
+          }
+        }
+      ],
+      "limits": [
+        "Hand-authored synthetic syntax cases selected to exercise the documented reader contract; not representative user tasks.",
+        "No native-tool arm, unknown-name discovery, edits, retries, provider usage, cost or latency comparison.",
+        "Expected text is manually specified and includes whole physical lines, even same-line neighbors.",
+        "Passing a deliberate unsupported-wrapper refusal is guard behavior, not retrieval success; failures remain records.",
+        "No source code is executed; fixture files and checkout identity are checked after reads."
+      ]
+    }
+  ]
+}
