@@ -1,28 +1,34 @@
 # Experiment verification — 2026-11-17
 
-Tested snapshot: `b20948640d5a071bb6d5b3823f8e58cea93ca78a`.
+Tested snapshot: `145e7f37af1d0d58bba55818d328e4c4d2d0eb3d`.
 Both clean-checkout `scripts/verify-local.sh` runs completed with exit 0:
-Node 20.20.2 **355/355**, Node 24.22.1 **355/355**, with no failures,
+Node 20.20.2 **358/358**, Node 24.22.1 **358/358**, with no failures,
 skips or cancellations. Each verifier performed a lockfile install with
 scripts disabled and checked that HEAD and the working tree stayed unchanged.
 No GitHub Actions workflow or live model was used for this verification.
 
-The shared file reader now opens one descriptor with no-follow/nonblocking
-flags where available, checks its regular-file type, size and exact bigint
-device/inode identity against the initial path check, then reads that same
-descriptor and closes it on success or failure. It is shared by `try`,
-`outline` and `read`.
+The shared reader retains descriptor-bound type, size and exact bigint
+identity checks, no-follow/nonblocking open flags where available, and
+success/failure descriptor closure. It now consumes at most **1 MiB + 1 byte**
+from that descriptor, stopping at EOF or the fixed buffer boundary. The extra
+byte detects oversize growth and is not returned as accepted input. This bound
+applies once in the helper shared by `try`, `outline` and `read`.
 
-Five new regression tests cover a symlink substituted after the path check,
-a different regular inode, a path swapped after descriptor validation,
-opened type/size changes and an integer-precision collision above 2^53.
-The first three race cases failed before the fix; the precision case also
-failed with rounded numeric metadata. All now pass. Descriptor closure is
-checked on both successful reads and identity refusal. The earlier two
-lookup/read race tests now observe descriptor-backed reads and still pass.
-These are deterministic temporary-fixture changes plus a large-inode metadata
-stub, not proof against every filesystem race. In-place edits and parent-path
-changes are not locked; fingerprints describe the bytes actually read.
+A deterministic reproduction against the previous committed reader grew a small
+file to 2 MiB after its descriptor metadata check. The old reader consumed all
+2,097,152 bytes before refusing it. The new growth regression requires refusal
+with no more than 1,048,577 bytes consumed and verifies descriptor closure.
+Two more tests cover joining short reads before multibyte UTF-8/BOM decoding
+and cleanup after a simulated later I/O error. An existing guard test also
+checks acceptance of an exact 1-MiB input ending in a multibyte character.
+
+All eight shared-reader regressions and both lookup/read race regressions pass.
+The earlier path-swap, inode identity, opened type/size and integer-precision
+checks remain covered; lookup/read race fixtures now observe EOF of bounded
+reads. These are temporary-fixture mutations and injected I/O/metadata cases,
+not proof against every filesystem race. The bound covers input-buffer size
+and returned read bytes, not total process memory or atomic snapshots against
+concurrent in-place edits; fingerprints describe the bytes actually read.
 
 ## First-run and installed-source checks
 
@@ -36,8 +42,8 @@ by the tools; the consumer directory stayed unchanged. Fixture changes for the
 stale-hash case were made by the test harness. Five installed runtime files
 (`index.cjs`, `outline.cjs`, `source-read.cjs`, `evaluation/try-it.cjs`,
 `evaluation/owner-trial.cjs`) matched the tested checkout byte-for-byte.
-The installed package also passed **7/7 focused regression tests**: the five
-new shared-reader checks and both existing lookup/read race checks.
+The installed package also passed **10/10 focused regression tests**: eight
+shared-reader checks and both lookup/read race checks.
 
 The README and first-run archive links now point to this verified snapshot.
 The following documentation-only update does not change product runtime or
