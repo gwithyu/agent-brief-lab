@@ -65,7 +65,7 @@ or randomized. It is not representative user-task evidence.
 
 ## Reproduce
 
-Requires Node 20 or 24, Git, `sed` and installed dependencies in the harness
+Requires Node 20 or 24, a full-history Git checkout, `sed` and installed dependencies in the harness
 checkout. The recorded run used Node 24.22.1, TypeScript 5.9.3 and GNU sed 4.9
 on Linux. A Node 20.20.2 rerun produced identical per-case grades and token
 counts. Both clean-checkout software suites passed 360/360 tests. Run the
@@ -101,3 +101,50 @@ this result does not measure that transformation. Before making task-level
 claims, run independent same-model coding sessions with ordinary search/range
 tools versus the optional helper, retaining acceptance results, follow-up reads,
 all retries, actual provider usage and charges. Those model runs remain undone.
+
+## Source-only follow-up
+
+The new optional `--source-only` output was measured against the **same frozen
+source snapshot and twelve targets**, using separately pinned helper snapshot
+`4d8abe79fdfa159c523298860b754148066cd20d`. No source/task was substituted and
+all original controls reproduce exactly. Both Node 20.20.2 and 24.22.1 yielded
+identical per-case grades and counts; all four modes returned the exact target
+text on 12/12 lookups.
+
+| Mode | Actual stdout tokens | Declared command/result envelope tokens |
+| --- | ---: | ---: |
+| Native targeted `sed` | 8,088 | 9,399 |
+| Default text | 8,959 | 10,333 |
+| JSON | 11,217 | 12,354 |
+| Source only | 8,088 | 9,474 |
+
+This reaches **source-payload parity**, not a win over the native baseline.
+The normalized envelope still contains 75 additional tokens (about 0.8%).
+For a separately installed helper, the harness normalizes its executable path
+to `index.cjs` in the declared command counts; real invocation paths and host
+schemas can cost more. No provider billing conclusion follows.
+
+Source-only skips display metadata, not validation. It retains file/selector,
+fingerprint and budget checks and writes exact selected text without an added
+newline. It emits no successful hash/range receipt; use default/JSON when
+that metadata is needed for follow-up. Its refusal cases remain nonzero with
+empty stdout and diagnostics on stderr.
+
+[Full four-mode result](../evaluation/source-only-results.json) retains the
+source revision and helper revision separately. The original three-mode data
+above is unchanged. To reproduce this follow-up from a full-history harness
+checkout with dependencies installed:
+
+```sh
+SOURCE_ONLY_RUN="$(mktemp -d "${TMPDIR:-/tmp}/brief-source-only.XXXXXX")"
+git worktree add --detach "$SOURCE_ONLY_RUN/source" ff8548572cbdd63bff34aa6f4dc1c582b53cfd4d
+git worktree add --detach "$SOURCE_ONLY_RUN/helper" 4d8abe79fdfa159c523298860b754148066cd20d
+(cd "$SOURCE_ONLY_RUN/helper" && npm ci --ignore-scripts --no-audit --no-fund)
+node evaluation/retrieval-preflight.cjs "$SOURCE_ONLY_RUN/source" "$SOURCE_ONLY_RUN/helper" > "$SOURCE_ONLY_RUN/report.json"
+git worktree remove "$SOURCE_ONLY_RUN/source"
+git worktree remove "$SOURCE_ONLY_RUN/helper"
+```
+
+This remains a scripted, known-name retrieval follow-up, not independent AI
+coding tasks. Correctness of code edits, follow-up context, retries, tool
+schemas, model usage, cache behavior, latency and bills remain unmeasured.

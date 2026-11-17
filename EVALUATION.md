@@ -9,6 +9,13 @@ helper returned more local text tokens in both modes. This is a negative
 retrieval result, with zero model runs, not completed AI code-edit or billing
 evaluation. The full-source Raw/Prepared experiment remains a separate question.
 
+The source-only follow-up retains those twelve sources and targets while
+pinning a newer helper separately. It ties native stdout at 8,088 local tokens;
+its declared command/result envelope remains slightly larger. This removes
+returned metadata overhead without establishing a task-level cost advantage.
+See the original and follow-up data in the same guide; model edits and provider
+bills remain unmeasured.
+
 An earlier readiness attempt used the installed, signed-in Codex CLI. No task or model
 completion was obtained: initial startup failed on read-only runtime state; a
 writable isolated runtime reached thread startup but its filesystem sandbox helper

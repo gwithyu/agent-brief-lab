@@ -1,3 +1,48 @@
+# Source-only follow-up verification — 2026-11-17
+
+Verified helper snapshot: `4d8abe79fdfa159c523298860b754148066cd20d`, with
+the same Git tree `47e887def2855daf8189af569fd3908458172320` tested locally
+as `130a9b0e29ec0cec3448444cd3323d06cef48a9b`. Clean-checkout Node 20.20.2
+and Node 24.22.1 verifiers each passed **363/363**, with no failures,
+skips or cancellations.
+
+Three new CLI regressions verify exact selected UTF-8/BOM/CRLF output with no
+extra newline, named and line selectors, no source execution, retained stale /
+ambiguous / over-budget refusals, and conflicting/duplicate output-switch
+rejection. Default text and JSON behavior remain covered. Source-only changes
+presentation; underlying source identity/fingerprint and size checks remain.
+
+The same frozen input revision and twelve target declarations from the earlier
+retrieval preflight were retained. The helper and inputs are pinned separately.
+All four modes retrieved the exact target bytes on 12/12 lookups under both
+Node versions. Per-case grades, counts and hashes match between Node versions;
+the three original controls also match the previous result case by case.
+
+| Mode | Local stdout tokens | Declared command/result envelope tokens |
+| --- | ---: | ---: |
+| Native targeted sed | 8,088 | 9,399 |
+| Default text | 8,959 | 10,333 |
+| JSON | 11,217 | 12,354 |
+| Source only | 8,088 | 9,474 |
+
+This is payload parity, not a total-token or bill-saving result. Separate
+helper executable paths are normalized in the declared command counts; real
+host/tool frames, model context, follow-up reads, retries and charges remain
+unmeasured. Code-edit correctness and provider usage/bills stay null.
+
+A fresh Node 24.22.1 archive consumer passed **13/13 focused regression tests**
+and **8 CLI smoke checks**. Five installed runtime files matched the tested
+checkout byte-for-byte. Original text, stale-read refusal, exact CRLF chunk
+reconstruction and unchanged tool-read sources/consumer directory were checked.
+The README and first-run install pins now point at the verified helper above.
+The subsequent result/documentation commit does not alter tested runtime code.
+No live model call, GitHub Actions run, merge, tag or npm release was performed.
+
+Full data and reproduction: [source-only follow-up](docs/RETRIEVAL_COMPARISON.md#source-only-follow-up).
+The original negative retrieval result remains below and in its original JSON.
+
+---
+
 # Retrieval comparison verification — 2026-11-17
 
 Evaluation snapshot: `cbd67da59281966acd6f80a36fb5cd8fae245f3a` (the exact

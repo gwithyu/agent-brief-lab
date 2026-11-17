@@ -19,6 +19,13 @@ a general token-saving advantage from whole-file comparisons.
 This is a formatting-restricted, scripted retrieval sample, not model editing
 success or a provider bill. **[Results, limitations and reproduction](docs/RETRIEVAL_COMPARISON.md)**.
 
+The optional `read --source-only` mode now returns exact selected source with
+the same checks and no display metadata. On the same twelve frozen targets,
+its stdout ties native reads at **8,088 tokens**. The declared command/result
+envelope is still **9,474 versus native 9,399**; this is payload parity, not
+a demonstrated total-token or billing advantage. The original negative result
+is retained. **[Source-only follow-up](docs/RETRIEVAL_COMPARISON.md#source-only-follow-up)**.
+
 ## NEW: log actual Raw / Prepared model outcomes without inventing savings
 
 After generating a private native `handoff` and `pair`, the new manual
@@ -194,7 +201,7 @@ tested source revision instead of silently changing the code you execute:
 
 ```sh
 npm exec --yes --ignore-scripts \
-  --package="https://github.com/gwithyu/agent-brief-lab/archive/145e7f37af1d0d58bba55818d328e4c4d2d0eb3d.tar.gz" \
+  --package="https://github.com/gwithyu/agent-brief-lab/archive/4d8abe79fdfa159c523298860b754148066cd20d.tar.gz" \
   -- agent-brief try
 ```
 
