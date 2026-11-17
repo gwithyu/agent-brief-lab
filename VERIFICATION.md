@@ -1,18 +1,28 @@
 # Experiment verification — 2026-11-17
 
-Tested snapshot: `9fb18072906c1b463dff05c97eea9801fe647a32`.
+Tested snapshot: `b20948640d5a071bb6d5b3823f8e58cea93ca78a`.
 Both clean-checkout `scripts/verify-local.sh` runs completed with exit 0:
-Node 20.20.2 **350/350**, Node 24.22.1 **350/350**, with no failures,
+Node 20.20.2 **355/355**, Node 24.22.1 **355/355**, with no failures,
 skips or cancellations. Each verifier performed a lockfile install with
 scripts disabled and checked that HEAD and the working tree stayed unchanged.
 No GitHub Actions workflow or live model was used for this verification.
 
-The two previously unrun lookup/read race regressions now pass. A source edit
-after the locator's read is refused as `source_changed`, with empty stdout
-and no resume hint. Replacing the path with a symlink is refused as
-`invalid_file`, without reading the link target. These tests use deterministic
-changes to temporary fixtures; they do not prove protection against every
-filesystem race or establish an edit lock.
+The shared file reader now opens one descriptor with no-follow/nonblocking
+flags where available, checks its regular-file type, size and exact bigint
+device/inode identity against the initial path check, then reads that same
+descriptor and closes it on success or failure. It is shared by `try`,
+`outline` and `read`.
+
+Five new regression tests cover a symlink substituted after the path check,
+a different regular inode, a path swapped after descriptor validation,
+opened type/size changes and an integer-precision collision above 2^53.
+The first three race cases failed before the fix; the precision case also
+failed with rounded numeric metadata. All now pass. Descriptor closure is
+checked on both successful reads and identity refusal. The earlier two
+lookup/read race tests now observe descriptor-backed reads and still pass.
+These are deterministic temporary-fixture changes plus a large-inode metadata
+stub, not proof against every filesystem race. In-place edits and parent-path
+changes are not locked; fingerprints describe the bytes actually read.
 
 ## First-run and installed-source checks
 
@@ -23,9 +33,11 @@ published outline/named-read walkthrough, a second public-source lookup,
 body-free oversized-read hints, exact CRLF reconstruction in two line reads
 and refusal of a stale resume hash. Target source was unexecuted and unchanged
 by the tools; the consumer directory stayed unchanged. Fixture changes for the
-stale-hash case were made by the test harness. Four installed runtime files
-(`index.cjs`, `outline.cjs`, `source-read.cjs`, `evaluation/owner-trial.cjs`)
-matched the tested checkout byte-for-byte.
+stale-hash case were made by the test harness. Five installed runtime files
+(`index.cjs`, `outline.cjs`, `source-read.cjs`, `evaluation/try-it.cjs`,
+`evaluation/owner-trial.cjs`) matched the tested checkout byte-for-byte.
+The installed package also passed **7/7 focused regression tests**: the five
+new shared-reader checks and both existing lookup/read race checks.
 
 The README and first-run archive links now point to this verified snapshot.
 The following documentation-only update does not change product runtime or
