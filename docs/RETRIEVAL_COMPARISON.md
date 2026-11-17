@@ -67,7 +67,9 @@ or randomized. It is not representative user-task evidence.
 
 Requires Node 20 or 24, Git, `sed` and installed dependencies in the harness
 checkout. The recorded run used Node 24.22.1, TypeScript 5.9.3 and GNU sed 4.9
-on Linux. Run the harness from the checkout containing this guide; it requires
+on Linux. A Node 20.20.2 rerun produced identical per-case grades and token
+counts. Both clean-checkout software suites passed 360/360 tests. Run the
+harness from the checkout containing this guide; it requires
 a separate clean source checkout at the exact frozen revision:
 
 ```sh

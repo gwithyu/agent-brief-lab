@@ -1,3 +1,30 @@
+# Retrieval comparison verification — 2026-11-17
+
+Evaluation snapshot: `cbd67da59281966acd6f80a36fb5cd8fae245f3a` (the exact
+Git tree `e889f97c72a059a581c0e5e1220d76d57abc90fe` tested locally as
+`397c84f9f34803c7628930f6e219947c1e46fb01`). Clean-checkout Node 20.20.2
+and Node 24.22.1 verifiers each passed **360/360**, with no failures,
+skips or cancellations. Product source-reader runtime and the verified
+installation pin below are unchanged by this evaluation-only update.
+
+The twelve-target, three-mode retrieval preflight ran on the separate frozen
+source checkout `ff8548572cbdd63bff34aa6f4dc1c582b53cfd4d`. Both Node versions
+produced identical per-case grading, fingerprints and local token counts.
+All modes returned exact original target text on 12/12 lookups, but native
+stdout totaled **8,088** tokens versus **8,959** for default text and **11,217**
+for JSON. This negative retrieval result, its source/style limitations and
+reproduction are documented in [RETRIEVAL_COMPARISON.md](docs/RETRIEVAL_COMPARISON.md).
+Two focused grader tests cover exact/partial/extra context and failed,
+malformed or stale receipts. An npm-pack dry run confirmed the harness,
+manifest, result and tests are included; no tarball or npm release was made.
+
+These are scripted retrievals on selected self-source declarations, with no
+model sessions or agent edits. Coding-task correctness, native provider usage
+and billed cost remain null. The local declared command/result envelope is
+not a provider protocol. No GitHub Actions or live model calls were used.
+
+---
+
 # Experiment verification — 2026-11-17
 
 Tested snapshot: `145e7f37af1d0d58bba55818d328e4c4d2d0eb3d`.
