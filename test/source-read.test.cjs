@@ -260,32 +260,30 @@ test('named CLI refuses a source edit between lookup and original read without p
   const file=path.join(dir,'PRIVATE_RACE.cjs');
   const old='function entry() {return "PRIVATE_OLD_BODY";}\n';
   const current='// shifted after lookup\nfunction entry() {return "PRIVATE_NEW_BODY";}\n';
-  fs.writeFileSync(file,old);const originalRead=fs.readFileSync,identity=fs.statSync(file);let reads=0;
-  t.mock.method(fs,'readFileSync',function(target,...args){
-    const bytes=originalRead.call(fs,target,...args);
-    const stat=typeof target==='number'?fs.fstatSync(target):null;
-    if((target===file||stat?.dev===identity.dev&&stat?.ino===identity.ino)&&++reads===1)fs.writeFileSync(file,current);
-    return bytes;
+  fs.writeFileSync(file,old);const originalRead=fs.readSync,identity=fs.statSync(file);let reads=0;
+  t.mock.method(fs,'readSync',function(fd,...args){
+    const count=originalRead.call(fs,fd,...args),stat=fs.fstatSync(fd);
+    if(count===0&&stat.dev===identity.dev&&stat.ino===identity.ino&&++reads===1)fs.writeFileSync(file,current);
+    return count;
   });
   const out=[],err=[];
   const status=runCli(['--source',file,'--symbol','entry','--json'],{out:s=>out.push(s),err:s=>err.push(s)});
   assert.equal(status,1);assert.deepEqual(out,[]);assert.equal(reads,2);
   assert.match(err.join('\n'),/source_changed/);
   assert.doesNotMatch(err.join('\n'),/PRIVATE_|readHint|sourceSha256|\/tmp\//);
-  assert.equal(originalRead.call(fs,file,'utf8'),current);
+  assert.equal(fs.readFileSync(file,'utf8'),current);
 }));
 test('named CLI refuses a path replaced by a symlink after lookup without reading the link target',(t)=>fixture(dir=>{
   const file=path.join(dir,'PRIVATE_RACE.cjs'),target=path.join(dir,'PRIVATE_TARGET.cjs');
   const protectedSource='function entry() {return "PRIVATE_TARGET_BODY";}\n';
   fs.writeFileSync(file,'function entry() {}\n');fs.writeFileSync(target,protectedSource);
-  const originalRead=fs.readFileSync,identity=fs.statSync(file),protectedIdentity=fs.statSync(target);
+  const originalRead=fs.readSync,identity=fs.statSync(file),protectedIdentity=fs.statSync(target);
   let sourceReads=0,targetReads=0;
-  t.mock.method(fs,'readFileSync',function(selected,...args){
-    const stat=typeof selected==='number'?fs.fstatSync(selected):null;
-    if(selected===target||stat?.dev===protectedIdentity.dev&&stat?.ino===protectedIdentity.ino)targetReads++;
-    const bytes=originalRead.call(fs,selected,...args);
-    if((selected===file||stat?.dev===identity.dev&&stat?.ino===identity.ino)&&++sourceReads===1){fs.unlinkSync(file);fs.symlinkSync(target,file);}
-    return bytes;
+  t.mock.method(fs,'readSync',function(fd,...args){
+    const count=originalRead.call(fs,fd,...args),stat=fs.fstatSync(fd);
+    if(count>0&&stat.dev===protectedIdentity.dev&&stat.ino===protectedIdentity.ino)targetReads++;
+    if(count===0&&stat.dev===identity.dev&&stat.ino===identity.ino&&++sourceReads===1){fs.unlinkSync(file);fs.symlinkSync(target,file);}
+    return count;
   });
   const out=[],err=[];
   const status=runCli(['--source',file,'--symbol','entry','--json'],{out:s=>out.push(s),err:s=>err.push(s)});
@@ -293,5 +291,5 @@ test('named CLI refuses a path replaced by a symlink after lookup without readin
   assert.match(err.join('\n'),/invalid_file/);
   assert.doesNotMatch(err.join('\n'),/PRIVATE_|readHint|sourceSha256|\/tmp\//);
   assert.equal(fs.lstatSync(file).isSymbolicLink(),true);
-  assert.equal(originalRead.call(fs,target,'utf8'),protectedSource);
+  assert.equal(fs.readFileSync(target,'utf8'),protectedSource);
 }));

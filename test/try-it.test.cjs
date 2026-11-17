@@ -13,22 +13,57 @@ function temp(fn){
 function call(args,cwd=root){
   return spawnSync(process.execPath,[cli,...args],{cwd,encoding:'utf8',timeout:25000,maxBuffer:128*1024});
 }
+test('shared file reader caps bytes consumed if an input grows after descriptor validation',(t)=>temp(dir=>{
+  const file=path.join(dir,'growing.js');fs.writeFileSync(file,'valid source');
+  const originalFstat=fs.fstatSync,originalRead=fs.readSync;
+  let grown=false,openedFd,consumed=0;
+  t.mock.method(fs,'fstatSync',function(fd,...args){
+    const stat=originalFstat.call(fs,fd,...args);openedFd=fd;
+    if(!grown){grown=true;fs.writeFileSync(file,Buffer.alloc(2*1024*1024,0x61));}
+    return stat;
+  });
+  t.mock.method(fs,'readSync',function(...args){const count=originalRead.apply(fs,args);consumed+=count;return count;});
+  assert.throws(()=>readFile(file),/invalid_file/);assert.equal(grown,true);
+  assert.ok(consumed>0&&consumed<=1024*1024+1,`consumed ${consumed} bytes`);
+  assert.throws(()=>originalFstat.call(fs,openedFd),{code:'EBADF'});
+}));
+test('shared file reader joins short reads before decoding multibyte UTF-8 and BOM',(t)=>temp(dir=>{
+  const file=path.join(dir,'short.js'),source='\ufeff说明🙂\r\n第二行';fs.writeFileSync(file,source);
+  const originalRead=fs.readSync;let calls=0;
+  t.mock.method(fs,'readSync',function(fd,buffer,offset,length,position){
+    calls++;return originalRead.call(fs,fd,buffer,offset,Math.min(length,2),position);
+  });
+  assert.equal(readFile(file,{preserveBom:true}),source);
+  assert.equal(readFile(file),source.slice(1));assert.ok(calls>2);
+}));
+test('shared file reader closes its descriptor when a later bounded read throws',(t)=>temp(dir=>{
+  const file=path.join(dir,'failure.js');fs.writeFileSync(file,'valid source');
+  const originalFstat=fs.fstatSync,originalRead=fs.readSync,failure=Error('simulated I/O failure');
+  let fd,calls=0;
+  t.mock.method(fs,'fstatSync',function(selected,...args){fd=selected;return originalFstat.call(fs,selected,...args)});
+  t.mock.method(fs,'readSync',function(selected,buffer,offset,length,position){
+    if(++calls===2)throw failure;
+    return originalRead.call(fs,selected,buffer,offset,Math.min(length,2),position);
+  });
+  assert.throws(()=>readFile(file),error=>error===failure);assert.equal(calls,2);
+  assert.throws(()=>originalFstat.call(fs,fd),{code:'EBADF'});
+}));
 test('shared file reader refuses a leaf replaced by a symlink after its path check without reading bytes',(t)=>temp(dir=>{
   const file=path.join(dir,'source.js'),target=path.join(dir,'target.js');
   fs.writeFileSync(file,'original source');fs.writeFileSync(target,'PRIVATE_TARGET');
-  const originalStat=fs.lstatSync,originalRead=fs.readFileSync;let swapped=false,reads=0;
+  const originalStat=fs.lstatSync,originalRead=fs.readSync;let swapped=false,reads=0;
   t.mock.method(fs,'lstatSync',function(selected,...args){
     const stat=originalStat.call(fs,selected,...args);
     if(selected===file&&!swapped){swapped=true;fs.unlinkSync(file);fs.symlinkSync(target,file);}
     return stat;
   });
-  t.mock.method(fs,'readFileSync',function(...args){reads++;return originalRead.apply(fs,args)});
+  t.mock.method(fs,'readSync',function(...args){reads++;return originalRead.apply(fs,args)});
   assert.throws(()=>readFile(file),/invalid_file/);assert.equal(swapped,true);assert.equal(reads,0);
 }));
 test('shared file reader refuses a different regular inode before reading and closes its descriptor',(t)=>temp(dir=>{
   const file=path.join(dir,'source.js'),replacement=path.join(dir,'replacement.js');
   fs.writeFileSync(file,'original source');fs.writeFileSync(replacement,'replaced source');
-  const originalStat=fs.lstatSync,originalFstat=fs.fstatSync,originalRead=fs.readFileSync;
+  const originalStat=fs.lstatSync,originalFstat=fs.fstatSync,originalRead=fs.readSync;
   let swapped=false,openedFd,reads=0;
   t.mock.method(fs,'lstatSync',function(selected,...args){
     const stat=originalStat.call(fs,selected,...args);
@@ -36,7 +71,7 @@ test('shared file reader refuses a different regular inode before reading and cl
     return stat;
   });
   t.mock.method(fs,'fstatSync',function(fd,...args){openedFd=fd;return originalFstat.call(fs,fd,...args)});
-  t.mock.method(fs,'readFileSync',function(...args){reads++;return originalRead.apply(fs,args)});
+  t.mock.method(fs,'readSync',function(...args){reads++;return originalRead.apply(fs,args)});
   assert.throws(()=>readFile(file),/invalid_file/);assert.equal(swapped,true);assert.equal(reads,0);
   assert.equal(typeof openedFd,'number');assert.throws(()=>originalFstat.call(fs,openedFd),{code:'EBADF'});
 }));
@@ -54,8 +89,8 @@ test('shared file reader retains the checked open file if its pathname changes a
   assert.throws(()=>originalFstat.call(fs,openedFd),{code:'EBADF'});
 }));
 test('shared file reader checks opened type and size before consuming any bytes',(t)=>temp(dir=>{
-  const originalStat=fs.lstatSync,originalRead=fs.readFileSync;let reads=0;
-  t.mock.method(fs,'readFileSync',function(...args){reads++;return originalRead.apply(fs,args)});
+  const originalStat=fs.lstatSync,originalRead=fs.readSync;let reads=0;
+  t.mock.method(fs,'readSync',function(...args){reads++;return originalRead.apply(fs,args)});
   for(const kind of ['empty','large','directory']){
     const file=path.join(dir,kind);fs.writeFileSync(file,'valid source');let changed=false;
     const mocked=t.mock.method(fs,'lstatSync',function(selected,...args){
@@ -188,6 +223,8 @@ test('reject symlinks, directories, oversized files, NUL and invalid UTF-8',()=>
     fs.writeFileSync(valid,'[]');
     const link=path.join(dir,'link.json');fs.symlinkSync(valid,link);
     for(const x of [link,dir])assert.throws(()=>readFile(x),/invalid_file/);
+    const exact=path.join(dir,'exact.txt'),text='x'.repeat(1024*1024-2)+'é';
+    fs.writeFileSync(exact,text);assert.equal(readFile(exact),text);
     const large=path.join(dir,'large.json');fs.writeFileSync(large,Buffer.alloc(1024*1024+1,0x30));
     assert.throws(()=>readFile(large),/invalid_file/);
     const nul=path.join(dir,'nul.json');fs.writeFileSync(nul,Buffer.from([123,0,125]));

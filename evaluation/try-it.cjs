@@ -32,7 +32,14 @@ function readFile(file,{preserveBom=false}={}){
     if(!opened.isFile()||opened.dev!==s.dev||opened.ino!==s.ino||opened.size<1||opened.size>MAX_BYTES)
       throw Error('invalid_file');
     // Read the checked descriptor so a later path swap cannot redirect the read.
-    b=fs.readFileSync(fd);
+    // One extra byte distinguishes an exact-limit file from a growing/oversize input.
+    b=Buffer.alloc(MAX_BYTES+1);let length=0;
+    while(length<b.length){
+      const count=fs.readSync(fd,b,length,b.length-length,null);
+      if(count===0)break;
+      length+=count;
+    }
+    b=b.subarray(0,length);
   }finally{fs.closeSync(fd);}
   if(b.length<1||b.length>MAX_BYTES||b.includes(0))throw Error('invalid_file');
   return new TextDecoder('utf-8',{fatal:true,ignoreBOM:preserveBom}).decode(b);

@@ -182,7 +182,12 @@ and a file basename; it is intended for your authorized coding assistant.
 Files are limited to **1 MiB**, with strict UTF-8, NUL, regular-file and
 symlink checks. The shared reader used by `try`, `outline` and `read` checks
 the opened file's type, size and device/inode against its initial path check,
-then reads that same descriptor and closes it on success or failure. It uses
+then reads that same descriptor and closes it on success or failure. Reads use
+a buffer of at most **1 MiB + 1 byte**, stopping at EOF or that boundary; the
+extra byte detects oversize growth after validation and is never returned as
+accepted input. Short reads are joined before UTF-8 decoding, so multibyte
+characters and BOM handling are preserved. This is an input-buffer/read bound,
+not a process-memory cap or an atomic snapshot of concurrent in-place edits. It uses
 no-follow/nonblocking open flags where available. A replacement observed before
 descriptor validation is refused as `invalid_file`; changing the path afterward
 cannot redirect that open descriptor. This is not a lock against in-place edits
