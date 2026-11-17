@@ -2,7 +2,14 @@
 
 A real A/B evaluation remains a limitation of this alpha, not a passing gate.
 
-Readiness was attempted with the installed, signed-in Codex CLI. No task or model
+The 2026-11-17 [known-name retrieval preflight](docs/RETRIEVAL_COMPARISON.md)
+compared a targeted native command with default-text and JSON reads on twelve
+public self-source declarations. All modes retrieved the exact targets; the
+helper returned more local text tokens in both modes. This is a negative
+retrieval result, with zero model runs, not completed AI code-edit or billing
+evaluation. The full-source Raw/Prepared experiment remains a separate question.
+
+An earlier readiness attempt used the installed, signed-in Codex CLI. No task or model
 completion was obtained: initial startup failed on read-only runtime state; a
 writable isolated runtime reached thread startup but its filesystem sandbox helper
 failed because a required NETLINK_ROUTE socket operation was not permitted.

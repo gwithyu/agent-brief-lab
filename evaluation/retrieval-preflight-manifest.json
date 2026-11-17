@@ -1,0 +1,70 @@
+{
+  "schema": "agent-brief-retrieval-preflight.v1",
+  "revision": "ff8548572cbdd63bff34aa6f4dc1c582b53cfd4d",
+  "tasks": [
+    {
+      "id": "lookup-01",
+      "file": "source-read.cjs",
+      "symbol": "readSymbol"
+    },
+    {
+      "id": "lookup-02",
+      "file": "source-read.cjs",
+      "symbol": "parseArgs"
+    },
+    {
+      "id": "lookup-03",
+      "file": "evaluation/owner-trial.cjs",
+      "symbol": "summarizeUsage"
+    },
+    {
+      "id": "lookup-04",
+      "file": "evaluation/owner-trial.cjs",
+      "symbol": "scoreTrial"
+    },
+    {
+      "id": "lookup-05",
+      "file": "evaluation/owner-trial.cjs",
+      "symbol": "importCodexTrial"
+    },
+    {
+      "id": "lookup-06",
+      "file": "outline.cjs",
+      "symbol": "analyze"
+    },
+    {
+      "id": "lookup-07",
+      "file": "outline.cjs",
+      "symbol": "outline"
+    },
+    {
+      "id": "lookup-08",
+      "file": "prepare.cjs",
+      "symbol": "prepareInput"
+    },
+    {
+      "id": "lookup-09",
+      "file": "paired-handoff.cjs",
+      "symbol": "readHandoff"
+    },
+    {
+      "id": "lookup-10",
+      "file": "paired-handoff.cjs",
+      "symbol": "planPair"
+    },
+    {
+      "id": "lookup-11",
+      "file": "handoff.cjs",
+      "symbol": "resolveOutput"
+    },
+    {
+      "id": "lookup-12",
+      "file": "handoff.cjs",
+      "symbol": "buildHandoff"
+    }
+  ],
+  "nativePolicy": "sed -n /^function NAME(/,/^}/p FILE; known name, multiline top-level declarations with column-zero closing braces",
+  "briefPolicy": "node index.cjs read --source FILE --symbol NAME --json",
+  "encoding": "o200k_base",
+  "briefTextPolicy": "node index.cjs read --source FILE --symbol NAME"
+}

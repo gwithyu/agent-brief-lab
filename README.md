@@ -4,7 +4,20 @@
 
 Local experiments for preparing smaller coding-agent inputs while keeping explicit user constraints, and checking what changed in a Git working tree.
 
-This is an experimental CLI/library, **not a proven agent-cost optimizer or a natural-language understanding system**. It does not intercept ChatGPT or automatically change any agent's context. Live agent A/B testing is blocked in the release environment; see [EVALUATION.md](EVALUATION.md).
+This is an experimental CLI/library, **not a proven agent-cost optimizer or a natural-language understanding system**. It does not intercept ChatGPT or automatically change any agent's context. Independent live-agent A/B testing has not completed; see [EVALUATION.md](EVALUATION.md).
+
+## Retrieval check: targeted native reads used fewer local tokens
+
+On twelve known-name function lookups in this public repository, native `sed`
+and both Agent Brief output modes returned the exact target text in all cases.
+Actual stdout totaled **8,088 local tokens for native reads**, **8,959 for
+default text**, and **11,217 for JSON**. The reader did not save tokens against
+that targeted baseline; its identity metadata and guidance have a context cost.
+Use it as an optional structured/fingerprint-checked reader, rather than inferring
+a general token-saving advantage from whole-file comparisons.
+
+This is a formatting-restricted, scripted retrieval sample, not model editing
+success or a provider bill. **[Results, limitations and reproduction](docs/RETRIEVAL_COMPARISON.md)**.
 
 ## NEW: log actual Raw / Prepared model outcomes without inventing savings
 
