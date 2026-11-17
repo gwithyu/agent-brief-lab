@@ -18,6 +18,40 @@ symlinks may remain unchanged: only their link metadata is observed, not target
 contents. Editable source must still be a regular file. Source in
 the returned input may already be a conservative rewrite **candidate**.
 
+## Optional source lookup
+
+Use `node index.cjs outline --source /absolute/path/to/module.ts` to locate
+top-level declarations, class/object callables and direct CommonJS function
+assignments before reading a large file.
+If relevant locations may follow the current page, continue using its
+`nextOffset` and source hash: `outline --source FILE --offset N --sha256 HASH`.
+Use the same tool revision and stop on a source mismatch; whole-file counters
+are repeated on each page, not counts to sum.
+For a fresh, uniquely named declaration, `read --source FILE --symbol NAME`
+locates it and rechecks the fingerprint automatically. Use `--container OWNER`
+when needed, and pin an earlier observation with `--sha256 HASH`. Do not guess
+through ambiguous-name errors; select the actual range using the directory.
+The result is complete physical lines, which can include same-line neighbors.
+Use `--source-only` when you only need those original bytes; it omits display
+guidance/hash/range fields and adds no newline. Use default/JSON output when
+you need that metadata for subsequent reads. All validation and refusal rules
+apply in either mode; `--source-only` and `--json` cannot be combined.
+Ranges include parser-attached JSDoc. Documented multi-binding statements may
+include earlier bindings; this context counts toward the same read budget.
+Inspect other comments and surrounding scope separately when relevant.
+If a named read exceeds its budget, use the `readHint` coordinates/hash on
+stderr for smaller explicit line reads; `--json` makes that refusal JSON.
+Each chunk must fit both limits. A line over 64 KiB needs another authorized
+reader. Never treat a refused read or its hint as source already read.
+Read the relevant original implementation, imports and dependencies through
+your normal authorized tools, or use `read --source FILE --lines START:END
+--sha256 HASH` with the outline's actual fingerprint. This prints explicitly
+selected original source data (up to 200 lines / 64 KiB), and refuses changed
+files before printing code. Regenerate the outline after a mismatch.
+Neither the directory nor a successful read grants edit scope or proves full
+context. Preserve the complete original sources in native Raw/Prepared task
+comparisons.
+
 ## Instructions an agent can follow
 
 Use these instructions explicitly, or adapt them into your project's existing

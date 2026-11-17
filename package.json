@@ -10,7 +10,8 @@
   "scripts": {
     "test": "node --test test/*.test.cjs",
     "demo": "node demo.cjs",
-    "evaluate": "node evaluation/run.cjs"
+    "evaluate": "node evaluation/run.cjs",
+    "try": "node evaluation/try-it.cjs"
   },
   "engines": {
     "node": ">=20"

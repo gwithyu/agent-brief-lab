@@ -74,4 +74,4 @@ function unpackHistory(input,expectedDigest) {
   const restored=verifyFingerprint(validateMessages(messages),input.sourceDigest);
   return expectedDigest===undefined?restored:verifyFingerprint(restored,expectedDigest);
 }
-module.exports={packHistory,unpackHistory};
+module.exports={packHistory,unpackHistory,validateMessages};

@@ -1,0 +1,625 @@
+{
+  "schema": "agent-brief-retrieval-preflight-report.v1",
+  "manifest": {
+    "schema": "agent-brief-retrieval-preflight.v1",
+    "revision": "ff8548572cbdd63bff34aa6f4dc1c582b53cfd4d",
+    "tasks": [
+      {
+        "id": "lookup-01",
+        "file": "source-read.cjs",
+        "symbol": "readSymbol"
+      },
+      {
+        "id": "lookup-02",
+        "file": "source-read.cjs",
+        "symbol": "parseArgs"
+      },
+      {
+        "id": "lookup-03",
+        "file": "evaluation/owner-trial.cjs",
+        "symbol": "summarizeUsage"
+      },
+      {
+        "id": "lookup-04",
+        "file": "evaluation/owner-trial.cjs",
+        "symbol": "scoreTrial"
+      },
+      {
+        "id": "lookup-05",
+        "file": "evaluation/owner-trial.cjs",
+        "symbol": "importCodexTrial"
+      },
+      {
+        "id": "lookup-06",
+        "file": "outline.cjs",
+        "symbol": "analyze"
+      },
+      {
+        "id": "lookup-07",
+        "file": "outline.cjs",
+        "symbol": "outline"
+      },
+      {
+        "id": "lookup-08",
+        "file": "prepare.cjs",
+        "symbol": "prepareInput"
+      },
+      {
+        "id": "lookup-09",
+        "file": "paired-handoff.cjs",
+        "symbol": "readHandoff"
+      },
+      {
+        "id": "lookup-10",
+        "file": "paired-handoff.cjs",
+        "symbol": "planPair"
+      },
+      {
+        "id": "lookup-11",
+        "file": "handoff.cjs",
+        "symbol": "resolveOutput"
+      },
+      {
+        "id": "lookup-12",
+        "file": "handoff.cjs",
+        "symbol": "buildHandoff"
+      }
+    ],
+    "nativePolicy": "sed -n /^function NAME(/,/^}/p FILE; known name, multiline top-level declarations with column-zero closing braces",
+    "briefPolicy": "node index.cjs read --source FILE --symbol NAME --json",
+    "encoding": "o200k_base",
+    "briefTextPolicy": "node index.cjs read --source FILE --symbol NAME"
+  },
+  "manifestSha256": "b07af99f00ed7985e0ccbf0440d59cad3f0448a98ca10640ed82385a0ab8765c",
+  "runtime": {
+    "node": "v24.22.1",
+    "platform": "linux",
+    "typescript": "5.9.3"
+  },
+  "taskCount": 12,
+  "agentRuns": 0,
+  "modelCalls": 0,
+  "providerUsage": null,
+  "billedCostUsd": null,
+  "codingTaskCorrectness": null,
+  "retrievalComparisonComplete": true,
+  "verifiedRealWorldSavings": false,
+  "native": {
+    "completed": 12,
+    "containsExpected": 12,
+    "exactExpected": 12,
+    "stdoutTokens": 8088,
+    "commandTokens": 262,
+    "declaredEnvelopeTokens": 9399
+  },
+  "briefText": {
+    "completed": 12,
+    "containsExpected": 12,
+    "exactExpected": 12,
+    "stdoutTokens": 8959,
+    "commandTokens": 289,
+    "declaredEnvelopeTokens": 10333
+  },
+  "briefJson": {
+    "completed": 12,
+    "containsExpected": 12,
+    "exactExpected": 12,
+    "stdoutTokens": 11217,
+    "commandTokens": 325,
+    "declaredEnvelopeTokens": 12354
+  },
+  "records": [
+    {
+      "id": "lookup-01",
+      "file": "source-read.cjs",
+      "symbol": "readSymbol",
+      "sourceSha256": "db42b1ba165ac15bbd661c0604daddb48e93bee524d66aac5492b9558e95ef86",
+      "targetStartLine": 27,
+      "targetEndLine": 42,
+      "targetBytes": 860,
+      "native": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": null,
+        "exitCode": 0,
+        "stdoutTokens": 208,
+        "commandTokens": 21,
+        "declaredEnvelopeTokens": 274,
+        "stdoutBytes": 860
+      },
+      "briefText": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "db42b1ba165ac15bbd661c0604daddb48e93bee524d66aac5492b9558e95ef86",
+        "exitCode": 0,
+        "stdoutTokens": 277,
+        "commandTokens": 23,
+        "declaredEnvelopeTokens": 348,
+        "stdoutBytes": 1075
+      },
+      "briefJson": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "db42b1ba165ac15bbd661c0604daddb48e93bee524d66aac5492b9558e95ef86",
+        "exitCode": 0,
+        "stdoutTokens": 422,
+        "commandTokens": 26,
+        "declaredEnvelopeTokens": 498,
+        "stdoutBytes": 1380
+      }
+    },
+    {
+      "id": "lookup-02",
+      "file": "source-read.cjs",
+      "symbol": "parseArgs",
+      "sourceSha256": "db42b1ba165ac15bbd661c0604daddb48e93bee524d66aac5492b9558e95ef86",
+      "targetStartLine": 43,
+      "targetEndLine": 62,
+      "targetBytes": 1168,
+      "native": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": null,
+        "exitCode": 0,
+        "stdoutTokens": 391,
+        "commandTokens": 21,
+        "declaredEnvelopeTokens": 467,
+        "stdoutBytes": 1168
+      },
+      "briefText": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "db42b1ba165ac15bbd661c0604daddb48e93bee524d66aac5492b9558e95ef86",
+        "exitCode": 0,
+        "stdoutTokens": 460,
+        "commandTokens": 23,
+        "declaredEnvelopeTokens": 541,
+        "stdoutBytes": 1383
+      },
+      "briefJson": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "db42b1ba165ac15bbd661c0604daddb48e93bee524d66aac5492b9558e95ef86",
+        "exitCode": 0,
+        "stdoutTokens": 616,
+        "commandTokens": 26,
+        "declaredEnvelopeTokens": 691,
+        "stdoutBytes": 1694
+      }
+    },
+    {
+      "id": "lookup-03",
+      "file": "evaluation/owner-trial.cjs",
+      "symbol": "summarizeUsage",
+      "sourceSha256": "f4860aecdac7ee55dab88cb2d3e3641dc6ef10e656a307a3df66f9e0b684f2d0",
+      "targetStartLine": 207,
+      "targetEndLine": 218,
+      "targetBytes": 531,
+      "native": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": null,
+        "exitCode": 0,
+        "stdoutTokens": 144,
+        "commandTokens": 24,
+        "declaredEnvelopeTokens": 206,
+        "stdoutBytes": 531
+      },
+      "briefText": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "f4860aecdac7ee55dab88cb2d3e3641dc6ef10e656a307a3df66f9e0b684f2d0",
+        "exitCode": 0,
+        "stdoutTokens": 220,
+        "commandTokens": 28,
+        "declaredEnvelopeTokens": 289,
+        "stdoutBytes": 748
+      },
+      "briefJson": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "f4860aecdac7ee55dab88cb2d3e3641dc6ef10e656a307a3df66f9e0b684f2d0",
+        "exitCode": 0,
+        "stdoutTokens": 360,
+        "commandTokens": 31,
+        "declaredEnvelopeTokens": 440,
+        "stdoutBytes": 1056
+      }
+    },
+    {
+      "id": "lookup-04",
+      "file": "evaluation/owner-trial.cjs",
+      "symbol": "scoreTrial",
+      "sourceSha256": "f4860aecdac7ee55dab88cb2d3e3641dc6ef10e656a307a3df66f9e0b684f2d0",
+      "targetStartLine": 219,
+      "targetEndLine": 369,
+      "targetBytes": 8581,
+      "native": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": null,
+        "exitCode": 0,
+        "stdoutTokens": 2119,
+        "commandTokens": 24,
+        "declaredEnvelopeTokens": 2364,
+        "stdoutBytes": 8581
+      },
+      "briefText": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "f4860aecdac7ee55dab88cb2d3e3641dc6ef10e656a307a3df66f9e0b684f2d0",
+        "exitCode": 0,
+        "stdoutTokens": 2195,
+        "commandTokens": 26,
+        "declaredEnvelopeTokens": 2445,
+        "stdoutBytes": 8798
+      },
+      "briefJson": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "f4860aecdac7ee55dab88cb2d3e3641dc6ef10e656a307a3df66f9e0b684f2d0",
+        "exitCode": 0,
+        "stdoutTokens": 2517,
+        "commandTokens": 29,
+        "declaredEnvelopeTokens": 2679,
+        "stdoutBytes": 9242
+      }
+    },
+    {
+      "id": "lookup-05",
+      "file": "evaluation/owner-trial.cjs",
+      "symbol": "importCodexTrial",
+      "sourceSha256": "f4860aecdac7ee55dab88cb2d3e3641dc6ef10e656a307a3df66f9e0b684f2d0",
+      "targetStartLine": 370,
+      "targetEndLine": 433,
+      "targetBytes": 4090,
+      "native": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": null,
+        "exitCode": 0,
+        "stdoutTokens": 1014,
+        "commandTokens": 26,
+        "declaredEnvelopeTokens": 1152,
+        "stdoutBytes": 4090
+      },
+      "briefText": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "f4860aecdac7ee55dab88cb2d3e3641dc6ef10e656a307a3df66f9e0b684f2d0",
+        "exitCode": 0,
+        "stdoutTokens": 1090,
+        "commandTokens": 28,
+        "declaredEnvelopeTokens": 1233,
+        "stdoutBytes": 4307
+      },
+      "briefJson": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "f4860aecdac7ee55dab88cb2d3e3641dc6ef10e656a307a3df66f9e0b684f2d0",
+        "exitCode": 0,
+        "stdoutTokens": 1305,
+        "commandTokens": 31,
+        "declaredEnvelopeTokens": 1415,
+        "stdoutBytes": 4673
+      }
+    },
+    {
+      "id": "lookup-06",
+      "file": "outline.cjs",
+      "symbol": "analyze",
+      "sourceSha256": "1e62162e07651e85be275c578afa0ad2e9a941a71d115297084bfb8cdc7eac13",
+      "targetStartLine": 20,
+      "targetEndLine": 89,
+      "targetBytes": 4578,
+      "native": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": null,
+        "exitCode": 0,
+        "stdoutTokens": 992,
+        "commandTokens": 19,
+        "declaredEnvelopeTokens": 1130,
+        "stdoutBytes": 4578
+      },
+      "briefText": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "1e62162e07651e85be275c578afa0ad2e9a941a71d115297084bfb8cdc7eac13",
+        "exitCode": 0,
+        "stdoutTokens": 1062,
+        "commandTokens": 22,
+        "declaredEnvelopeTokens": 1206,
+        "stdoutBytes": 4789
+      },
+      "briefJson": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "1e62162e07651e85be275c578afa0ad2e9a941a71d115297084bfb8cdc7eac13",
+        "exitCode": 0,
+        "stdoutTokens": 1281,
+        "commandTokens": 25,
+        "declaredEnvelopeTokens": 1391,
+        "stdoutBytes": 5147
+      }
+    },
+    {
+      "id": "lookup-07",
+      "file": "outline.cjs",
+      "symbol": "outline",
+      "sourceSha256": "1e62162e07651e85be275c578afa0ad2e9a941a71d115297084bfb8cdc7eac13",
+      "targetStartLine": 110,
+      "targetEndLine": 127,
+      "targetBytes": 1331,
+      "native": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": null,
+        "exitCode": 0,
+        "stdoutTokens": 339,
+        "commandTokens": 19,
+        "declaredEnvelopeTokens": 405,
+        "stdoutBytes": 1331
+      },
+      "briefText": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "1e62162e07651e85be275c578afa0ad2e9a941a71d115297084bfb8cdc7eac13",
+        "exitCode": 0,
+        "stdoutTokens": 409,
+        "commandTokens": 21,
+        "declaredEnvelopeTokens": 480,
+        "stdoutBytes": 1544
+      },
+      "briefJson": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "1e62162e07651e85be275c578afa0ad2e9a941a71d115297084bfb8cdc7eac13",
+        "exitCode": 0,
+        "stdoutTokens": 555,
+        "commandTokens": 24,
+        "declaredEnvelopeTokens": 629,
+        "stdoutBytes": 1852
+      }
+    },
+    {
+      "id": "lookup-08",
+      "file": "prepare.cjs",
+      "symbol": "prepareInput",
+      "sourceSha256": "7c569e11c48b6cb845ad42d8eb0930c6c0a4aec77f110e0201e6016f5b8f3c54",
+      "targetStartLine": 6,
+      "targetEndLine": 64,
+      "targetBytes": 4344,
+      "native": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": null,
+        "exitCode": 0,
+        "stdoutTokens": 975,
+        "commandTokens": 20,
+        "declaredEnvelopeTokens": 1092,
+        "stdoutBytes": 4344
+      },
+      "briefText": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "7c569e11c48b6cb845ad42d8eb0930c6c0a4aec77f110e0201e6016f5b8f3c54",
+        "exitCode": 0,
+        "stdoutTokens": 1052,
+        "commandTokens": 22,
+        "declaredEnvelopeTokens": 1174,
+        "stdoutBytes": 4554
+      },
+      "briefJson": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "7c569e11c48b6cb845ad42d8eb0930c6c0a4aec77f110e0201e6016f5b8f3c54",
+        "exitCode": 0,
+        "stdoutTokens": 1249,
+        "commandTokens": 25,
+        "declaredEnvelopeTokens": 1356,
+        "stdoutBytes": 4903
+      }
+    },
+    {
+      "id": "lookup-09",
+      "file": "paired-handoff.cjs",
+      "symbol": "readHandoff",
+      "sourceSha256": "bf825348b269e71fbb215172250cf0285358eae633687e9e2f6fc18d807e0386",
+      "targetStartLine": 39,
+      "targetEndLine": 73,
+      "targetBytes": 1872,
+      "native": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": null,
+        "exitCode": 0,
+        "stdoutTokens": 458,
+        "commandTokens": 23,
+        "declaredEnvelopeTokens": 556,
+        "stdoutBytes": 1872
+      },
+      "briefText": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "bf825348b269e71fbb215172250cf0285358eae633687e9e2f6fc18d807e0386",
+        "exitCode": 0,
+        "stdoutTokens": 527,
+        "commandTokens": 25,
+        "declaredEnvelopeTokens": 630,
+        "stdoutBytes": 2090
+      },
+      "briefJson": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "bf825348b269e71fbb215172250cf0285358eae633687e9e2f6fc18d807e0386",
+        "exitCode": 0,
+        "stdoutTokens": 704,
+        "commandTokens": 28,
+        "declaredEnvelopeTokens": 790,
+        "stdoutBytes": 2417
+      }
+    },
+    {
+      "id": "lookup-10",
+      "file": "paired-handoff.cjs",
+      "symbol": "planPair",
+      "sourceSha256": "bf825348b269e71fbb215172250cf0285358eae633687e9e2f6fc18d807e0386",
+      "targetStartLine": 74,
+      "targetEndLine": 114,
+      "targetBytes": 2078,
+      "native": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": null,
+        "exitCode": 0,
+        "stdoutTokens": 501,
+        "commandTokens": 22,
+        "declaredEnvelopeTokens": 605,
+        "stdoutBytes": 2078
+      },
+      "briefText": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "bf825348b269e71fbb215172250cf0285358eae633687e9e2f6fc18d807e0386",
+        "exitCode": 0,
+        "stdoutTokens": 570,
+        "commandTokens": 24,
+        "declaredEnvelopeTokens": 679,
+        "stdoutBytes": 2297
+      },
+      "briefJson": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "bf825348b269e71fbb215172250cf0285358eae633687e9e2f6fc18d807e0386",
+        "exitCode": 0,
+        "stdoutTokens": 753,
+        "commandTokens": 27,
+        "declaredEnvelopeTokens": 841,
+        "stdoutBytes": 2632
+      }
+    },
+    {
+      "id": "lookup-11",
+      "file": "handoff.cjs",
+      "symbol": "resolveOutput",
+      "sourceSha256": "6e3c738a09ff27f1ecef16b69d1ce7dae31876f998f0eb8b7f05ede36abccd9b",
+      "targetStartLine": 35,
+      "targetEndLine": 48,
+      "targetBytes": 726,
+      "native": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": null,
+        "exitCode": 0,
+        "stdoutTokens": 180,
+        "commandTokens": 21,
+        "declaredEnvelopeTokens": 245,
+        "stdoutBytes": 726
+      },
+      "briefText": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "6e3c738a09ff27f1ecef16b69d1ce7dae31876f998f0eb8b7f05ede36abccd9b",
+        "exitCode": 0,
+        "stdoutTokens": 255,
+        "commandTokens": 23,
+        "declaredEnvelopeTokens": 325,
+        "stdoutBytes": 937
+      },
+      "briefJson": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "6e3c738a09ff27f1ecef16b69d1ce7dae31876f998f0eb8b7f05ede36abccd9b",
+        "exitCode": 0,
+        "stdoutTokens": 398,
+        "commandTokens": 26,
+        "declaredEnvelopeTokens": 470,
+        "stdoutBytes": 1243
+      }
+    },
+    {
+      "id": "lookup-12",
+      "file": "handoff.cjs",
+      "symbol": "buildHandoff",
+      "sourceSha256": "6e3c738a09ff27f1ecef16b69d1ce7dae31876f998f0eb8b7f05ede36abccd9b",
+      "targetStartLine": 61,
+      "targetEndLine": 121,
+      "targetBytes": 3317,
+      "native": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": null,
+        "exitCode": 0,
+        "stdoutTokens": 767,
+        "commandTokens": 22,
+        "declaredEnvelopeTokens": 903,
+        "stdoutBytes": 3317
+      },
+      "briefText": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "6e3c738a09ff27f1ecef16b69d1ce7dae31876f998f0eb8b7f05ede36abccd9b",
+        "exitCode": 0,
+        "stdoutTokens": 842,
+        "commandTokens": 24,
+        "declaredEnvelopeTokens": 983,
+        "stdoutBytes": 3529
+      },
+      "briefJson": {
+        "completed": true,
+        "containsExpected": true,
+        "exactExpected": true,
+        "sourceSha256": "6e3c738a09ff27f1ecef16b69d1ce7dae31876f998f0eb8b7f05ede36abccd9b",
+        "exitCode": 0,
+        "stdoutTokens": 1057,
+        "commandTokens": 27,
+        "declaredEnvelopeTokens": 1154,
+        "stdoutBytes": 3890
+      }
+    }
+  ],
+  "limits": [
+    "Scripted retrieval on one public self-repository; known names and regular formatting; no code edits or independent model sessions.",
+    "Convenience sample, not externally preregistered or randomized; no task exclusions after measurement.",
+    "sed relies on column-zero declaration formatting; AST original ranges are used only by the grader.",
+    "Normalized command/result JSON is a declared local envelope, not provider usage or an actual host tool envelope.",
+    "No agent instructions, follow-up reads, tool schemas, model outputs, retries, latency, cache effects or bills measured.",
+    "Brief identity metadata and stronger guarantees are counted but not claimed equivalent to sed."
+  ]
+}

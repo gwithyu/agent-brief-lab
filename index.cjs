@@ -151,7 +151,7 @@ function brief(intent) {
     + `\n\nUnresolved questions:\n${intent.questions.length ? intent.questions.map(x => '- '+x).join('\n') : 'None recorded'}\n`;
 }
 
-module.exports = {tokens, simplify, validateIntent, intentDigest, checkPlan, brief, filePath};
+module.exports = {tokens, simplify, validateIntent, intentDigest, checkPlan, brief, filePath, sourceFile};
 
 if (require.main === module) {
   const args=process.argv.slice(2);
@@ -159,6 +159,17 @@ if (require.main === module) {
   const help=`Usage: agent-brief <command> [options]
 
 Commands:
+  try [--history FILE | --source FILE] [--json]   Preview compression locally (no model calls)
+  outline --source FILE [--offset N --sha256 HASH] [--json]
+                                               Locate declarations without printing source bodies
+  read --source FILE --lines START:END --sha256 HASH [--json | --source-only]
+                                               Read original lines after matching the source fingerprint
+  read --source FILE --symbol NAME [--container OWNER] [--sha256 HASH] [--json | --source-only]
+                                               Read one unambiguous outlined declaration by name
+  handoff --repo ROOT --task TEXT --file FILE --out NEW_DIR [--constraint TEXT] [--check TEXT]
+                                               Private native-JSON handoff to an existing agent
+  pair --handoff PRIVATE_DIR --out NEW_DIR       Export equivalent raw/compact prompts
+  trial init|import-codex|score ...               Import local traces and evaluate paired AI runs
   measure <source> [encoding]                 Measure a conservative rewrite candidate
   compact <source> [encoding]                 Print a smaller candidate without overwriting source
   brief <intent.json>                         Print the complete explicit intent brief
@@ -174,8 +185,8 @@ Commands:
   history <messages.json> [encoding]           Pack repeated tool-output strings losslessly
   restore <history-input.json> [expected-sha256]
                                                Restore and verify a packed history document
-  prepare <intent.json> <sources.json> <messages.json> [encoding]
-                                               Build one measured input envelope
+  prepare <intent.json> <sources.json> <messages.json> [encoding] [min-saving-tokens]
+                                               Build one measured input envelope; default minimum 1 token
   session <intent.json> <repo> <new-output-dir>
                                                Prepare a bundle for the current agent; no model call
   propose <intent.json> <repo> <new-output-dir> [--live --model MODEL]
@@ -189,7 +200,19 @@ Exit status: 0 success; 1 invalid/rejected/check failure; 2 incorrect CLI usage.
 `;
   if(args.length===1 && ['--help','-h'].includes(args[0])) process.stdout.write(help);
   else if(args.length===1 && ['--version','-V'].includes(args[0])) console.log(require('./package.json').version);
-  else if(args[0]==='propose') {
+  else if(args[0]==='read') {
+    process.exitCode=require('./source-read.cjs').runCli(args.slice(1));
+  } else if(args[0]==='outline') {
+    process.exitCode=require('./outline.cjs').runCli(args.slice(1));
+  } else if(args[0]==='trial') {
+    process.exitCode=require('./evaluation/owner-trial.cjs').runCli(args.slice(1));
+  } else if(args[0]==='pair') {
+    process.exitCode=require('./paired-handoff.cjs').runCli(args.slice(1));
+  } else if(args[0]==='handoff') {
+    process.exitCode=require('./handoff.cjs').runCli(args.slice(1));
+  } else if(args[0]==='try') {
+    process.exitCode=require('./evaluation/try-it.cjs').runCli(args.slice(1));
+  } else if(args[0]==='propose') {
     try {
       const [_,intentFile,repo,out,...options]=args;
       if(!intentFile||!repo||!out||!(options.length===0||(options.length===3&&options[0]==='--live'&&options[1]==='--model')))throw Object.assign(new Error('Usage: agent-brief propose <intent.json> <repo> <new-output-dir> [--live --model MODEL]'),{exitCode:2});
@@ -197,7 +220,7 @@ Exit status: 0 success; 1 invalid/rejected/check failure; 2 incorrect CLI usage.
       console.log(JSON.stringify(result,null,2));if(!['prepared','proposal_ready'].includes(result.state))process.exitCode=1;
     }catch(error){console.error(error.message);process.exitCode=error.exitCode??1;}
   } else {
-  const arity={measure:[2,3],compact:[2,3],check:[3,3],brief:[2,2],baseline:[3,3],verify:[5,6],context:[4,5],pack:[3,4],history:[2,3],restore:[2,3],review:[6,6],prepare:[4,5],session:[4,4]};
+  const arity={measure:[2,3],compact:[2,3],check:[3,3],brief:[2,2],baseline:[3,3],verify:[5,6],context:[4,5],pack:[3,4],history:[2,3],restore:[2,3],review:[6,6],prepare:[4,6],session:[4,4]};
   const readJson=name=>JSON.parse(fs.readFileSync(name,'utf8'));
   try {
     if (!arity[command] || args.length<arity[command][0] || args.length>arity[command][1]) {
@@ -211,7 +234,8 @@ Exit status: 0 success; 1 invalid/rejected/check failure; 2 incorrect CLI usage.
       console.log(JSON.stringify(result,null,2));
       if(result.state!=='session_ready')process.exitCode=1;
     } else if(command==='prepare') {
-      console.log(JSON.stringify(require('./prepare.cjs').prepareInput(readJson(file),readJson(extra),readJson(fourth),fifth),null,2));
+      const minimum=sixth===undefined?1:(/^[1-9][0-9]*$/.test(sixth)?Number(sixth):NaN);
+      console.log(JSON.stringify(require('./prepare.cjs').prepareInput(readJson(file),readJson(extra),readJson(fourth),fifth??'o200k_base',minimum),null,2));
     } else if(command==='review') {
       const result=require('./review.cjs').reviewChanges(readJson(file),readJson(extra),readJson(fourth),fifth,readJson(sixth));
       console.log(JSON.stringify(result,null,2));

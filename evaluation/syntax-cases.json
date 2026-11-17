@@ -1,0 +1,125 @@
+{
+  "schema": "agent-brief-syntax-cases.v1",
+  "purpose": "Curated reader-contract diagnostics, not a native-tool comparison or agent/billing study.",
+  "oracle": "Expected physical-line text is manually specified; neither production outline nor AST ranges generate expected output.",
+  "cases": [
+    {
+      "id": "arrow",
+      "file": "arrow.js",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nconst selected = (value) => {\n  return {value};\n};\nconst after = 1;\n",
+      "symbol": "selected",
+      "expectedText": "const selected = (value) => {\n  return {value};\n};\n"
+    },
+    {
+      "id": "expression",
+      "file": "expression.cjs",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nconst selected = function named(value) {\n  return value + 1;\n};\n",
+      "symbol": "selected",
+      "expectedText": "const selected = function named(value) {\n  return value + 1;\n};\n"
+    },
+    {
+      "id": "export-async-generic",
+      "file": "export-async-generic.ts",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nexport async function selected<T>(value: T): Promise<T> {\n  return value;\n}\n",
+      "symbol": "selected",
+      "expectedText": "export async function selected<T>(value: T): Promise<T> {\n  return value;\n}\n"
+    },
+    {
+      "id": "class-owner",
+      "file": "class-owner.ts",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nclass Other { selected() { return 0; } }\nclass Client {\n  selected(value: number) {\n    return value + 1;\n  }\n}\n",
+      "symbol": "selected",
+      "expectedText": "  selected(value: number) {\n    return value + 1;\n  }\n",
+      "container": "Client"
+    },
+    {
+      "id": "object-method",
+      "file": "object-method.js",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nconst api = {\n  selected(value) {\n    return value;\n  },\n  other() {}\n};\n",
+      "symbol": "selected",
+      "expectedText": "  selected(value) {\n    return value;\n  },\n",
+      "container": "api"
+    },
+    {
+      "id": "object-arrow",
+      "file": "object-arrow.js",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nconst api = {\n  selected: (value) => ({value}),\n  other: () => 0\n};\n",
+      "symbol": "selected",
+      "expectedText": "  selected: (value) => ({value}),\n",
+      "container": "api"
+    },
+    {
+      "id": "commonjs-property",
+      "file": "commonjs-property.cjs",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nexports.selected = function(value) {\n  return value;\n};\n",
+      "symbol": "selected",
+      "expectedText": "exports.selected = function(value) {\n  return value;\n};\n",
+      "container": "exports"
+    },
+    {
+      "id": "commonjs-direct",
+      "file": "commonjs-direct.cjs",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nmodule.exports = (value) => {\n  return value;\n};",
+      "symbol": "exports",
+      "expectedText": "module.exports = (value) => {\n  return value;\n};",
+      "container": "module"
+    },
+    {
+      "id": "template-braces",
+      "file": "template-braces.js",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nconst lookalike = `\nfunction selected(fake) {\n}\n`;\nfunction selected(value) {\n  const text = `before\n}\nafter`;\n  if (value) {\n    return {text};\n  }\n  return null;\n}\nfunction after() {}\n",
+      "symbol": "selected",
+      "expectedText": "function selected(value) {\n  const text = `before\n}\nafter`;\n  if (value) {\n    return {text};\n  }\n  return null;\n}\n"
+    },
+    {
+      "id": "bom-jsdoc-crlf",
+      "file": "bom-jsdoc-crlf.ts",
+      "source": "﻿/** Keep milliseconds. */\r\nexport const selected = (value: number) => {\r\n  return value;\r\n};\r\nthrow new Error(\"SOURCE_MUST_NOT_EXECUTE\");\r\n",
+      "symbol": "selected",
+      "expectedText": "﻿/** Keep milliseconds. */\r\nexport const selected = (value: number) => {\r\n  return value;\r\n};\r\n"
+    },
+    {
+      "id": "same-line-neighbors",
+      "file": "same-line-neighbors.js",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nconst before = 1; function selected() {return 2;} const after = 3;\n",
+      "symbol": "selected",
+      "expectedText": "const before = 1; function selected() {return 2;} const after = 3;\n"
+    },
+    {
+      "id": "unicode",
+      "file": "unicode.ts",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nconst 计算 = (值: number) => {\n  return 值 + 1;\n};\n",
+      "symbol": "计算",
+      "expectedText": "const 计算 = (值: number) => {\n  return 值 + 1;\n};\n"
+    },
+    {
+      "id": "ambiguous",
+      "file": "ambiguous.js",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nclass A { selected() {} }\nclass B { selected() {} }\n",
+      "symbol": "selected",
+      "expectedError": "ambiguous_symbol"
+    },
+    {
+      "id": "unsupported-wrapper",
+      "file": "unsupported-wrapper.js",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nconst selected = wrap(() => 1);\n",
+      "symbol": "selected",
+      "expectedError": "symbol_not_found"
+    },
+    {
+      "id": "stale-source",
+      "file": "stale-source.js",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nfunction selected() {}\n",
+      "symbol": "selected",
+      "expectedError": "source_changed",
+      "expectedSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "line-budget",
+      "file": "line-budget.js",
+      "source": "throw new Error(\"SOURCE_MUST_NOT_EXECUTE\");\nfunction selected() {\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n  // Body must stay off stderr.\n}\n",
+      "symbol": "selected",
+      "expectedError": "read_budget_exceeded"
+    }
+  ]
+}
